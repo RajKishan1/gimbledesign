@@ -5,21 +5,46 @@ import { getSubscriptionToken } from "@inngest/realtime";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 
 export async function fetchRealtimeSubscriptionToken() {
-  const session = await getKindeServerSession();
-  const user = await session.getUser();
-  if (!user) throw new Error("Unauthorized");
+  try {
+    const session = await getKindeServerSession();
+    const user = await session.getUser();
+    if (!user) {
+      console.error("[Realtime] Unauthorized: No user session");
+      throw new Error("Unauthorized");
+    }
 
-  // This creates a token using the Inngest API that is bound to the channel and topic:
-  const token = await getSubscriptionToken(inngest, {
-    channel: `user:${user.id}`,
-    topics: [
-      "generation.start",
-      "analysis.start",
-      "analysis.complete",
-      "frame.created",
-      "generation.complete",
-    ],
-  });
+    // Check if required environment variables are set (for production)
+    if (process.env.NODE_ENV === "production") {
+      if (!process.env.INNGEST_SIGNING_KEY) {
+        console.error("[Realtime] Missing INNGEST_SIGNING_KEY in production");
+      }
+      if (!process.env.NEXT_PUBLIC_APP_URL) {
+        console.error("[Realtime] Missing NEXT_PUBLIC_APP_URL in production");
+      }
+    }
 
-  return token;
+    // This creates a token using the Inngest API that is bound to the channel and topic:
+    const token = await getSubscriptionToken(inngest, {
+      channel: `user:${user.id}`,
+      topics: [
+        "generation.start",
+        "analysis.start",
+        "analysis.complete",
+        "frame.created",
+        "generation.complete",
+      ],
+    });
+
+    console.log("[Realtime] Token generated successfully for user:", user.id);
+    return token;
+  } catch (error) {
+    console.error("[Realtime] Error generating subscription token:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      environment: process.env.NODE_ENV,
+      hasSigningKey: !!process.env.INNGEST_SIGNING_KEY,
+      appUrl: process.env.NEXT_PUBLIC_APP_URL,
+    });
+    throw error;
+  }
 }

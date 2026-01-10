@@ -79,9 +79,22 @@ export const CanvasProvider = ({
       : null;
 
   //Update the LoadingState Inngest Realtime event
-  const { freshData } = useInngestSubscription({
+  const subscriptionResult = useInngestSubscription({
     refreshToken: fetchRealtimeSubscriptionToken,
   });
+  const { freshData } = subscriptionResult;
+
+  // Log subscription status for debugging (especially in production)
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      // Log subscription status to help debug WebSocket issues
+      console.log("[Realtime] Subscription status:", {
+        hasFreshData: !!freshData,
+        dataLength: freshData?.length || 0,
+        appUrl: process.env.NEXT_PUBLIC_APP_URL,
+      });
+    }
+  }, [freshData]);
 
   useEffect(() => {
     if (!freshData || freshData.length === 0) return;

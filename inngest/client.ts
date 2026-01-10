@@ -8,5 +8,5 @@ export const inngest = new Inngest({
   id: "xdesign-app",
   middleware: [realtimeMiddleware()],
   // Optional: Explicitly set event key for production (if not using default)
-  // eventKey: process.env.INNGEST_EVENT_KEY,
+  eventKey: process.env.INNGEST_EVENT_KEY,
 });
