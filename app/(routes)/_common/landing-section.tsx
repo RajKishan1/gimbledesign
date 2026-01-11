@@ -120,29 +120,6 @@ const LandingSection = () => {
                 </Suggestions>
               </div>
             </div>
-
-            <div
-              className="absolute -translate-x-1/2
-             left-1/2 w-[5000px] h-[3000px] top-[80%]
-             -z-10"
-            >
-              <div
-                className="-translate-x-1/2 absolute
-               bottom-[calc(100%-300px)] left-1/2
-               h-[2000px] w-[2000px]
-               opacity-20 bg-radial-primary"
-              ></div>
-              <div
-                className="absolute -mt-2.5
-              size-full rounded-[50%]
-               bg-primary/20 opacity-70
-               [box-shadow:0_-15px_24.8px_var(--primary)]"
-              ></div>
-              <div
-                className="absolute z-0 size-full
-               rounded-[50%] bg-background"
-              ></div>
-            </div>
           </div>
         </div>
 
@@ -202,7 +179,7 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
     <div
       role="button"
       className="w-full flex flex-col border rounded-xl cursor-pointer
-    hover:shadow-md overflow-hidden
+    hover:shadow-sm overflow-hidden
     "
       onClick={onRoute}
     >
@@ -220,18 +197,18 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
           />
         ) : (
           <div
-            className="w-16 h-16 rounded-full bg-primary/20
+            className="w-16 h-16 rounded-full
               flex items-center justify-center text-primary
             "
           >
-            <FolderOpenDotIcon />
+            <FolderOpenDotIcon size={36} />
           </div>
         )}
       </div>
 
       <div className="p-4 flex flex-col">
         <h3
-          className="font-semibold
+          className="font-medium
          text-sm truncate w-full mb-1 line-clamp-1"
         >
           {project.name}

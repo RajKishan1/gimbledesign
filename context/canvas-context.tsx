@@ -132,7 +132,9 @@ export const CanvasProvider = ({
               const newFrames = [...prev];
               // Match by frame.id (database ID) or frameId first, then fallback to screenId (kebab-case)
               const frameIdToMatch = data.frameId || data.frame.id;
-              const idx = newFrames.findIndex((f) => f.id === frameIdToMatch || f.id === data.screenId);
+              const idx = newFrames.findIndex(
+                (f) => f.id === frameIdToMatch || f.id === data.screenId
+              );
               if (idx !== -1) {
                 newFrames[idx] = { ...data.frame, isLoading: false };
               } else {

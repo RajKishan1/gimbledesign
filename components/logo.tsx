@@ -2,9 +2,11 @@ import Link from "next/link";
 
 const Logo = () => {
   return (
-    <Link href="/" className="flex-1 flex items-center gap-1 text-2xl">
-      <span className="inline-block font-extrabold text-primary">X</span>
-      <span className="font-semibold text-foreground">design.ai</span>
+    <Link
+      href="/"
+      className="flex-1 text-black dark:text-white flex items-center gap-1 text-xl"
+    >
+      <span className="font-medium text-foreground">Gimble</span>
     </Link>
   );
 };

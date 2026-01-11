@@ -5,6 +5,9 @@ import { useParams } from "next/navigation";
 import Header from "./_common/header";
 import Canvas from "@/components/canvas";
 import { CanvasProvider } from "@/context/canvas-context";
+import DesignSidebar from "@/components/canvas/design-sidebar";
+import ProjectsSidebar from "@/components/canvas/projects-sidebar";
+import { useGenerateDesignById } from "@/features/use-project-id";
 
 const Page = () => {
   const params = useParams();
@@ -21,29 +24,60 @@ const Page = () => {
   }
 
   return (
+    <CanvasProvider
+      initialFrames={project?.frames}
+      initialThemeId={project?.theme}
+      hasInitialData={hasInitialData}
+      projectId={project?.id}
+    >
+      <PageContent
+        projectId={project?.id || id}
+        projectName={project?.name}
+        isPending={isPending}
+      />
+    </CanvasProvider>
+  );
+};
+
+const PageContent = ({
+  projectId,
+  projectName,
+  isPending,
+}: {
+  projectId: string;
+  projectName?: string;
+  isPending: boolean;
+}) => {
+  const { mutate: generateDesign, isPending: isGenerating } =
+    useGenerateDesignById(projectId);
+
+  const handleGenerate = (promptText: string) => {
+    generateDesign(promptText);
+  };
+
+  return (
     <div
       className="relative h-screen w-full
-   flex flex-col
-  "
+     flex flex-col
+    "
     >
-      <Header projectName={project?.name} />
+      <Header projectName={projectName} />
 
-      <CanvasProvider
-        initialFrames={project?.frames}
-        initialThemeId={project?.theme}
-        hasInitialData={hasInitialData}
-        projectId={project?.id}
-      >
-        <div className="flex flex-1 overflow-hidden">
-          <div className="relative flex-1">
-            <Canvas
-              projectId={project?.id}
-              projectName={project?.name}
-              isPending={isPending}
-            />
-          </div>
+      <div className="flex flex-1 overflow-hidden">
+        <ProjectsSidebar />
+        <div className="relative flex-1">
+          <Canvas
+            projectId={projectId}
+            projectName={projectName || null}
+            isPending={isPending}
+          />
         </div>
-      </CanvasProvider>
+        <DesignSidebar
+          projectId={projectId}
+          onGenerate={handleGenerate}
+          isPending={isGenerating}
+        />
+      </div>
     </div>
   );
 };

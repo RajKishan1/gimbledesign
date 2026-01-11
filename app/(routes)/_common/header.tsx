@@ -31,18 +31,6 @@ const Header = () => {
           <Logo />
 
           <div
-            className="hidden flex-1 items-center
-          justify-center gap-8 md:flex"
-          >
-            <Link href="/" className="text-foreground-muted text-sm">
-              Home
-            </Link>
-            <Link href="/" className="text-foreground-muted text-sm">
-              Pricing
-            </Link>
-          </div>
-
-          <div
             className="flex flex-1 items-center
            justify-end gap-3
 

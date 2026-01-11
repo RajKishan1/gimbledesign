@@ -23,7 +23,7 @@ const CanvasControls = ({
       className="
    -translate-x-1/2 absolute bottom-4 left-1/2
    flex items-center gap-3 rounded-full border
-   bg-black dark:bg-muted py-1.5 px-4 shadow-md text-white!
+    dark:bg-[#242424] bg-white py-1.5 px-4 shadow-sm text-black! dark:text-white!
 
   "
     >
@@ -32,7 +32,7 @@ const CanvasControls = ({
           size="icon-sm"
           variant="ghost"
           className={cn(
-            "rounded-full cursor-pointer hover:bg-white/20! text-white!",
+            "rounded-full cursor-pointer hover:bg-white/20! text-black! dark:text-white!",
             toolMode === TOOL_MODE_ENUM.SELECT && "bg-white/20"
           )}
           onClick={() => setToolMode(TOOL_MODE_ENUM.SELECT)}
@@ -43,7 +43,7 @@ const CanvasControls = ({
           size="icon-sm"
           variant="ghost"
           className={cn(
-            "rounded-full cursor-pointer hover:bg-white/20! text-white!",
+            "rounded-full cursor-pointer hover:bg-white/20! text-black! dark:text-white!",
             toolMode === TOOL_MODE_ENUM.HAND && "bg-white/20"
           )}
           onClick={() => setToolMode(TOOL_MODE_ENUM.HAND)}
@@ -58,7 +58,7 @@ const CanvasControls = ({
           size="icon-sm"
           variant="ghost"
           className={cn(
-            "rounded-full cursor-pointer hover:bg-white/20! text-white!"
+            "rounded-full cursor-pointer hover:bg-white/20! text-black! dark:text-white!"
           )}
           onClick={() => zoomOut()}
         >
@@ -69,7 +69,7 @@ const CanvasControls = ({
           size="icon-sm"
           variant="ghost"
           className={cn(
-            "rounded-full cursor-pointer hover:bg-white/20! text-white!"
+            "rounded-full cursor-pointer hover:bg-white/20! text-black! dark:text-white!"
           )}
           onClick={() => zoomIn()}
         >

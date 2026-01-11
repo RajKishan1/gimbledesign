@@ -4,7 +4,6 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { LoadingStatusType, useCanvas } from "@/context/canvas-context";
 import { cn } from "@/lib/utils";
 import { Spinner } from "../ui/spinner";
-import CanvasFloatingToolbar from "./canvas-floating-toolbar";
 import { TOOL_MODE_ENUM, ToolModeType } from "@/constant/canvas";
 import CanvasControls from "./canvas-controls";
 import DeviceFrame from "./device-frame";
@@ -156,12 +155,6 @@ const Canvas = ({
   return (
     <>
       <div className="relative w-full h-full overflow-hidden">
-        <CanvasFloatingToolbar
-          projectId={projectId}
-          isScreenshotting={isScreenshotting}
-          onScreenshot={handleCanvasScreenshot}
-        />
-
         {currentStatus && <CanvasLoader status={currentStatus} />}
 
         <TransformWrapper
@@ -190,8 +183,8 @@ const Canvas = ({
               <div
                 ref={canvasRootRef}
                 className={cn(
-                  `absolute inset-0 w-full h-full bg-[#eee]
-                  dark:bg-[#242423] p-3
+                  `absolute inset-0 w-full h-full bg-[#F4F4F5]
+                  dark:bg-[#1b1b1b] p-3
               `,
                   toolMode === TOOL_MODE_ENUM.HAND
                     ? "cursor-grab active:cursor-grabbing"
@@ -199,7 +192,7 @@ const Canvas = ({
                 )}
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle, var(--primary) 1px, transparent 1px)",
+                    "radial-gradient(circle, var(--grid-color) 1px, transparent 1px)",
                   backgroundSize: "20px 20px",
                 }}
               >
