@@ -51,12 +51,13 @@ export const generateScreens = inngest.createFunction(
       userId,
       projectId,
       prompt,
-
+      model,
       frames,
       theme: existingTheme,
     } = event.data;
     const CHANNEL = `user:${userId}`;
     const isExistingGeneration = Array.isArray(frames) && frames.length > 0;
+    const selectedModel = model || "google/gemini-3-pro-preview";
 
     await publish({
       channel: CHANNEL,
@@ -107,7 +108,7 @@ export const generateScreens = inngest.createFunction(
         `.trim();
 
       const { object } = await generateObject({
-        model: openrouter.chat("google/gemini-3-pro-preview"),
+        model: openrouter.chat(selectedModel),
         schema: AnalysisSchema,
         system: ANALYSIS_PROMPT,
         prompt: analysisPrompt,
@@ -165,7 +166,7 @@ export const generateScreens = inngest.createFunction(
 
       await step.run(`generated-screen-${i}`, async () => {
         const result = await generateText({
-          model: openrouter.chat("google/gemini-3-pro-preview"),
+          model: openrouter.chat(selectedModel),
           system: GENERATION_SYSTEM_PROMPT,
           tools: {
             searchUnsplash: unsplashTool,

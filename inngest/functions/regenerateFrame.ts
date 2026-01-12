@@ -15,10 +15,12 @@ export const regenerateFrame = inngest.createFunction(
       projectId,
       frameId,
       prompt,
+      model,
       theme: themeId,
       frame,
     } = event.data;
     const CHANNEL = `user:${userId}`;
+    const selectedModel = model || "google/gemini-3-pro-preview";
 
     await publish({
       channel: CHANNEL,
@@ -40,7 +42,7 @@ export const regenerateFrame = inngest.createFunction(
       `;
 
       const result = await generateText({
-        model: openrouter.chat("google/gemini-3-pro-preview"),
+        model: openrouter.chat(selectedModel),
         system: GENERATION_SYSTEM_PROMPT,
         tools: {
           searchUnsplash: unsplashTool,

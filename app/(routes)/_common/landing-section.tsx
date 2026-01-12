@@ -14,10 +14,29 @@ import { FolderOpenDotIcon } from "lucide-react";
 const LandingSection = () => {
   const { user } = useKindeBrowserClient();
   const [promptText, setPromptText] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>("google/gemini-3-pro-preview");
   const userId = user?.id;
 
   const { data: projects, isLoading, isError } = useGetProjects(userId);
   const { mutate, isPending } = useCreateProject();
+
+  // Load model from localStorage on mount
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedModel = localStorage.getItem("selectedModel");
+      if (savedModel) {
+        setSelectedModel(savedModel);
+      }
+    }
+  }, []);
+
+  // Save model selection to localStorage
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("selectedModel", modelId);
+    }
+  };
 
   const suggestions = [
     {
@@ -58,7 +77,7 @@ const LandingSection = () => {
 
   const handleSubmit = () => {
     if (!promptText) return;
-    mutate(promptText);
+    mutate({ prompt: promptText, model: selectedModel });
   };
 
   return (
@@ -101,6 +120,8 @@ const LandingSection = () => {
                   setPromptText={setPromptText}
                   isLoading={isPending}
                   onSubmit={handleSubmit}
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
                 />
               </div>
 

@@ -36,7 +36,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, model } = await request.json();
     const session = await getKindeServerSession();
     const user = await session.getUser();
 
@@ -44,8 +44,9 @@ export async function POST(request: Request) {
     if (!prompt) throw new Error("Missing Prompt");
 
     const userId = user.id;
+    const selectedModel = model || "google/gemini-3-pro-preview";
 
-    const projectName = await generateProjectName(prompt);
+    const projectName = await generateProjectName(prompt, selectedModel);
 
     const project = await prisma.project.create({
       data: {
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
           userId,
           projectId: project.id,
           prompt,
+          model: selectedModel,
         },
       });
     } catch (error) {

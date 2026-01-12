@@ -6,10 +6,11 @@ import { toast } from "sonner";
 export const useCreateProject = () => {
   const router = useRouter();
   return useMutation({
-    mutationFn: async (prompt: string) =>
+    mutationFn: async (data: { prompt: string; model?: string }) =>
       await axios
         .post("/api/project", {
-          prompt,
+          prompt: data.prompt,
+          model: data.model || "google/gemini-3-pro-preview",
         })
         .then((res) => res.data),
     onSuccess: (data) => {
