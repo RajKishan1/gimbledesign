@@ -2,10 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { useGetProjectById } from "@/features/use-project-id";
 import { getHTMLWrapper } from "@/lib/frame-wrapper";
-import { THEME_LIST } from "@/lib/themes";
+import { THEME_LIST, parseThemeColors } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,11 +33,55 @@ const PreviewPage = () => {
   const frames = project?.frames || [];
   const theme = THEME_LIST.find((t) => t.id === project?.theme);
 
+  // Determine if theme is light or dark based on background color
+  const isDarkTheme = useMemo(() => {
+    if (!theme?.style) return true; // Default to dark
+    const colors = parseThemeColors(theme.style);
+    const bgColor = colors.background || "#fff";
+    
+    // Helper function to get RGB values from color string
+    const getRGB = (color: string): [number, number, number] => {
+      // Remove whitespace
+      color = color.trim();
+      
+      // Handle hex colors
+      if (color.startsWith("#")) {
+        const hex = color.replace("#", "");
+        if (hex.length === 3) {
+          // 3-digit hex
+          const r = parseInt(hex[0] + hex[0], 16);
+          const g = parseInt(hex[1] + hex[1], 16);
+          const b = parseInt(hex[2] + hex[2], 16);
+          return [r, g, b];
+        } else if (hex.length === 6) {
+          // 6-digit hex
+          const r = parseInt(hex.substr(0, 2), 16);
+          const g = parseInt(hex.substr(2, 2), 16);
+          const b = parseInt(hex.substr(4, 2), 16);
+          return [r, g, b];
+        }
+      }
+      
+      // Handle rgb/rgba
+      const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (rgbMatch) {
+        return [parseInt(rgbMatch[1]), parseInt(rgbMatch[2]), parseInt(rgbMatch[3])];
+      }
+      
+      // Default to white if can't parse
+      return [255, 255, 255];
+    };
+    
+    const [r, g, b] = getRGB(bgColor);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    return brightness < 128; // Dark if brightness is less than 128
+  }, [theme]);
+
   // Navigation state
   const [currentScreenId, setCurrentScreenId] = useState<string | null>(null);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [transitionDirection, setTransitionDirection] = useState<"left" | "right">("right");
   const [iframeHeight, setIframeHeight] = useState<number>(MIN_DEVICE_HEIGHT);
   const [viewportHeight, setViewportHeight] = useState<number>(800);
 
@@ -89,9 +132,8 @@ const PreviewPage = () => {
 
   // Navigate to a screen - use ref to avoid stale closure
   const navigateTo = useCallback(
-    (screenId: string, direction: "left" | "right" = "right") => {
+    (screenId: string) => {
       console.log("[Preview] Navigating to:", screenId);
-      setTransitionDirection(direction);
       setNavigationHistory((prev) => {
         const newHistory = prev.slice(0, historyIndex + 1);
         newHistory.push(screenId);
@@ -105,13 +147,12 @@ const PreviewPage = () => {
 
   // Keep ref updated
   useEffect(() => {
-    navigateToRef.current = (screenId: string) => navigateTo(screenId, "right");
+    navigateToRef.current = (screenId: string) => navigateTo(screenId);
   }, [navigateTo]);
 
   // Go back in history
   const goBack = useCallback(() => {
     if (historyIndex > 0) {
-      setTransitionDirection("left");
       setHistoryIndex(historyIndex - 1);
       setCurrentScreenId(navigationHistory[historyIndex - 1]);
     }
@@ -120,7 +161,6 @@ const PreviewPage = () => {
   // Go forward in history
   const goForward = useCallback(() => {
     if (historyIndex < navigationHistory.length - 1) {
-      setTransitionDirection("right");
       setHistoryIndex(historyIndex + 1);
       setCurrentScreenId(navigationHistory[historyIndex + 1]);
     }
@@ -173,12 +213,8 @@ const PreviewPage = () => {
           
           const htmlEl = el as HTMLElement;
           
-          // Make it visually interactive
+          // Make it interactive (no visual borders)
           htmlEl.style.cursor = "pointer";
-          htmlEl.style.outline = "3px solid rgba(99, 102, 241, 0.8)";
-          htmlEl.style.outlineOffset = "2px";
-          htmlEl.style.borderRadius = "6px";
-          htmlEl.style.transition = "all 0.15s ease";
           
           // Store the target screen ID
           htmlEl.setAttribute("data-link-target", link.toScreenId);
@@ -192,19 +228,6 @@ const PreviewPage = () => {
             if (targetScreen) {
               navigateToRef.current(targetScreen);
             }
-          };
-          
-          // Add hover effects
-          htmlEl.onmouseenter = () => {
-            htmlEl.style.outline = "4px solid rgba(99, 102, 241, 1)";
-            htmlEl.style.transform = "scale(1.03)";
-            htmlEl.style.boxShadow = "0 4px 12px rgba(99, 102, 241, 0.4)";
-          };
-          
-          htmlEl.onmouseleave = () => {
-            htmlEl.style.outline = "3px solid rgba(99, 102, 241, 0.8)";
-            htmlEl.style.transform = "scale(1)";
-            htmlEl.style.boxShadow = "none";
           };
         }
       });
@@ -288,8 +311,18 @@ const PreviewPage = () => {
     ? getHTMLWrapper(currentFrame.htmlContent, currentFrame.title, theme?.style, currentFrame.id, { previewMode: true })
     : "";
 
+  // Background classes based on theme
+  const backgroundClasses = isDarkTheme
+    ? "h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden"
+    : "h-screen w-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 overflow-hidden";
+
+  // Button text color classes based on theme
+  const buttonTextClasses = isDarkTheme
+    ? "text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-full"
+    : "text-gray-700 hover:text-gray-900 hover:bg-gray-200/50 disabled:opacity-30 rounded-full";
+
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
+    <div className={backgroundClasses}>
       {/* Simple Navigation Controls */}
       <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between">
         {/* Left: Cancel Button */}
@@ -297,7 +330,7 @@ const PreviewPage = () => {
           variant="ghost"
           size="icon"
           onClick={() => router.push(`/project/${projectId}`)}
-          className="text-white/70 hover:text-white hover:bg-white/10 rounded-full"
+          className={buttonTextClasses}
         >
           <X className="w-5 h-5" />
         </Button>
@@ -309,7 +342,7 @@ const PreviewPage = () => {
             size="icon"
             onClick={goBack}
             disabled={historyIndex <= 0}
-            className="text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-full"
+            className={buttonTextClasses}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -319,7 +352,7 @@ const PreviewPage = () => {
             size="icon"
             onClick={goForward}
             disabled={historyIndex >= navigationHistory.length - 1}
-            className="text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-full"
+            className={buttonTextClasses}
           >
             <ArrowRight className="w-5 h-5" />
           </Button>
@@ -333,31 +366,7 @@ const PreviewPage = () => {
           zIndex: 10,
         }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentScreenId}
-            initial={{
-              opacity: 0,
-              x: transitionDirection === "right" ? 40 : -40,
-              scale: 0.95,
-            }}
-            animate={{
-              opacity: 1,
-              x: 0,
-              scale: 1,
-            }}
-            exit={{
-              opacity: 0,
-              x: transitionDirection === "right" ? -40 : 40,
-              scale: 0.95,
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 500,
-              damping: 40,
-            }}
-            className="flex items-center justify-center"
-          >
+        <div className="flex items-center justify-center">
             {/* Device Frame - Portrait Mode */}
             <div
               className={cn(
@@ -403,8 +412,7 @@ const PreviewPage = () => {
               <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/30 rounded-full" />
             </div>
 
-          </motion.div>
-        </AnimatePresence>
+        </div>
       </div>
     </div>
   );

@@ -41,19 +41,9 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
 
   return (
     <div className="flex items-center gap-2">
-      <div
-        className={cn(
-          "relative flex items-center p-1 rounded-lg",
-          "bg-muted",
-          "border border-border"
-        )}
-      >
+      <div className={cn("relative flex items-center p-1")}>
         <motion.div
-          className={cn(
-            "absolute h-[calc(100%-8px)] rounded-md",
-            "bg-background shadow-sm",
-            "border border-border"
-          )}
+          className={cn("absolute h-[calc(100%-8px)] rounded-md")}
           initial={false}
           animate={{
             x: mode === "design" ? padding : designButtonWidth + padding,
@@ -71,35 +61,32 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
             key={m.id}
             onClick={() => setMode(m.id)}
             className={cn(
-              "relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-md",
-              "text-sm font-medium transition-colors duration-200",
+              "relative z-10 cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-md",
+              "text-sm transition-all duration-200",
               "min-w-fit",
               mode === m.id
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-foreground font-semibold"
+                : "text-muted-foreground/50 hover:text-muted-foreground font-normal opacity-60"
             )}
           >
             <span>{m.label}</span>
           </button>
         ))}
       </div>
-
       {mode === "prototype" && links.length > 0 && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className={cn(
-            "flex items-center gap-1.5 px-2.5 py-1 rounded-md",
-            "bg-secondary text-secondary-foreground",
-            "text-xs font-medium",
-            "border border-border"
+            "flex items-center gap-1.5 px-2.5 py-1",
+            " text-secondary-foreground",
+            "text-xs font-medium"
           )}
         >
           <Link2 className="w-3 h-3" />
           {links.length} link{links.length !== 1 ? "s" : ""}
         </motion.div>
       )}
-
       {mode === "prototype" && (
         <motion.div
           initial={{ opacity: 0, x: -10 }}

@@ -25,7 +25,9 @@ const ProjectsSidebar = () => {
     user?.id,
     undefined // No limit - fetch all projects
   );
-  const { data: credits, isLoading: isLoadingCredits } = useGetCredits(user?.id);
+  const { data: credits, isLoading: isLoadingCredits } = useGetCredits(
+    user?.id
+  );
 
   const handleProjectClick = (projectId: string) => {
     router.push(`/project/${projectId}`);
@@ -135,7 +137,7 @@ const ProjectsSidebar = () => {
                             : "hover:bg-primary/20 border-border"
                         )}
                       >
-                        <h4 className="text-sm line-clamp-1">{project.name}</h4>
+                        <h4 className="text-xs line-clamp-1">{project.name}</h4>
                         {/* <p className="text-xs text-muted-foreground mt-1">
                           {timeAgo}
                         </p> */}
@@ -157,11 +159,11 @@ const ProjectsSidebar = () => {
               <Coins className="size-4 text-primary" />
               <div className="flex flex-col min-w-0 flex-1">
                 <p className="text-xs font-medium text-primary">
-                  {isLoadingCredits ? "Loading..." : `${credits?.toFixed(1) || "0.0"} Credits`}
+                  {isLoadingCredits
+                    ? "Loading..."
+                    : `${credits?.toFixed(1) || "0.0"} Credits`}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Available
-                </p>
+                <p className="text-xs text-muted-foreground">Available</p>
               </div>
             </div>
           </div>

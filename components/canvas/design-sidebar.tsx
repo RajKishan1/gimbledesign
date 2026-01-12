@@ -208,20 +208,17 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
         </div>
       )}
 
-      {/* Prototype Mode Sidebar Content */}
       {!isCollapsed && mode === "prototype" && (
         <div className="flex flex-col h-full p-4">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-4 pt-8">
+          <div className="flex items-center justify-between mb-4 pt-8">
             <h3 className="font-medium text-sm">Interactions</h3>
+            <span className="text-xs font-medium text-muted-foreground">
+              {links.length} Link{links.length !== 1 ? "s" : ""}
+            </span>
           </div>
 
-          {/* Links List */}
           <div className="flex-1 overflow-y-auto">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                {links.length} Link{links.length !== 1 ? "s" : ""}
-              </span>
               {links.length > 0 && (
                 <Button
                   variant="ghost"
@@ -236,7 +233,6 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
 
             {links.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Link2 className="w-10 h-10 text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">
                   No links created yet
                 </p>
@@ -301,14 +297,6 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
                 })}
               </div>
             )}
-          </div>
-
-          {/* Quick Tips */}
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-[10px] text-muted-foreground">
-              <strong>Tips:</strong> Press ESC to cancel linking. Click on a
-              linked element to remove its link.
-            </p>
           </div>
         </div>
       )}

@@ -28,11 +28,7 @@ const CanvasFloatingToolbar = ({
   };
 
   return (
-    <div
-      className="
-  z-50
-  "
-    >
+    <div>
       <div
         className="w-full max-w-2xl bg-transparent
     "
@@ -42,14 +38,14 @@ const CanvasFloatingToolbar = ({
             <Button
               variant="outline"
               size="icon-sm"
-              className="rounded-lg cursor-pointer"
+              className="rounded-lg border-none cursor-pointer"
               disabled={isScreenshotting}
               onClick={onScreenshot}
             >
               {isScreenshotting ? (
                 <Spinner />
               ) : (
-                <CameraIcon className="size-4.5" />
+                <CameraIcon className="size-4" />
               )}
             </Button>
             <Button
@@ -70,7 +66,7 @@ const CanvasFloatingToolbar = ({
             <Button
               variant="outline"
               size="sm"
-              className="rounded-lg font-normal cursor-pointer"
+              className="rounded-lg border-none font-normal cursor-pointer"
               onClick={() => setIsExportModalOpen(true)}
             >
               <Download className="size-4" />

@@ -51,8 +51,6 @@ const Header = ({
           </div>
           <ModeToggle projectId={projectId} />
           <div className="flex items-center gap-4">
-            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-
             <CanvasFloatingToolbar
               projectId={projectId}
               isScreenshotting={isScreenshotting || false}
@@ -61,7 +59,7 @@ const Header = ({
             <Button
               variant="outline"
               size="icon"
-              className="relative rounded-lg h-8 w-8"
+              className="relative border-none rounded-lg h-8 w-8"
               onClick={() => setTheme(isDark ? "light" : "dark")}
             >
               <SunIcon
