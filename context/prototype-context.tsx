@@ -26,6 +26,7 @@ export interface LinkingState {
   fromScreenId: string | null;
   fromElementId: string | null;
   fromElementRect: DOMRect | null;
+  clickPosition: { x: number; y: number } | null;
   mousePosition: { x: number; y: number } | null;
 }
 
@@ -45,7 +46,7 @@ interface PrototypeContextType {
 
   // Linking state (when creating new links)
   linkingState: LinkingState;
-  startLinking: (screenId: string, elementId: string, elementRect: DOMRect) => void;
+  startLinking: (screenId: string, elementId: string, elementRect: DOMRect, clickPosition: { x: number; y: number }) => void;
   updateLinkingPosition: (x: number, y: number) => void;
   finishLinking: (toScreenId: string) => void;
   cancelLinking: () => void;
@@ -80,6 +81,7 @@ export const PrototypeProvider = ({
     fromScreenId: null,
     fromElementId: null,
     fromElementRect: null,
+    clickPosition: null,
     mousePosition: null,
   });
   const [screenPositions, setScreenPositions] = useState<Map<string, { x: number; y: number; width: number; height: number }>>(new Map());
@@ -159,12 +161,13 @@ export const PrototypeProvider = ({
     [links]
   );
 
-  const startLinking = useCallback((screenId: string, elementId: string, elementRect: DOMRect) => {
+  const startLinking = useCallback((screenId: string, elementId: string, elementRect: DOMRect, clickPosition: { x: number; y: number }) => {
     setLinkingState({
       isLinking: true,
       fromScreenId: screenId,
       fromElementId: elementId,
       fromElementRect: elementRect,
+      clickPosition: clickPosition,
       mousePosition: null,
     });
   }, []);
@@ -189,6 +192,7 @@ export const PrototypeProvider = ({
       fromScreenId: null,
       fromElementId: null,
       fromElementRect: null,
+      clickPosition: null,
       mousePosition: null,
     });
   }, [linkingState.fromScreenId, linkingState.fromElementId, addLink]);
@@ -199,6 +203,7 @@ export const PrototypeProvider = ({
       fromScreenId: null,
       fromElementId: null,
       fromElementRect: null,
+      clickPosition: null,
       mousePosition: null,
     });
   }, []);

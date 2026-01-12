@@ -61,9 +61,35 @@ const PrototypeElementOverlay: React.FC<PrototypeElementOverlayProps> = ({
         
         elements.forEach((el, index) => {
           const rect = el.getBoundingClientRect();
+          const tagName = el.tagName.toLowerCase();
           
           // Only include visible elements with reasonable size
-          if (rect.width > 20 && rect.height > 15 && rect.width < 500) {
+          // For divs, use slightly stricter size requirements to avoid too many connection points
+          const minWidth = tagName === "div" ? 30 : 20;
+          const minHeight = tagName === "div" ? 20 : 15;
+          
+          if (rect.width > minWidth && rect.height > minHeight && rect.width < 500) {
+            // Skip divs that are likely just containers (very large or have many children)
+            if (tagName === "div") {
+              const childCount = el.children.length;
+              // Skip if div is very large (likely a container) or has many direct children
+              if (rect.width > 400 || rect.height > 600 || childCount > 10) {
+                // But still include if it has interactive indicators
+                const hasOnClick = el.hasAttribute("onclick") || 
+                                   el.getAttribute("data-onclick") !== null;
+                const hasDataInteractive = el.hasAttribute("data-interactive") ||
+                                         el.hasAttribute("data-clickable") ||
+                                         el.hasAttribute("data-prototype-connect");
+                const hasRole = el.getAttribute("role") === "button" ||
+                              el.getAttribute("role") === "link" ||
+                              el.getAttribute("role") === "tab";
+                
+                if (!hasOnClick && !hasDataInteractive && !hasRole) {
+                  return; // Skip large container divs
+                }
+              }
+            }
+            
             const elementId = el.getAttribute("data-prototype-id") || 
                              el.id || 
                              `element-${frameId}-${index}`;
@@ -71,7 +97,7 @@ const PrototypeElementOverlay: React.FC<PrototypeElementOverlayProps> = ({
             foundElements.push({
               id: elementId,
               rect: rect,
-              tagName: el.tagName.toLowerCase(),
+              tagName: tagName,
               text: (el.textContent || "").trim().slice(0, 30),
             });
           }
@@ -126,7 +152,13 @@ const PrototypeElementOverlay: React.FC<PrototypeElementOverlayProps> = ({
         element.rect.height
       );
 
-      startLinking(frameId, element.id, elementRect);
+      // Capture the exact click position relative to the canvas
+      const clickPosition = {
+        x: e.clientX,
+        y: e.clientY,
+      };
+
+      startLinking(frameId, element.id, elementRect, clickPosition);
     },
     [frameId, frameRect, startLinking]
   );
@@ -179,7 +211,7 @@ const PrototypeElementOverlay: React.FC<PrototypeElementOverlayProps> = ({
             {/* Status indicator */}
             <div
               className={cn(
-                "absolute -right-2 -top-2 w-5 h-5 rounded-full flex items-center justify-center",
+                "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center",
                 "shadow-md transition-all duration-200",
                 isActivelyLinking
                   ? "bg-indigo-600 scale-125"

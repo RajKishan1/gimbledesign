@@ -10,27 +10,20 @@ export function getHTMLWrapper(
   const finalTheme = theme_style || OCEAN_BREEZE_THEME;
   const isPreview = options?.previewMode || false;
 
-  // For preview mode, completely disable scrolling and scale content to fit
+  // For preview mode, allow natural content flow and scrolling
   const previewStyles = isPreview ? `
     html, body { 
-      height: 100% !important; 
-      max-height: 100% !important; 
-      overflow: hidden !important;
       margin: 0 !important;
       padding: 0 !important;
+      width: 100% !important;
     }
     #root { 
-      height: 100% !important; 
-      max-height: 100% !important; 
-      overflow: hidden !important;
+      width: 100% !important;
+      min-height: 100vh !important;
     }
     #root > div { 
-      height: 100% !important;
-      max-height: 100% !important;
-      overflow: hidden !important;
-      transform-origin: top left;
-      transform: scale(0.75);
-      width: 133.33%;
+      width: 100% !important;
+      min-height: 100% !important;
     }
   ` : '';
 
@@ -76,7 +69,6 @@ export function getHTMLWrapper(
       const fid='${frameId}';
       const isPreview = ${isPreview};
       const send=()=>{
-        if (isPreview) return;
         const r=document.getElementById('root')?.firstElementChild;
         const h=r?.className.match(/h-(screen|full)|min-h-screen/)?Math.max(800,innerHeight):Math.max(r?.scrollHeight||0,document.body.scrollHeight,800);
         parent.postMessage({type:'FRAME_HEIGHT',frameId:fid,height:h},'*');

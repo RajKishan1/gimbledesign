@@ -30,34 +30,34 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
   ];
 
   const handleOpenPreview = () => {
-    // Open preview in new tab
     const previewUrl = `/project/${projectId}/preview`;
     window.open(previewUrl, "_blank");
     onPlay?.();
   };
 
+  const designButtonWidth = 76;
+  const prototypeButtonWidth = 94;
+  const padding = 4;
+
   return (
     <div className="flex items-center gap-2">
-      {/* Mode Toggle Switch */}
       <div
         className={cn(
           "relative flex items-center p-1 rounded-lg",
-          "bg-gray-100 dark:bg-gray-800",
-          "border border-gray-200 dark:border-gray-700"
+          "bg-muted",
+          "border border-border"
         )}
       >
-        {/* Animated background indicator */}
         <motion.div
           className={cn(
             "absolute h-[calc(100%-8px)] rounded-md",
-            mode === "design"
-              ? "bg-white dark:bg-gray-700 shadow-sm"
-              : "bg-indigo-500 shadow-md"
+            "bg-background shadow-sm",
+            "border border-border"
           )}
           initial={false}
           animate={{
-            x: mode === "design" ? 4 : "calc(100% + 4px)",
-            width: mode === "design" ? "76px" : "94px",
+            x: mode === "design" ? padding : designButtonWidth + padding,
+            width: mode === "design" ? designButtonWidth : prototypeButtonWidth,
           }}
           transition={{
             type: "spring",
@@ -73,29 +73,26 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
             className={cn(
               "relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-md",
               "text-sm font-medium transition-colors duration-200",
+              "min-w-fit",
               mode === m.id
-                ? m.id === "prototype"
-                  ? "text-white"
-                  : "text-gray-900 dark:text-white"
-                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {m.icon}
             <span>{m.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Link count badge (only in prototype mode) */}
       {mode === "prototype" && links.length > 0 && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className={cn(
-            "flex items-center gap-1 px-2 py-1 rounded-full",
-            "bg-indigo-100 dark:bg-indigo-900/50",
-            "text-indigo-600 dark:text-indigo-300",
-            "text-xs font-medium"
+            "flex items-center gap-1.5 px-2.5 py-1 rounded-md",
+            "bg-secondary text-secondary-foreground",
+            "text-xs font-medium",
+            "border border-border"
           )}
         >
           <Link2 className="w-3 h-3" />
@@ -103,7 +100,6 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
         </motion.div>
       )}
 
-      {/* Play Button (only in prototype mode) */}
       {mode === "prototype" && (
         <motion.div
           initial={{ opacity: 0, x: -10 }}
@@ -114,16 +110,11 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
             <TooltipTrigger asChild>
               <Button
                 onClick={handleOpenPreview}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg",
-                  "bg-gradient-to-r from-indigo-500 to-purple-500",
-                  "hover:from-indigo-600 hover:to-purple-600",
-                  "text-white font-medium shadow-md",
-                  "transition-all duration-200 hover:scale-105 hover:shadow-lg"
-                )}
+                variant="default"
+                size="sm"
                 disabled={links.length === 0}
               >
-                <Play className="w-4 h-4 fill-current" />
+                <Play className="w-4 h-4" />
                 <span>Play</span>
               </Button>
             </TooltipTrigger>

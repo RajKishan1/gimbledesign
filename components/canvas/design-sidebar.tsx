@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, ChevronLeft, ImageIcon, Sparkles, GitBranch, Trash2, Link2, MessageSquare, Palette } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronLeft,
+  ImageIcon,
+  Sparkles,
+  GitBranch,
+  Trash2,
+  Link2,
+  MessageSquare,
+  Palette,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Spinner } from "../ui/spinner";
@@ -20,7 +30,14 @@ interface DesignSidebarProps {
 type DesignTab = "chat" | "theme";
 
 const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
-  const { mode, links, removeLink, clearLinks, selectedLinkId, setSelectedLinkId } = usePrototype();
+  const {
+    mode,
+    links,
+    removeLink,
+    clearLinks,
+    selectedLinkId,
+    setSelectedLinkId,
+  } = usePrototype();
   const { frames, themes, theme: currentTheme, setTheme } = useCanvas();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [promptText, setPromptText] = useState<string>("");
@@ -100,7 +117,6 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
 
       {!isCollapsed && mode === "design" && (
         <div className="flex flex-col h-full">
-          {/* Tabs */}
           <div className="flex border-b border-neutral-200 dark:border-[#2b2b2b] pt-8">
             <button
               onClick={() => setActiveTab("chat")}
@@ -111,7 +127,6 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <MessageSquare className="size-4" />
               Chat
             </button>
             <button
@@ -123,12 +138,10 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Palette className="size-4" />
               Theme
             </button>
           </div>
 
-          {/* Chat Tab Content */}
           {activeTab === "chat" && (
             <div className="flex flex-col h-full p-4">
               <div className="flex-1" />
@@ -200,15 +213,7 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
         <div className="flex flex-col h-full p-4">
           {/* Header */}
           <div className="flex items-center gap-2 mb-4 pt-8">
-            <GitBranch className="w-5 h-5 text-indigo-500" />
-            <h3 className="font-semibold text-sm">Interactions</h3>
-          </div>
-
-          {/* Instructions */}
-          <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
-            <p className="text-xs text-indigo-700 dark:text-indigo-300">
-              Click on interactive elements (buttons, cards) on any screen to create links between screens.
-            </p>
+            <h3 className="font-medium text-sm">Interactions</h3>
           </div>
 
           {/* Links List */}
@@ -232,7 +237,9 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
             {links.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Link2 className="w-10 h-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No links created yet</p>
+                <p className="text-sm text-muted-foreground">
+                  No links created yet
+                </p>
                 <p className="text-xs text-muted-foreground/70 mt-1">
                   Click on elements to start linking
                 </p>
@@ -240,7 +247,9 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
             ) : (
               <div className="space-y-2">
                 {links.map((link) => {
-                  const fromScreen = frames.find((f) => f.id === link.fromScreenId);
+                  const fromScreen = frames.find(
+                    (f) => f.id === link.fromScreenId
+                  );
                   const toScreen = frames.find((f) => f.id === link.toScreenId);
                   const isSelected = selectedLinkId === link.id;
 
@@ -253,16 +262,24 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
                           ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700"
                           : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-indigo-300"
                       )}
-                      onClick={() => setSelectedLinkId(isSelected ? null : link.id)}
+                      onClick={() =>
+                        setSelectedLinkId(isSelected ? null : link.id)
+                      }
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs font-medium truncate max-w-[70px]" title={fromScreen?.title}>
+                            <span
+                              className="text-xs font-medium truncate max-w-[70px]"
+                              title={fromScreen?.title}
+                            >
                               {fromScreen?.title || "Unknown"}
                             </span>
                             <span className="text-indigo-500">→</span>
-                            <span className="text-xs font-medium truncate max-w-[70px]" title={toScreen?.title}>
+                            <span
+                              className="text-xs font-medium truncate max-w-[70px]"
+                              title={toScreen?.title}
+                            >
                               {toScreen?.title || "Unknown"}
                             </span>
                           </div>
@@ -279,9 +296,6 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
-                      <div className="mt-1 text-[10px] text-muted-foreground truncate">
-                        {link.fromElementId}
-                      </div>
                     </div>
                   );
                 })}
@@ -292,7 +306,8 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
           {/* Quick Tips */}
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <p className="text-[10px] text-muted-foreground">
-              <strong>Tips:</strong> Press ESC to cancel linking. Click on a linked element to remove its link.
+              <strong>Tips:</strong> Press ESC to cancel linking. Click on a
+              linked element to remove its link.
             </p>
           </div>
         </div>

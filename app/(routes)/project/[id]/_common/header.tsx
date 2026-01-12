@@ -49,11 +49,8 @@ const Header = ({
               </p>
             </div>
           </div>
-
+          <ModeToggle projectId={projectId} />
           <div className="flex items-center gap-4">
-            {/* Mode Toggle (Design/Prototype) */}
-            <ModeToggle projectId={projectId} />
-
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
 
             <CanvasFloatingToolbar

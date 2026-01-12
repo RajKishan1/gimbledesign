@@ -26,4 +26,5 @@ export const INTERACTIVE_ELEMENT_SELECTORS = [
   "[onclick]",
   "input[type='submit']",
   "input[type='button']",
+  "div",
 ] as const;

@@ -108,98 +108,52 @@ const ConnectorArrow: React.FC<ConnectorArrowProps> = ({
   const midX = (startX + endX) / 2;
   const midY = (startY + endY) / 2;
 
-  const primaryColor = isSelected ? "#3b82f6" : "#6366f1";
-  const glowColor = isSelected ? "rgba(59, 130, 246, 0.6)" : "rgba(99, 102, 241, 0.4)";
+  const primaryColor = "#6366f1";
 
   return (
     <g className="connector-group">
-      {/* Glow/shadow effect */}
-      <path
-        d={path}
-        fill="none"
-        stroke={glowColor}
-        strokeWidth={8}
-        strokeLinecap="round"
-        style={{ filter: "blur(4px)" }}
-      />
-      
       {/* Invisible wider path for easier clicking */}
       <path
         d={path}
         fill="none"
         stroke="transparent"
-        strokeWidth={24}
+        strokeWidth={20}
         className="cursor-pointer"
         onClick={onSelect}
       />
       
-      {/* Visible connector path */}
+      {/* Visible connector path - thinner and solid color */}
       <path
         d={path}
         fill="none"
         stroke={primaryColor}
-        strokeWidth={isSelected ? 4 : 3}
+        strokeWidth={2}
         strokeLinecap="round"
         onClick={onSelect}
         className="cursor-pointer"
       />
 
-      {/* Starting circle indicator */}
+      {/* Starting circle indicator - smaller */}
       <circle
         cx={startX}
         cy={startY}
-        r={isSelected ? 10 : 8}
+        r={5}
         fill={primaryColor}
-        stroke="white"
-        strokeWidth={3}
         className="cursor-pointer"
         onClick={onSelect}
       />
-      
-      {/* Inner dot at start */}
-      <circle
-        cx={startX}
-        cy={startY}
-        r={3}
-        fill="white"
-      />
 
-      {/* Arrow head at the end */}
+      {/* Arrow head at the end - pointing at target */}
       <g transform={`translate(${endX}, ${endY}) rotate(${angle})`}>
         <polygon
-          points="-16,-8 0,0 -16,8"
+          points="-12,-6 0,0 -12,6"
           fill={primaryColor}
-          stroke="white"
-          strokeWidth={2}
-        />
-      </g>
-
-      {/* Connection label at midpoint */}
-      <g transform={`translate(${midX}, ${midY})`}>
-        <rect
-          x={-30}
-          y={-12}
-          width={60}
-          height={24}
-          rx={12}
-          fill={primaryColor}
-          stroke="white"
-          strokeWidth={2}
           className="cursor-pointer"
           onClick={onSelect}
         />
-        <text
-          x={0}
-          y={5}
-          textAnchor="middle"
-          fill="white"
-          fontSize={11}
-          fontWeight={600}
-          style={{ pointerEvents: "none" }}
-        >
-          Link
-        </text>
       </g>
+
+      {/* Connection label at midpoint - removed for cleaner look */}
 
       {/* Delete button (only shown when selected) */}
       {isSelected && (
@@ -249,44 +203,32 @@ const DragConnector: React.FC<DragConnectorProps> = ({ startPos, endPos }) => {
 
   return (
     <g className="drag-connector">
-      {/* Glow effect */}
+      {/* Connector path - thinner, no shadow */}
       <path
         d={path}
         fill="none"
         stroke="#6366f1"
-        strokeWidth={4}
+        strokeWidth={2}
         strokeLinecap="round"
         strokeDasharray="8 4"
         style={{
-          filter: "drop-shadow(0 0 8px rgba(99, 102, 241, 0.6))",
           animation: "dashMove 0.5s linear infinite",
         }}
       />
       
-      {/* Start circle */}
+      {/* Start circle - smaller */}
       <circle
         cx={startPos.x}
         cy={startPos.y}
-        r={8}
+        r={5}
         fill="#6366f1"
-        stroke="white"
-        strokeWidth={3}
-        style={{
-          filter: "drop-shadow(0 0 6px rgba(99, 102, 241, 0.8))",
-        }}
       />
 
-      {/* End indicator */}
+      {/* Arrow head at the end - pointing at target */}
       <g transform={`translate(${endPos.x}, ${endPos.y}) rotate(${angle})`}>
-        <circle
-          r={10}
+        <polygon
+          points="-12,-6 0,0 -12,6"
           fill="#6366f1"
-          stroke="white"
-          strokeWidth={3}
-          opacity={0.8}
-          style={{
-            filter: "drop-shadow(0 0 8px rgba(99, 102, 241, 0.6))",
-          }}
         />
       </g>
     </g>
@@ -455,12 +397,9 @@ const PrototypeConnectors: React.FC<PrototypeConnectorsProps> = ({ canvasScale }
       </g>
 
       {/* Render drag connector when linking */}
-      {linkingState.isLinking && linkingState.fromElementRect && linkingState.mousePosition && (
+      {linkingState.isLinking && linkingState.clickPosition && linkingState.mousePosition && (
         <DragConnector
-          startPos={{
-            x: linkingState.fromElementRect.right,
-            y: linkingState.fromElementRect.top + linkingState.fromElementRect.height / 2,
-          }}
+          startPos={linkingState.clickPosition}
           endPos={linkingState.mousePosition}
         />
       )}

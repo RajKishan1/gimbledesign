@@ -11,11 +11,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   ArrowRight,
-  Home,
   X,
-  Maximize2,
-  Minimize2,
-  RotateCcw,
 } from "lucide-react";
 import { INTERACTIVE_ELEMENT_SELECTORS } from "@/constant/canvas";
 import { PrototypeLink } from "@/context/prototype-context";
@@ -25,7 +21,7 @@ const getLinksStorageKey = (projectId: string) => `prototype-links-${projectId}`
 
 // Portrait mode dimensions (iPhone-like aspect ratio)
 const DEVICE_WIDTH = 320;
-const DEVICE_HEIGHT = 568;
+const MIN_DEVICE_HEIGHT = 568;
 
 const PreviewPage = () => {
   const params = useParams();
@@ -42,8 +38,9 @@ const PreviewPage = () => {
   const [currentScreenId, setCurrentScreenId] = useState<string | null>(null);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState<"left" | "right">("right");
+  const [iframeHeight, setIframeHeight] = useState<number>(MIN_DEVICE_HEIGHT);
+  const [viewportHeight, setViewportHeight] = useState<number>(800);
 
   // Load prototype links from localStorage
   const [links, setLinks] = useState<PrototypeLink[]>([]);
@@ -74,6 +71,16 @@ const PreviewPage = () => {
       setHistoryIndex(0);
     }
   }, [frames, currentScreenId]);
+
+  // Track viewport height
+  useEffect(() => {
+    const updateViewportHeight = () => {
+      setViewportHeight(window.innerHeight);
+    };
+    updateViewportHeight();
+    window.addEventListener("resize", updateViewportHeight);
+    return () => window.removeEventListener("resize", updateViewportHeight);
+  }, []);
 
   // Get current frame
   const currentFrame = useMemo(() => {
@@ -119,34 +126,6 @@ const PreviewPage = () => {
     }
   }, [historyIndex, navigationHistory]);
 
-  // Go home (first screen)
-  const goHome = useCallback(() => {
-    if (frames.length > 0) {
-      navigateTo(frames[0].id, "left");
-    }
-  }, [frames, navigateTo]);
-
-  // Restart preview
-  const restart = useCallback(() => {
-    if (frames.length > 0) {
-      const firstScreenId = frames[0].id;
-      setCurrentScreenId(firstScreenId);
-      setNavigationHistory([firstScreenId]);
-      setHistoryIndex(0);
-      setTransitionDirection("left");
-    }
-  }, [frames]);
-
-  // Toggle fullscreen
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  }, []);
 
   // Get links for current screen
   const currentScreenLinks = useMemo(() => {
@@ -239,6 +218,21 @@ const PreviewPage = () => {
     }
   }, [currentScreenId, currentScreenLinks]);
 
+  // Listen for iframe height updates
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.data.type === "FRAME_HEIGHT" &&
+        event.data.frameId === currentScreenId
+      ) {
+        const newHeight = Math.max(MIN_DEVICE_HEIGHT, event.data.height);
+        setIframeHeight(newHeight);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [currentScreenId]);
+
   // Setup interactions when iframe loads
   const handleIframeLoad = useCallback(() => {
     console.log("[Preview] iframe loaded for screen:", currentScreenId);
@@ -256,26 +250,12 @@ const PreviewPage = () => {
         goForward();
       } else if (e.key === "Escape") {
         router.push(`/project/${projectId}`);
-      } else if (e.key === "Home") {
-        goHome();
-      } else if (e.key === "f" || e.key === "F") {
-        toggleFullscreen();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goBack, goForward, goHome, router, projectId, toggleFullscreen]);
-
-  // Listen for fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
+  }, [goBack, goForward, router, projectId]);
 
   if (isPending) {
     return (
@@ -310,109 +290,46 @@ const PreviewPage = () => {
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
-      {/* Navigation Bar */}
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50",
-          "bg-gray-900/80 backdrop-blur-xl border-b border-white/10",
-          "transition-opacity duration-300",
-          isFullscreen && "opacity-0 hover:opacity-100"
-        )}
-      >
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Left: Close & Navigation */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.push(`/project/${projectId}`)}
-                className="text-white/70 hover:text-white hover:bg-white/10"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+      {/* Simple Navigation Controls */}
+      <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between">
+        {/* Left: Cancel Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push(`/project/${projectId}`)}
+          className="text-white/70 hover:text-white hover:bg-white/10 rounded-full"
+        >
+          <X className="w-5 h-5" />
+        </Button>
 
-              <div className="h-6 w-px bg-white/20 mx-2" />
+        {/* Right: Navigation Arrows */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goBack}
+            disabled={historyIndex <= 0}
+            className="text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-full"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goBack}
-                disabled={historyIndex <= 0}
-                className="text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goForward}
-                disabled={historyIndex >= navigationHistory.length - 1}
-                className="text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
-              >
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={goHome}
-                className="text-white/70 hover:text-white hover:bg-white/10"
-              >
-                <Home className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {/* Center: Screen Info */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-1.5 bg-white/10 rounded-full">
-                <span className="text-white/50 text-sm">
-                  {historyIndex + 1} / {frames.length}
-                </span>
-                <div className="h-4 w-px bg-white/20" />
-                <span className="text-white font-medium text-sm truncate max-w-[200px]">
-                  {currentFrame?.title || "Untitled"}
-                </span>
-              </div>
-            </div>
-
-            {/* Right: Controls */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={restart}
-                className="text-white/70 hover:text-white hover:bg-white/10"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleFullscreen}
-                className="text-white/70 hover:text-white hover:bg-white/10"
-              >
-                {isFullscreen ? (
-                  <Minimize2 className="w-5 h-5" />
-                ) : (
-                  <Maximize2 className="w-5 h-5" />
-                )}
-              </Button>
-            </div>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goForward}
+            disabled={historyIndex >= navigationHistory.length - 1}
+            className="text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-full"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </Button>
         </div>
-      </motion.nav>
+      </div>
 
       {/* Preview Content */}
       <div 
         className="fixed inset-0 flex items-center justify-center"
         style={{ 
-          top: "56px", 
-          bottom: "76px",
           zIndex: 10,
         }}
       >
@@ -455,13 +372,13 @@ const PreviewPage = () => {
               {/* Notch */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-b-xl z-10" />
 
-              {/* Screen Content - No scroll, fixed portrait size */}
+              {/* Screen Content - Responsive height with scrolling */}
               <div 
-                className="relative bg-white rounded-[22px]"
+                className="relative bg-white rounded-[22px] overflow-hidden"
                 style={{
                   width: `${DEVICE_WIDTH}px`,
-                  height: `${DEVICE_HEIGHT}px`,
-                  overflow: "hidden",
+                  height: `${Math.min(iframeHeight, viewportHeight * 0.9)}px`,
+                  maxHeight: "90vh",
                 }}
               >
                 <iframe
@@ -472,11 +389,11 @@ const PreviewPage = () => {
                   onLoad={handleIframeLoad}
                   style={{
                     width: `${DEVICE_WIDTH}px`,
-                    height: `${DEVICE_HEIGHT}px`,
+                    height: `${Math.min(iframeHeight, viewportHeight * 0.9)}px`,
+                    minHeight: `${MIN_DEVICE_HEIGHT}px`,
                     border: "none",
                     display: "block",
                     background: "white",
-                    overflow: "hidden",
                     pointerEvents: "auto",
                   }}
                 />
@@ -486,87 +403,8 @@ const PreviewPage = () => {
               <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/30 rounded-full" />
             </div>
 
-            {/* Link indicator badge */}
-            {currentScreenLinks.length > 0 && (
-              <div className="absolute -top-2 -right-2 bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                {currentScreenLinks.length} link{currentScreenLinks.length > 1 ? "s" : ""}
-              </div>
-            )}
           </motion.div>
         </AnimatePresence>
-      </div>
-
-      {/* Screen Thumbnails */}
-      <motion.div
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        className={cn(
-          "fixed bottom-0 left-0 right-0 z-40",
-          "bg-gray-900/90 backdrop-blur-xl border-t border-white/10",
-          "transition-opacity duration-300",
-          isFullscreen && "opacity-0 hover:opacity-100"
-        )}
-      >
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-center gap-2 overflow-x-auto scrollbar-hide">
-            {frames.map((frame, index) => {
-              const isActive = frame.id === currentScreenId;
-              const hasLink = links.some((l) => l.fromScreenId === frame.id);
-              const isLinkedTo = links.some((l) => l.toScreenId === frame.id);
-
-              return (
-                <motion.button
-                  key={frame.id}
-                  whileHover={{ scale: 1.08 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigateTo(frame.id, index > frames.findIndex(f => f.id === currentScreenId) ? "right" : "left")}
-                  className={cn(
-                    "relative flex-shrink-0 w-12 h-18 rounded-md overflow-hidden",
-                    "border-2 transition-all duration-200",
-                    isActive
-                      ? "border-indigo-500 ring-2 ring-indigo-500/50 scale-110"
-                      : "border-white/20 hover:border-white/40"
-                  )}
-                  style={{ height: "4.5rem" }}
-                >
-                  <div
-                    className={cn(
-                      "absolute inset-0 bg-gradient-to-br",
-                      isActive
-                        ? "from-indigo-500/30 to-purple-500/30"
-                        : "from-gray-800 to-gray-900"
-                    )}
-                  />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-                    <span className="text-white/90 text-[10px] font-bold">
-                      {index + 1}
-                    </span>
-                    <span className="text-white/50 text-[8px] truncate w-full text-center px-0.5">
-                      {frame.title?.slice(0, 6) || ""}
-                    </span>
-                  </div>
-
-                  {/* Link indicators */}
-                  {hasLink && (
-                    <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-green-400 rounded-full" />
-                  )}
-                  {isLinkedTo && (
-                    <div className="absolute bottom-0.5 left-0.5 w-1.5 h-1.5 bg-blue-400 rounded-full" />
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Keyboard Shortcuts Help */}
-      <div className="fixed bottom-24 right-4 text-white/30 text-xs bg-gray-900/50 px-2 py-1 rounded">
-        <span>← → navigate</span>
-        <span className="mx-2">•</span>
-        <span>F fullscreen</span>
-        <span className="mx-2">•</span>
-        <span>ESC close</span>
       </div>
     </div>
   );
