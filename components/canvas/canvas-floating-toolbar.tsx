@@ -1,6 +1,6 @@
 "use client";
 
-import { CameraIcon, ChevronDown, Palette, Save } from "lucide-react";
+import { CameraIcon, ChevronDown, Palette, Save, Download } from "lucide-react";
 import { useCanvas } from "@/context/canvas-context";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
@@ -10,6 +10,8 @@ import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
 import { useUpdateProject } from "@/features/use-project-id";
 import { Spinner } from "../ui/spinner";
+import { ExportModal } from "../export-modal";
+import { useState } from "react";
 
 const CanvasFloatingToolbar = ({
   projectId,
@@ -21,6 +23,7 @@ const CanvasFloatingToolbar = ({
   onScreenshot: () => void;
 }) => {
   const { themes, theme: currentTheme, setTheme } = useCanvas();
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const update = useUpdateProject(projectId);
 
@@ -117,9 +120,22 @@ const CanvasFloatingToolbar = ({
                 </>
               )}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-lg font-normal cursor-pointer"
+              onClick={() => setIsExportModalOpen(true)}
+            >
+              <Download className="size-4" />
+              Export
+            </Button>
           </div>
         </div>
       </div>
+      <ExportModal
+        open={isExportModalOpen}
+        onOpenChange={setIsExportModalOpen}
+      />
     </div>
   );
 };
