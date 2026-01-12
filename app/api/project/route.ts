@@ -4,18 +4,23 @@ import { NextResponse } from "next/server";
 import { generateProjectName } from "@/app/action/action";
 import { inngest } from "@/inngest/client";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getKindeServerSession();
     const user = await session.getUser();
 
     if (!user) throw new Error("Unauthorized");
 
+    // Get limit from query parameters
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+
     const projects = await prisma.project.findMany({
       where: {
         userId: user.id,
       },
-      take: 10,
+      ...(limit && { take: limit }),
       orderBy: { createdAt: "desc" },
     });
 

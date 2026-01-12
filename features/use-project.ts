@@ -29,11 +29,12 @@ export const useCreateProject = () => {
   });
 };
 
-export const useGetProjects = (userId?: string) => {
+export const useGetProjects = (userId?: string, limit?: number) => {
   return useQuery({
-    queryKey: ["projects"],
+    queryKey: ["projects", limit],
     queryFn: async () => {
-      const res = await axios.get("/api/project");
+      const url = limit ? `/api/project?limit=${limit}` : "/api/project";
+      const res = await axios.get(url);
       return res.data.data;
     },
     enabled: !!userId,

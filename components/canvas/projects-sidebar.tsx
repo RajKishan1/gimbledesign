@@ -22,7 +22,8 @@ const ProjectsSidebar = () => {
   const currentProjectId = params.id as string;
   const { user } = useKindeBrowserClient();
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects(
-    user?.id
+    user?.id,
+    undefined // No limit - fetch all projects
   );
   const { data: credits, isLoading: isLoadingCredits } = useGetCredits(user?.id);
 

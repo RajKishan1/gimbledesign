@@ -10,14 +10,20 @@ import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
 import { FolderOpenDotIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const LandingSection = () => {
   const { user } = useKindeBrowserClient();
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("google/gemini-3-pro-preview");
+  const [showAllProjects, setShowAllProjects] = useState(false);
   const userId = user?.id;
 
-  const { data: projects, isLoading, isError } = useGetProjects(userId);
+  // Fetch limited projects initially, all projects when showAllProjects is true
+  const { data: projects, isLoading, isError } = useGetProjects(
+    userId,
+    showAllProjects ? undefined : 10
+  );
   const { mutate, isPending } = useCreateProject();
 
   // Load model from localStorage on mount
@@ -165,15 +171,28 @@ const LandingSection = () => {
                     <Spinner className="size-10" />
                   </div>
                 ) : (
-                  <div
-                    className="grid grid-cols-1 sm:grid-cols-2
-                  md:grid-cols-3 gap-3 mt-3
-                    "
-                  >
-                    {projects?.map((project: ProjectType) => (
-                      <ProjectCard key={project.id} project={project} />
-                    ))}
-                  </div>
+                  <>
+                    <div
+                      className="grid grid-cols-1 sm:grid-cols-2
+                    md:grid-cols-3 gap-3 mt-3
+                      "
+                    >
+                      {projects?.map((project: ProjectType) => (
+                        <ProjectCard key={project.id} project={project} />
+                      ))}
+                    </div>
+                    {!showAllProjects && projects && projects.length >= 10 && (
+                      <div className="flex justify-center mt-6">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowAllProjects(true)}
+                          className="px-6"
+                        >
+                          Show All Projects
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
