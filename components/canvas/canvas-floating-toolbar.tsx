@@ -1,12 +1,7 @@
 "use client";
 
-import { CameraIcon, ChevronDown, Palette, Save, Download } from "lucide-react";
+import { CameraIcon, Save, Download } from "lucide-react";
 import { useCanvas } from "@/context/canvas-context";
-import { cn } from "@/lib/utils";
-import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import { parseThemeColors } from "@/lib/themes";
-import ThemeSelector from "./theme-selector";
-import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
 import { useUpdateProject } from "@/features/use-project-id";
 import { Spinner } from "../ui/spinner";
@@ -22,7 +17,7 @@ const CanvasFloatingToolbar = ({
   isScreenshotting: boolean;
   onScreenshot: () => void;
 }) => {
-  const { themes, theme: currentTheme, setTheme } = useCanvas();
+  const { theme: currentTheme } = useCanvas();
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const update = useUpdateProject(projectId);
@@ -43,54 +38,6 @@ const CanvasFloatingToolbar = ({
     "
       >
         <div className="flex flex-row items-center gap-2 px-3">
-          <Popover>
-            <PopoverTrigger>
-              <div className="flex items-center gap-2 px-3 py-2">
-                <div className="flex gap-1.5">
-                  {themes?.slice(0, 4)?.map((theme, index) => {
-                    const color = parseThemeColors(theme.style);
-                    return (
-                      <div
-                        role="button"
-                        key={index}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTheme(theme.id);
-                        }}
-                        className={cn(
-                          `w-5 h-5 rounded-full cursor-pointer
-                           `,
-                          currentTheme?.id === theme.id &&
-                            "ring-1 ring-offset-1"
-                        )}
-                        style={{
-                          background: `linear-gradient(135deg, ${color.primary}, ${color.accent})`,
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-                <div
-                  className="flex items-center gap-1 text-sm
-                "
-                >
-                  +{themes?.length - 2} more
-                  <ChevronDown className="size-4" />
-                </div>
-              </div>
-            </PopoverTrigger>
-            <PopoverContent
-              className="px-0 rounded-xl
-            shadow border
-            "
-            >
-              <ThemeSelector />
-            </PopoverContent>
-          </Popover>
-
-          {/* Divider */}
-          <Separator orientation="vertical" className="h-4!" />
-
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

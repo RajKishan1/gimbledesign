@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { LoadingStatusType, useCanvas } from "@/context/canvas-context";
+import { usePrototype } from "@/context/prototype-context";
 import { cn } from "@/lib/utils";
 import { Spinner } from "../ui/spinner";
 import { TOOL_MODE_ENUM, ToolModeType } from "@/constant/canvas";
 import CanvasControls from "./canvas-controls";
 import DeviceFrame from "./device-frame";
 import HtmlDialog from "./html-dialog";
+import PrototypeConnectors from "./prototype-connectors";
 import { toast } from "sonner";
 
 const DEMO_HTML = `
@@ -32,6 +34,15 @@ const Canvas = ({
     loadingStatus,
     setLoadingStatus,
   } = useCanvas();
+  
+  const {
+    mode,
+    linkingState,
+    updateLinkingPosition,
+    cancelLinking,
+    setSelectedLinkId,
+  } = usePrototype();
+  
   const [toolMode, setToolMode] = useState<ToolModeType>(TOOL_MODE_ENUM.SELECT);
   const [zoomPercent, setZoomPercent] = useState<number>(53);
   const [currentScale, setCurrentScale] = useState<number>(0.53);
@@ -40,6 +51,40 @@ const Canvas = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const canvasRootRef = useRef<HTMLDivElement>(null);
+  const isPrototypeMode = mode === "prototype";
+
+  // Handle mouse move for link dragging
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (linkingState.isLinking) {
+        updateLinkingPosition(e.clientX, e.clientY);
+      }
+    },
+    [linkingState.isLinking, updateLinkingPosition]
+  );
+
+  // Handle canvas click to cancel linking or deselect link
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (linkingState.isLinking) {
+        cancelLinking();
+      }
+      setSelectedLinkId(null);
+    },
+    [linkingState.isLinking, cancelLinking, setSelectedLinkId]
+  );
+
+  // Handle escape key to cancel linking
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && linkingState.isLinking) {
+        cancelLinking();
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [linkingState.isLinking, cancelLinking]);
 
   const saveThumbnailToProject = useCallback(
     async (projectId: string | null) => {
@@ -188,13 +233,19 @@ const Canvas = ({
               `,
                   toolMode === TOOL_MODE_ENUM.HAND
                     ? "cursor-grab active:cursor-grabbing"
-                    : "cursor-default"
+                    : linkingState.isLinking
+                    ? "cursor-crosshair"
+                    : "cursor-default",
+                  isPrototypeMode && "bg-[#F0F0F5] dark:bg-[#181820]"
                 )}
                 style={{
-                  backgroundImage:
-                    "radial-gradient(circle, var(--grid-color) 1px, transparent 1px)",
+                  backgroundImage: isPrototypeMode
+                    ? "radial-gradient(circle, var(--grid-color) 1px, transparent 1px), linear-gradient(135deg, rgba(99, 102, 241, 0.02) 25%, transparent 25%)"
+                    : "radial-gradient(circle, var(--grid-color) 1px, transparent 1px)",
                   backgroundSize: "20px 20px",
                 }}
+                onMouseMove={handleMouseMove}
+                onClick={handleCanvasClick}
               >
                 <TransformComponent
                   wrapperStyle={{
@@ -205,23 +256,22 @@ const Canvas = ({
                   contentStyle={{
                     width: "100%",
                     height: "100%",
+                    position: "relative",
                   }}
                 >
-                  <div>
+                  <div 
+                    className="relative"
+                    style={{ 
+                      width: "4000px", 
+                      height: "3000px",
+                      position: "relative",
+                    }}
+                  >
+                    {/* Device Frames */}
                     {frames?.map((frame, index: number) => {
                       const baseX = 100 + index * 480;
                       const y = 100;
 
-                      // if (frame.isLoading) {
-                      //   return (
-                      //     <DeviceFrameSkeleton
-                      //       key={index}
-                      //       style={{
-                      //         transform: `translate(${baseX}px, ${y}px)`,
-                      //       }}
-                      //     />
-                      //   );
-                      // }
                       return (
                         <DeviceFrame
                           key={frame.id}
@@ -241,6 +291,9 @@ const Canvas = ({
                         />
                       );
                     })}
+                    
+                    {/* Prototype connector arrows layer - rendered on top */}
+                    <PrototypeConnectors canvasScale={currentScale} />
                   </div>
                   {/* <DeviceFrame
                     frameId="demo"

@@ -4,9 +4,35 @@ export function getHTMLWrapper(
   html: string,
   title = "Untitled",
   theme_style?: string,
-  frameId?: string
+  frameId?: string,
+  options?: { previewMode?: boolean }
 ) {
   const finalTheme = theme_style || OCEAN_BREEZE_THEME;
+  const isPreview = options?.previewMode || false;
+
+  // For preview mode, completely disable scrolling and scale content to fit
+  const previewStyles = isPreview ? `
+    html, body { 
+      height: 100% !important; 
+      max-height: 100% !important; 
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    #root { 
+      height: 100% !important; 
+      max-height: 100% !important; 
+      overflow: hidden !important;
+    }
+    #root > div { 
+      height: 100% !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
+      transform-origin: top left;
+      transform: scale(0.75);
+      width: 133.33%;
+    }
+  ` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -37,6 +63,7 @@ export function getHTMLWrapper(
     #root {width:100%;min-height:100vh;}
     * {scrollbar-width:none;-ms-overflow-style:none;}
     *::-webkit-scrollbar {display:none;}
+    ${previewStyles}
   </style>
 </head>
 <body>
@@ -47,7 +74,9 @@ export function getHTMLWrapper(
   <script>
     (()=>{
       const fid='${frameId}';
+      const isPreview = ${isPreview};
       const send=()=>{
+        if (isPreview) return;
         const r=document.getElementById('root')?.firstElementChild;
         const h=r?.className.match(/h-(screen|full)|min-h-screen/)?Math.max(800,innerHeight):Math.max(r?.scrollHeight||0,document.body.scrollHeight,800);
         parent.postMessage({type:'FRAME_HEIGHT',frameId:fid,height:h},'*');

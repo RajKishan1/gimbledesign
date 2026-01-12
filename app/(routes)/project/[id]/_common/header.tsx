@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeftIcon, MoonIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CanvasFloatingToolbar from "@/components/canvas/canvas-floating-toolbar";
+import ModeToggle from "@/components/canvas/mode-toggle";
 
 const Header = ({
   projectName,
@@ -49,7 +50,12 @@ const Header = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {/* Mode Toggle (Design/Prototype) */}
+            <ModeToggle projectId={projectId} />
+
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+
             <CanvasFloatingToolbar
               projectId={projectId}
               isScreenshotting={isScreenshotting || false}

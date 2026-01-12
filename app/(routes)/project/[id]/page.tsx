@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Header from "./_common/header";
 import Canvas from "@/components/canvas";
 import { CanvasProvider } from "@/context/canvas-context";
+import { PrototypeProvider } from "@/context/prototype-context";
 import DesignSidebar from "@/components/canvas/design-sidebar";
 import ProjectsSidebar from "@/components/canvas/projects-sidebar";
 import { useGenerateDesignById } from "@/features/use-project-id";
@@ -30,11 +31,13 @@ const Page = () => {
       hasInitialData={hasInitialData}
       projectId={project?.id}
     >
-      <PageContent
-        projectId={project?.id || id}
-        projectName={project?.name}
-        isPending={isPending}
-      />
+      <PrototypeProvider projectId={project?.id || id}>
+        <PageContent
+          projectId={project?.id || id}
+          projectName={project?.name}
+          isPending={isPending}
+        />
+      </PrototypeProvider>
     </CanvasProvider>
   );
 };
