@@ -46,6 +46,37 @@ export async function POST(request: Request) {
     const userId = user.id;
     const selectedModel = model || "google/gemini-3-pro-preview";
 
+    // Check and deduct credits (1 credit for landing page submit)
+    const creditCost = 1.0;
+    let userRecord = await prisma.user.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!userRecord) {
+      // Create user with 10 free credits
+      userRecord = await prisma.user.create({
+        data: {
+          userId: user.id,
+          credits: 10.0,
+        },
+      });
+    }
+
+    if (userRecord.credits < creditCost) {
+      return NextResponse.json(
+        {
+          error: "Insufficient credits. You need at least 1 credit to create a project.",
+        },
+        { status: 402 }
+      );
+    }
+
+    // Deduct credits
+    await prisma.user.update({
+      where: { userId: user.id },
+      data: { credits: userRecord.credits - creditCost },
+    });
+
     const projectName = await generateProjectName(prompt, selectedModel);
 
     const project = await prisma.project.create({

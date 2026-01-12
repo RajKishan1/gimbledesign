@@ -1,10 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export const useCreateProject = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { prompt: string; model?: string }) =>
       await axios
@@ -14,11 +15,16 @@ export const useCreateProject = () => {
         })
         .then((res) => res.data),
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["credits"] });
       router.push(`/project/${data.data.id}`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.log("Project failed", error);
-      toast.error("Failed to create project");
+      if (error?.response?.status === 402) {
+        toast.error(error?.response?.data?.error || "Insufficient credits");
+      } else {
+        toast.error("Failed to create project");
+      }
     },
   });
 };

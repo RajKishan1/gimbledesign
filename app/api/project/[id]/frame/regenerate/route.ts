@@ -44,6 +44,37 @@ export async function POST(
       return NextResponse.json({ error: "Frame not found" }, { status: 404 });
     }
 
+    // Check and deduct credits (0.5 credits for regenerate)
+    const creditCost = 0.5;
+    let userRecord = await prisma.user.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!userRecord) {
+      // Create user with 10 free credits
+      userRecord = await prisma.user.create({
+        data: {
+          userId: user.id,
+          credits: 10.0,
+        },
+      });
+    }
+
+    if (userRecord.credits < creditCost) {
+      return NextResponse.json(
+        {
+          error: "Insufficient credits. You need at least 0.5 credits to regenerate a frame.",
+        },
+        { status: 402 }
+      );
+    }
+
+    // Deduct credits
+    await prisma.user.update({
+      where: { userId: user.id },
+      data: { credits: userRecord.credits - creditCost },
+    });
+
     // Trigger inngest function
     await inngest.send({
       name: "ui/regenerate.frame",

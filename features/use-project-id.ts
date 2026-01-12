@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ export const useGetProjectById = (projectId: string) => {
 };
 
 export const useGenerateDesignById = (projectId: string) => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (prompt: string) =>
       await axios
@@ -22,11 +23,16 @@ export const useGenerateDesignById = (projectId: string) => {
         })
         .then((res) => res.data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["credits"] });
       toast.success("Generation Started");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.log("Project failed", error);
-      toast.error("Failed to generate screen");
+      if (error?.response?.status === 402) {
+        toast.error(error?.response?.data?.error || "Insufficient credits");
+      } else {
+        toast.error("Failed to generate screen");
+      }
     },
   });
 };

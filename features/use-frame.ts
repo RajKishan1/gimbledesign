@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 
 export const useRegenerateFrame = (projectId: string) => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       frameId,
@@ -22,10 +23,15 @@ export const useRegenerateFrame = (projectId: string) => {
       return res.data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["credits"] });
       toast.success("Frame regeneration started");
     },
-    onError: () => {
-      toast.error("Failed to regenerate frame");
+    onError: (error: any) => {
+      if (error?.response?.status === 402) {
+        toast.error(error?.response?.data?.error || "Insufficient credits");
+      } else {
+        toast.error("Failed to regenerate frame");
+      }
     },
   });
 };

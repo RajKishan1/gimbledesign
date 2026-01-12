@@ -12,6 +12,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ProjectType } from "@/types/project";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { ScrollArea } from "../ui/scroll-area";
+import { useGetCredits } from "@/features/use-credits";
+import { Coins } from "lucide-react";
 
 const ProjectsSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -22,6 +24,7 @@ const ProjectsSidebar = () => {
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects(
     user?.id
   );
+  const { data: credits, isLoading: isLoadingCredits } = useGetCredits(user?.id);
 
   const handleProjectClick = (projectId: string) => {
     router.push(`/project/${projectId}`);
@@ -145,6 +148,21 @@ const ProjectsSidebar = () => {
                 </p>
               )}
             </ScrollArea>
+          </div>
+
+          {/* Credits Section */}
+          <div className="border-t border-border px-4 py-3 flex-shrink-0">
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-primary/5 border border-primary/20">
+              <Coins className="size-4 text-primary" />
+              <div className="flex flex-col min-w-0 flex-1">
+                <p className="text-xs font-medium text-primary">
+                  {isLoadingCredits ? "Loading..." : `${credits?.toFixed(1) || "0.0"} Credits`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Available
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* User Info Section */}

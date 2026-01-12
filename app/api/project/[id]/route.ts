@@ -80,6 +80,38 @@ export async function POST(
     }
 
     const userId = user.id;
+    
+    // Check and deduct credits (1 credit for design-sidebar submit)
+    const creditCost = 1.0;
+    let userRecord = await prisma.user.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!userRecord) {
+      // Create user with 10 free credits
+      userRecord = await prisma.user.create({
+        data: {
+          userId: user.id,
+          credits: 10.0,
+        },
+      });
+    }
+
+    if (userRecord.credits < creditCost) {
+      return NextResponse.json(
+        {
+          error: "Insufficient credits. You need at least 1 credit to generate designs.",
+        },
+        { status: 402 }
+      );
+    }
+
+    // Deduct credits
+    await prisma.user.update({
+      where: { userId: user.id },
+      data: { credits: userRecord.credits - creditCost },
+    });
+
     const project = await prisma.project.findFirst({
       where: { id, userId: user.id },
       include: { frames: true },

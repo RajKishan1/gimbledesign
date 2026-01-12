@@ -41,3 +41,12 @@ model Frame {
 
   @@index([projectId])
 }
+
+model User {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String   @unique
+  credits  Float    @default(10.0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
