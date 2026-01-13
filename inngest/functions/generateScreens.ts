@@ -40,7 +40,10 @@ const AnalysisSchema = z.object({
       })
     )
     .min(1)
-    .max(4),
+    .max(24)
+    .describe(
+      "Array of screens for the complete app. DEFAULT: Generate 15-24 screens for a comprehensive app experience. Include: 4 onboarding screens, authentication screens (if needed), all core feature screens, and secondary screens (profile, settings, search, notifications, help, etc.). Only generate 1-4 screens if the user explicitly requests a single screen."
+    ),
 });
 
 export const generateScreens = inngest.createFunction(
@@ -93,18 +96,33 @@ export const generateScreens = inngest.createFunction(
           USER REQUEST: ${prompt}
           SELECTED THEME: ${existingTheme}
 
-          EXISTING SCREENS (analyze for consistency navigation, layout, design system etc):
+          EXISTING SCREENS (analyze for consistency, navigation, layout, design system):
           ${contextHTML}
 
-         CRITICAL REQUIREMENTS A MUST - READ CAREFULLY:
-          - **Analyze the existing screens' layout, navigation patterns, and design system
-          - **Extract the EXACT bottom navigation component structure and styling
-          - **Identify common components (cards, buttons, headers) for reuse
-          - **Maintain the same visual hierarchy and spacing
-          - **Generate new screens that seamlessly blend with existing ones
+         CRITICAL REQUIREMENTS - MAINTAIN DETAILED CONTEXT:
+          - **Analyze ALL existing screens' layout, navigation patterns, and design system
+          - **Extract the EXACT bottom navigation component structure, icons, and styling - MUST reuse identically
+          - **Identify common components (cards, buttons, headers, spacing patterns) for exact reuse
+          - **Maintain the same visual hierarchy, spacing scale, typography, and color usage
+          - **Generate new screens that seamlessly blend - users should see perfect visual continuity
+          - **Context awareness: Each new screen must reference and maintain consistency with ALL previous screens
+          - **Design system: All screens must share the same design language and component patterns
         `.trim()
         : `
           USER REQUEST: ${prompt}
+
+          COMPREHENSIVE APP GENERATION REQUIREMENTS (CRITICAL - MUST FOLLOW):
+          - **MANDATORY: Generate 15-24 screens** for a complete app experience (this is the DEFAULT, not optional)
+          - **ONLY generate 1-4 screens if:** User explicitly says "one screen", "single screen", "just one", or similar
+          - **Onboarding Flow (REQUIRED):** Generate 4 onboarding screens minimum (Welcome, Features, Benefits, Get Started)
+          - **Authentication (if needed):** Login, Sign Up, Forgot Password, OTP screens
+          - **Core Features:** All primary feature screens based on app type (think of ALL features the app would have)
+          - **Secondary Features:** Profile, Settings, Search, Notifications, Help, About, etc.
+          - **Think holistically:** Plan the ENTIRE user journey from first launch to daily usage - don't stop at just 4 screens
+          - **Navigation Planning:** Determine bottom navigation structure (5 icons) that will be consistent across main screens
+          - **Screen Count:** You MUST generate 18-22 screens minimum for a complete app (prioritize most important screens up to 24)
+          - **Context Maintenance:** Each screen must maintain detailed context and consistency with all other screens
+          - **DO NOT default to 4 screens** - that's only for explicit user requests for a single screen
         `.trim();
 
       const { object } = await generateObject({
@@ -180,17 +198,32 @@ export const generateScreens = inngest.createFunction(
 
           VISUAL DESCRIPTION: ${screenPlan.visualDescription}
 
-          EXISTING SCREENS REFERENCE (Extract and reuse their components):
-          ${previousFramesContext || "No previous screens"}
+          EXISTING SCREENS CONTEXT (CRITICAL - MAINTAIN CONSISTENCY):
+          ${previousFramesContext || "No previous screens - this is the first screen"}
 
           THEME VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare these):
           ${fullThemeCSS}
 
-        CRITICAL REQUIREMENTS A MUST - READ CAREFULLY:
-        - **If previous screens exist, COPY the EXACT bottom navigation component structure and styling - do NOT recreate it
-        - **Extract common components (cards, buttons, headers) and reuse their styling
-        - **Maintain the exact same visual hierarchy, spacing, and color scheme
-        - **This screen should look like it belongs in the same app as the previous screens
+        CRITICAL REQUIREMENTS - MAINTAIN DETAILED CONTEXT ACROSS ALL SCREENS:
+
+        **CONTEXT MAINTENANCE (HIGHEST PRIORITY):**
+        - **If previous screens exist:** You MUST extract and EXACTLY reuse their design patterns:
+          - Copy the EXACT bottom navigation HTML structure, classes, and styling - do NOT recreate or modify it
+          - Extract header components and reuse their exact styling (glassmorphism, spacing, layout)
+          - Reuse card designs, button styles, spacing patterns from previous screens
+          - Maintain the exact same visual hierarchy, spacing scale (4px, 8px, 16px, 24px, 32px), and color usage
+          - Use the same icon sizes and styles (w-4, w-5, w-6, w-8)
+          - Keep typography hierarchy consistent (text sizes, font weights)
+        - **This screen MUST look like it belongs in the same app** - users should see seamless visual continuity
+        - **Design System Consistency:** All screens share the same design language, components, and patterns
+
+        **PROFESSIONAL DESIGN STANDARDS:**
+        - Avoid "vibe coded UI" - no excessive purple gradients, neon colors, or cluttered layouts
+        - Use clean, minimal design with generous whitespace (professional spacing)
+        - Modern, purposeful aesthetics - subtle gradients only when meaningful
+        - Clear visual hierarchy - primary actions prominent, secondary actions subtle
+        - Use modern Lucide icons exclusively (outline style preferred)
+        - Ensure minimum 44x44px touch targets for all interactive elements
 
         1. **Generate ONLY raw HTML markup for this mobile app screen using Tailwind CSS.**
           Use Tailwind classes for layout, spacing, typography, shadows, etc.
