@@ -66,7 +66,7 @@ const Faq = () => {
                                     </span>
                                     <ChevronDown
                                         size={20}
-                                        className={`flex-shrink-0 transition-transform duration-300 text-black dark:text-white ${
+                                        className={`flex shrink-0 transition-transform duration-300 text-black dark:text-white ${
                                             openIndex === index ? 'rotate-180' : ''
                                         }`}
                                     />

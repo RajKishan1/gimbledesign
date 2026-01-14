@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import Faq from "@/components/landing/Faq";
 import HowItWorks from "@/components/landing/HowItWorks";
 import PricingPage from "@/components/landing/PricingPage";
+import FeaturesBento from "@/components/landing/FeaturesBento";
 
 const LandingSection = () => {
   const { user } = useKindeBrowserClient();
@@ -210,6 +211,7 @@ const LandingSection = () => {
       <PricingPage />
       <HowItWorks />
       <Faq />
+      <FeaturesBento />
     </div>
   );
 };
