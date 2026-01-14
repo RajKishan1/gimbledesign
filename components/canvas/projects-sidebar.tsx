@@ -118,7 +118,7 @@ const ProjectsSidebar = () => {
       {!isCollapsed && (
         <div className="flex flex-col h-full overflow-hidden">
           <div className="flex flex-col flex-1 min-h-0">
-            <h3 className=" font-medium text-foreground px-4 pt-4 pb-2 flex-shrink-0">
+            <h3 className=" font-medium text-neutral-800 dark:text-neutral-200 px-4 pt-4 pb-2 flex-shrink-0">
               Recent Projects
             </h3>
             <ScrollArea className="flex-1 min-h-0">
@@ -147,7 +147,9 @@ const ProjectsSidebar = () => {
                             : "hover:bg-primary/20 border-border"
                         )}
                       >
-                        <h4 className="text-xs line-clamp-1">{project.name}</h4>
+                        <h4 className="text-xs line-clamp-1 text-neutral-600 dark:text-neutral-400">
+                          {project.name}
+                        </h4>
                         {/* <p className="text-xs text-muted-foreground mt-1">
                           {timeAgo}
                         </p> */}
@@ -163,24 +165,23 @@ const ProjectsSidebar = () => {
             </ScrollArea>
           </div>
 
-          {/* Credits Section */}
-          <div className="border-t border-border px-4 py-3 flex-shrink-0">
-            <div className="flex items-center gap-2 px-2 py-1.5 rounded-none bg-primary/5 border border-primary/20">
-              <Coins className="size-4 text-primary" />
-              <div className="flex flex-col min-w-0 flex-1">
-                <p className="text-xs font-medium text-primary">
+          <div className="border-t border-neutral-200 dark:border-[#2b2b2b] px-4 py-3 flex-shrink-0">
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded-none">
+              <div className="flex gap-2.5 items-center min-w-0 flex-1">
+                <p className="text-sm font-medium">
                   {isLoadingCredits
                     ? "Loading..."
                     : `${credits?.toFixed(1) || "0.0"} Credits`}
                 </p>
-                <p className="text-xs text-muted-foreground">Available</p>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                  Available
+                </p>
               </div>
             </div>
           </div>
 
-          {/* User Info Section */}
           <div
-            className="border-t border-border p-4 flex-shrink-0 cursor-pointer hover:bg-accent/50 transition-colors"
+            className="border-t border-neutral-200 dark:border-[#2b2b2b] p-4 flex-shrink-0 cursor-pointer hover:bg-accent/50 transition-colors"
             onClick={() => router.push("/profile")}
             role="button"
           >
@@ -203,13 +204,13 @@ const ProjectsSidebar = () => {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">
+                <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
                   {displayName ||
                     `${user?.given_name || ""} ${
                       user?.family_name || ""
                     }`.trim()}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
                   {displayEmail}
                 </p>
               </div>
