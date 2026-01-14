@@ -11,19 +11,25 @@ import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
 import { FolderOpenDotIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Faq from "@/components/landing/Faq";
+import HowItWorks from "@/components/landing/HowItWorks";
+import PricingPage from "@/components/landing/PricingPage";
 
 const LandingSection = () => {
   const { user } = useKindeBrowserClient();
   const [promptText, setPromptText] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("google/gemini-3-pro-preview");
+  const [selectedModel, setSelectedModel] = useState<string>(
+    "google/gemini-3-pro-preview"
+  );
   const [showAllProjects, setShowAllProjects] = useState(false);
   const userId = user?.id;
 
   // Fetch limited projects initially, all projects when showAllProjects is true
-  const { data: projects, isLoading, isError } = useGetProjects(
-    userId,
-    showAllProjects ? undefined : 10
-  );
+  const {
+    data: projects,
+    isLoading,
+    isError,
+  } = useGetProjects(userId, showAllProjects ? undefined : 10);
   const { mutate, isPending } = useCreateProject();
 
   // Load model from localStorage on mount
@@ -88,7 +94,7 @@ const LandingSection = () => {
 
   return (
     <div className=" w-full min-h-screen">
-      <div className="flex flex-col">
+      <div className="flex flex-col ">
         <Header />
 
         <div className="relative overflow-hidden pt-28">
@@ -201,6 +207,9 @@ const LandingSection = () => {
           </div>
         </div>
       </div>
+      <PricingPage />
+      <HowItWorks />
+      <Faq />
     </div>
   );
 };

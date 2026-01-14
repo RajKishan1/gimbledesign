@@ -28,8 +28,9 @@ const Header = () => {
   const profilePicture = profile?.profilePicture || user?.picture || "";
   const displayName = profile?.name || `${user?.given_name || ""} ${user?.family_name || ""}`.trim() || "";
   return (
-    <div className="sticky top-0 right-0 left-0 z-30">
-      <header className="h-16 border-b bg-background py-4">
+    <div className="sticky top-0 right-0 left-0 z-30 ">
+      <header className="h-16 border-b border-accent-background py-4 bg-black">
+
         <div
           className="w-full max-w-6xl mx-auto
          flex items-center justify-between"
