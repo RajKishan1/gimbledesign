@@ -100,14 +100,21 @@ const LandingSection = () => {
     <div className=" w-full min-h-screen">
       <div className="flex flex-col ">
         <Header />
-        <HeroGlobeBackground />
+
         <div
           className={`relative overflow-hidden py-28 border border-zinc-900
            ${inter.className}`}
         >
           <div
+            className="absolute inset-0  top-[-50]
+           z-[-1]"
+          >
+            {" "}
+            <HeroGlobeBackground theme="dark" />
+          </div>
+          <div
             className="max-w-6xl mx-auto flex flex-col
-         items-center justify-center gap-8
+         items-center justify-center gap-8 
         "
           >
             <div className="space-y-3">
@@ -130,7 +137,8 @@ const LandingSection = () => {
             <div
               className="flex w-full max-w-3xl flex-col
             item-center gap-8 relative 
-            ">
+            "
+            >
               <div className="w-full">
                 <PromptInput
                   className=""
@@ -194,7 +202,7 @@ const LandingSection = () => {
                         <ProjectCard key={project.id} project={project} />
                       ))}
                     </div>
-                    {!showAllProjects && projects && projects.length >= 10 && (
+                    {!showAllProjects && projects && projects.length >= 9 && (
                       <div className="flex justify-center mt-6">
                         <Button
                           variant="outline"

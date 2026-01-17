@@ -53,7 +53,7 @@ const PromptInput = ({
   )?.provider;
 
   return (
-    <div className="bg-zinc-950">
+    <div className="bg-zinc-950/10">
       <InputGroup
         className={cn(
           "min-h-50  bg-zinc-950 ",
@@ -104,7 +104,7 @@ const PromptInput = ({
         </InputGroupAddon>
 
         <InputGroupTextarea
-          className="text-base! py-2.5!"
+          className="text-base! py-2.5! "
           placeholder="I want to design an app that..."
           value={promptText}
           onChange={(e) => {
