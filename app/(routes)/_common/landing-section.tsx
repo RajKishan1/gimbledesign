@@ -23,7 +23,7 @@ const LandingSection = () => {
   const { user } = useKindeBrowserClient();
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>(
-    "google/gemini-3-pro-preview",
+    "google/gemini-3-pro-preview"
   );
   const [showAllProjects, setShowAllProjects] = useState(false);
   const userId = user?.id;
@@ -130,7 +130,8 @@ const LandingSection = () => {
             <div
               className="flex w-full max-w-3xl flex-col
             item-center gap-8 relative 
-            ">
+            "
+            >
               <div className="w-full">
                 <PromptInput
                   className=""
