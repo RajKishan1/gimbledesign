@@ -16,6 +16,7 @@ import HowItWorks from "@/components/landing/HowItWorks";
 import PricingPage from "@/components/landing/PricingPage";
 import FeaturesBento from "@/components/landing/FeaturesBento";
 import { Inter_Tight } from "next/font/google";
+import HeroGlobeBackground from "@/components/landing/atoms/HeroGlobeBackground";
 const inter = Inter_Tight({ subsets: ["latin"] });
 
 const LandingSection = () => {
@@ -99,7 +100,7 @@ const LandingSection = () => {
     <div className=" w-full min-h-screen">
       <div className="flex flex-col ">
         <Header />
-
+        <HeroGlobeBackground />
         <div
           className={`relative overflow-hidden py-28 border border-zinc-900
            ${inter.className}`}
@@ -129,8 +130,7 @@ const LandingSection = () => {
             <div
               className="flex w-full max-w-3xl flex-col
             item-center gap-8 relative 
-            "
-            >
+            ">
               <div className="w-full">
                 <PromptInput
                   className=""
@@ -259,7 +259,7 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
               flex items-center justify-center text-primary
             "
           >
-            <FolderOpenDotIcon size={36} />
+            <FolderOpenDotIcon className="text-white" size={36} />
           </div>
         )}
       </div>

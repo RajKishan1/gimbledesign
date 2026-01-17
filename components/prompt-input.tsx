@@ -62,7 +62,7 @@ const PromptInput = ({
       >
         <InputGroupAddon
           align="block-start"
-          className="flex items-center justify-between w-full px-3 pt-3 pb-2"
+          className="flex bg-zinc-800 items-center justify-between w-full px-3 pt-3 pb-2"
         >
           <DropdownMenu open={isModelDropdownOpen} onOpenChange={setIsModelDropdownOpen}>
             <DropdownMenuTrigger asChild>
@@ -84,7 +84,7 @@ const PromptInput = ({
                   key={model.id}
                   onClick={() => handleModelSelect(model.id)}
                   className={cn(
-                    "flex flex-col items-start gap-0.5 cursor-pointer",
+                    "flex flex-col items-start gap-0.5 cursor-pointer rounded-none",
                     selectedModel === model.id && "bg-accent"
                   )}
                 >
