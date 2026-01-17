@@ -23,7 +23,7 @@ const LandingSection = () => {
   const { user } = useKindeBrowserClient();
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>(
-    "google/gemini-3-pro-preview",
+    "google/gemini-3-pro-preview"
   );
   const [showAllProjects, setShowAllProjects] = useState(false);
   const userId = user?.id;
