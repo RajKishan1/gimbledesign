@@ -20,6 +20,8 @@ export type LoadingStatusType =
   | "generating"
   | "completed";
 
+export type DeviceType = "mobile" | "web";
+
 interface CanvasContextType {
   theme?: ThemeType;
   setTheme: (id: string) => void;
@@ -40,6 +42,8 @@ interface CanvasContextType {
 
   loadingStatus: LoadingStatusType | null;
   setLoadingStatus: (status: LoadingStatusType | null) => void;
+
+  deviceType: DeviceType;
 }
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -48,12 +52,14 @@ export const CanvasProvider = ({
   children,
   initialFrames,
   initialThemeId,
+  initialDeviceType = "mobile",
   hasInitialData,
   projectId,
 }: {
   children: ReactNode;
   initialFrames: FrameType[];
   initialThemeId?: string;
+  initialDeviceType?: DeviceType;
   hasInitialData: boolean;
   projectId: string | null;
 }) => {
@@ -62,6 +68,7 @@ export const CanvasProvider = ({
   );
 
   const [fontId, setFontId] = useState<string>(DEFAULT_FONT);
+  const [deviceType] = useState<DeviceType>(initialDeviceType);
 
   const [frames, setFrames] = useState<FrameType[]>(initialFrames);
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null);
@@ -194,6 +201,7 @@ export const CanvasProvider = ({
         addFrame,
         loadingStatus,
         setLoadingStatus,
+        deviceType,
       }}
     >
       {children}

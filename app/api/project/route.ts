@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { prompt, model } = await request.json();
+    const { prompt, model, deviceType = "mobile" } = await request.json();
     const session = await getKindeServerSession();
     const user = await session.getUser();
 
@@ -91,13 +91,16 @@ export async function POST(request: Request) {
       data: {
         userId,
         name: projectName,
+        deviceType: deviceType,
       },
     });
 
-    //Trigger the Inngest
+    //Trigger the appropriate Inngest function based on device type
     try {
+      const eventName = deviceType === "web" ? "ui/generate.web-screens" : "ui/generate.screens";
+      
       await inngest.send({
-        name: "ui/generate.screens",
+        name: eventName,
         data: {
           userId,
           projectId: project.id,

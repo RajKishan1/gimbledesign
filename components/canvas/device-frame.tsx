@@ -43,7 +43,7 @@ const DeviceFrame = ({
   projectId,
   onOpenHtmlDialog,
 }: PropsType) => {
-  const { selectedFrameId, setSelectedFrameId, updateFrame } = useCanvas();
+  const { selectedFrameId, setSelectedFrameId, updateFrame, deviceType } = useCanvas();
   const { 
     mode, 
     updateScreenPosition, 
@@ -52,13 +52,13 @@ const DeviceFrame = ({
     cancelLinking,
   } = usePrototype();
   
-  // Fixed iPhone 17 Pro Max dimensions
-  const IPHONE_PRO_MAX_WIDTH = 430;
-  const IPHONE_PRO_MAX_HEIGHT = 932;
+  // Device dimensions based on type
+  const DEVICE_WIDTH = deviceType === "web" ? 1440 : 430;
+  const DEVICE_HEIGHT = deviceType === "web" ? 900 : 932;
   
   const [frameSize, setFrameSize] = useState({
-    width: IPHONE_PRO_MAX_WIDTH,
-    height: IPHONE_PRO_MAX_HEIGHT,
+    width: DEVICE_WIDTH,
+    height: DEVICE_HEIGHT,
   });
   const [framePosition, setFramePosition] = useState(initialPosition);
   const [frameRect, setFrameRect] = useState<DOMRect | null>(null);
@@ -82,10 +82,10 @@ const DeviceFrame = ({
       updateScreenPosition(frameId, {
       x: framePosition.x,
       y: framePosition.y,
-      width: IPHONE_PRO_MAX_WIDTH,
-      height: IPHONE_PRO_MAX_HEIGHT,
+      width: DEVICE_WIDTH,
+      height: DEVICE_HEIGHT,
     });
-  }, [frameId, framePosition, updateScreenPosition]);
+  }, [frameId, framePosition, updateScreenPosition, DEVICE_WIDTH, DEVICE_HEIGHT]);
 
   // Track frame rect for element overlay
   useEffect(() => {
@@ -130,8 +130,8 @@ const DeviceFrame = ({
         "/api/screenshot",
         {
           html: fullHtml,
-          width: IPHONE_PRO_MAX_WIDTH,
-          height: IPHONE_PRO_MAX_HEIGHT,
+          width: DEVICE_WIDTH,
+          height: DEVICE_HEIGHT,
         },
         {
           responseType: "blob",
@@ -183,8 +183,8 @@ const DeviceFrame = ({
       await copyDesignToFigma(
         iframeRef.current,
         html,
-        IPHONE_PRO_MAX_WIDTH,
-        IPHONE_PRO_MAX_HEIGHT,
+        DEVICE_WIDTH,
+        DEVICE_HEIGHT,
         title
       );
 
@@ -214,16 +214,16 @@ const DeviceFrame = ({
       default={{
         x: initialPosition.x,
         y: initialPosition.y,
-        width: IPHONE_PRO_MAX_WIDTH,
-        height: IPHONE_PRO_MAX_HEIGHT,
+        width: DEVICE_WIDTH,
+        height: DEVICE_HEIGHT,
       }}
-      minWidth={IPHONE_PRO_MAX_WIDTH}
-      maxWidth={IPHONE_PRO_MAX_WIDTH}
-      minHeight={IPHONE_PRO_MAX_HEIGHT}
-      maxHeight={IPHONE_PRO_MAX_HEIGHT}
+      minWidth={DEVICE_WIDTH}
+      maxWidth={DEVICE_WIDTH}
+      minHeight={DEVICE_HEIGHT}
+      maxHeight={DEVICE_HEIGHT}
       size={{
-        width: IPHONE_PRO_MAX_WIDTH,
-        height: IPHONE_PRO_MAX_HEIGHT,
+        width: DEVICE_WIDTH,
+        height: DEVICE_HEIGHT,
       }}
       position={framePosition}
       disableDragging={toolMode === TOOL_MODE_ENUM.HAND || isPrototypeMode}
@@ -317,12 +317,10 @@ const DeviceFrame = ({
 
         <div
           className={cn(
-            `relative w-full h-auto
-            rounded-[36px] overflow-hidden bg-black
-            shadow-2xl
-              `,
+            `relative w-full h-auto overflow-hidden bg-black shadow-2xl`,
+            deviceType === "mobile" ? "rounded-[36px]" : "rounded-lg",
             isSelected && toolMode !== TOOL_MODE_ENUM.HAND && !isPrototypeMode && "rounded-none",
-            isPrototypeMode && "rounded-2xl"
+            isPrototypeMode && (deviceType === "mobile" ? "rounded-2xl" : "rounded-lg")
           )}
           onClick={handlePrototypeClick}
         >
@@ -331,9 +329,9 @@ const DeviceFrame = ({
               <DeviceFrameSkeleton
                 style={{
                   position: "relative",
-                  width: IPHONE_PRO_MAX_WIDTH,
-                  minHeight: IPHONE_PRO_MAX_HEIGHT,
-                  height: `${IPHONE_PRO_MAX_HEIGHT}px`,
+                  width: DEVICE_WIDTH,
+                  minHeight: DEVICE_HEIGHT,
+                  height: `${DEVICE_HEIGHT}px`,
                 }}
               />
             ) : (
@@ -346,8 +344,8 @@ const DeviceFrame = ({
                   sandbox="allow-scripts allow-same-origin"
                   style={{
                     width: "100%",
-                    minHeight: `${IPHONE_PRO_MAX_HEIGHT}px`,
-                    height: `${IPHONE_PRO_MAX_HEIGHT}px`,
+                    minHeight: `${DEVICE_HEIGHT}px`,
+                    height: `${DEVICE_HEIGHT}px`,
                     border: "none",
                     pointerEvents: "none",
                     display: "block",

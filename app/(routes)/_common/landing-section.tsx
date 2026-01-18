@@ -17,6 +17,7 @@ import PricingPage from "@/components/landing/PricingPage";
 import FeaturesBento from "@/components/landing/FeaturesBento";
 import { Inter_Tight } from "next/font/google";
 import HeroGlobeBackground from "@/components/landing/atoms/HeroGlobeBackground";
+import { DeviceTypeModal } from "@/components/device-type-modal";
 const inter = Inter_Tight({ subsets: ["latin"] });
 
 const LandingSection = () => {
@@ -27,6 +28,8 @@ const LandingSection = () => {
   );
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [showDeviceTypeModal, setShowDeviceTypeModal] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState<string>("");
   const userId = user?.id;
 
   // Fetch limited projects initially, all projects when showAllProjects is true
@@ -95,6 +98,14 @@ const LandingSection = () => {
   const handleSubmit = async () => {
     if (!promptText) return;
     
+    // Show device type modal first
+    setPendingPrompt(promptText);
+    setShowDeviceTypeModal(true);
+  };
+
+  const handleDeviceTypeSelect = async (deviceType: "web" | "mobile") => {
+    setShowDeviceTypeModal(false);
+    
     // Start enhancing the prompt
     setIsEnhancing(true);
     
@@ -105,7 +116,7 @@ const LandingSection = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: promptText,
+          prompt: pendingPrompt,
           model: selectedModel,
         }),
       });
@@ -113,23 +124,29 @@ const LandingSection = () => {
       const enhanceData = await enhanceResponse.json();
       
       // Use the enhanced prompt if available, otherwise fallback to original
-      const finalPrompt = enhanceData.enhancedPrompt || promptText;
+      const finalPrompt = enhanceData.enhancedPrompt || pendingPrompt;
       
       // Stop enhancing state, start designing
       setIsEnhancing(false);
       
-      // Create project with enhanced prompt
-      mutate({ prompt: finalPrompt, model: selectedModel });
+      // Create project with enhanced prompt and device type
+      mutate({ prompt: finalPrompt, model: selectedModel, deviceType });
     } catch (error) {
       console.error("Error enhancing prompt:", error);
       // If enhancement fails, proceed with original prompt
       setIsEnhancing(false);
-      mutate({ prompt: promptText, model: selectedModel });
+      mutate({ prompt: pendingPrompt, model: selectedModel, deviceType });
     }
   };
 
   return (
     <div className=" w-full min-h-screen">
+      <DeviceTypeModal
+        open={showDeviceTypeModal}
+        onOpenChange={setShowDeviceTypeModal}
+        onSelect={handleDeviceTypeSelect}
+      />
+      
       <div className="flex flex-col ">
         <Header />
 
@@ -155,12 +172,12 @@ const LandingSection = () => {
             tracking-tight sm:text-5xl bg-linear-to-r from-zinc-900 dark:from-white to-zinc-800 bg-clip-text text-transparent pb-1
             "
               >
-                Design mobile apps <br className="md:hidden" />
+                Design mobile & web apps <br className="md:hidden" />
                 <span className="text-primary">in minutes</span>
               </h1>
               <div className="mx-auto max-w-2xl ">
                 <p className="text-center font-normal text-foreground leading-relaxed sm:text-lg">
-                  Go from idea to beautiful app mockups in minutes by chatting
+                  Go from idea to beautiful mobile or web mockups in minutes by chatting
                   with AI.
                 </p>
               </div>

@@ -33,6 +33,7 @@ const Canvas = ({
     setSelectedFrameId,
     loadingStatus,
     setLoadingStatus,
+    deviceType,
   } = useCanvas();
 
   const {
@@ -269,7 +270,9 @@ const Canvas = ({
                   >
                     {/* Device Frames */}
                     {frames?.map((frame, index: number) => {
-                      const baseX = 100 + index * 480;
+                      // Calculate spacing based on device type
+                      const frameSpacing = deviceType === "web" ? 1500 : 480;
+                      const baseX = 100 + index * frameSpacing;
                       const y = 100;
 
                       return (

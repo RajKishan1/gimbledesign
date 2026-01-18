@@ -17,12 +17,13 @@ datasource db {
 }
 
 model Project {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  name      String
-  theme     String?
-  thumbnail String?
-  frames    Frame[]
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String
+  name       String
+  theme      String?
+  thumbnail  String?
+  deviceType String   @default("mobile") // "mobile" or "web"
+  frames     Frame[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
