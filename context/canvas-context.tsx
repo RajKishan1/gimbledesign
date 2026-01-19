@@ -20,7 +20,7 @@ export type LoadingStatusType =
   | "generating"
   | "completed";
 
-export type DeviceType = "mobile" | "web";
+export type DeviceType = "mobile" | "web" | "creative";
 
 interface CanvasContextType {
   theme?: ThemeType;
@@ -68,7 +68,7 @@ export const CanvasProvider = ({
   );
 
   const [fontId, setFontId] = useState<string>(DEFAULT_FONT);
-  const [deviceType] = useState<DeviceType>(initialDeviceType);
+  const [deviceType, setDeviceType] = useState<DeviceType>(initialDeviceType);
 
   const [frames, setFrames] = useState<FrameType[]>(initialFrames);
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null);
@@ -84,6 +84,7 @@ export const CanvasProvider = ({
     setFrames(initialFrames);
     setThemeId(initialThemeId || THEME_LIST[0].id);
     setSelectedFrameId(null);
+    setDeviceType(initialDeviceType); // Reset device type when project changes
   }
 
   const theme = THEME_LIST.find((t) => t.id === themeId);

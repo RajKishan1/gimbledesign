@@ -369,6 +369,24 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import TrustedBy from "@/components/landing/atoms/TrustedBy";
 const inter = Inter_Tight({ subsets: ["latin"] });
 
+// Loading state type for the design process
+type LoadingState = "idle" | "thinking" | "enhancing" | "designing";
+
+// Helper function to get loading text based on state
+const getLoadingText = (state: LoadingState, designType: string | null): string | undefined => {
+  switch (state) {
+    case "thinking":
+      return "Analyzing your idea...";
+    case "enhancing":
+      const typeLabel = designType === "web" ? "web app" : designType === "creative" ? "creative" : "mobile app";
+      return `Enhancing for ${typeLabel}...`;
+    case "designing":
+      return "Generating designs...";
+    default:
+      return undefined;
+  }
+};
+
 const LandingSection = () => {
   const { user } = useKindeBrowserClient();
   const [promptText, setPromptText] = useState<string>("");
@@ -376,7 +394,8 @@ const LandingSection = () => {
     "google/gemini-3-pro-preview",
   );
   const [showAllProjects, setShowAllProjects] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [loadingState, setLoadingState] = useState<LoadingState>("idle");
+  const [detectedDesignType, setDetectedDesignType] = useState<string | null>(null);
   const userId = user?.id;
 
   // Fetch limited projects initially, all projects when showAllProjects is true
@@ -386,6 +405,17 @@ const LandingSection = () => {
     isError,
   } = useGetProjects(userId, showAllProjects ? undefined : 10);
   const { mutate, isPending } = useCreateProject();
+  
+  // Reset loading state when mutation completes (success redirects, error needs reset)
+  React.useEffect(() => {
+    if (!isPending && loadingState === "designing") {
+      // Small delay to ensure we catch error states
+      const timeout = setTimeout(() => {
+        setLoadingState("idle");
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [isPending, loadingState]);
 
   // Load model from localStorage on mount
   React.useEffect(() => {
@@ -445,10 +475,12 @@ const LandingSection = () => {
   const handleSubmit = async () => {
     if (!promptText) return;
     
-    setIsEnhancing(true);
     try {
-      // First, enhance the prompt
-      const enhanceResponse = await fetch("/api/enhance-prompt", {
+      // Step 1: Thinking - Analyze the prompt to detect design type
+      setLoadingState("thinking");
+      setDetectedDesignType(null);
+      
+      const analyzeResponse = await fetch("/api/analyze-prompt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -459,19 +491,49 @@ const LandingSection = () => {
         }),
       });
 
+      const analyzeData = await analyzeResponse.json();
+      const designType = analyzeData.designType || "mobile";
+      setDetectedDesignType(designType);
+      
+      // Step 2: Enhancing - Enhance the prompt with design-type-specific guidance
+      setLoadingState("enhancing");
+      
+      const enhanceResponse = await fetch("/api/enhance-prompt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: promptText,
+          model: selectedModel,
+          designType: designType,
+        }),
+      });
+
       const enhanceData = await enhanceResponse.json();
       
       // Use enhanced prompt if available, otherwise fallback to original
       const finalPrompt = enhanceData.enhancedPrompt || promptText;
       
-      // Then create the project with enhanced prompt
-      mutate({ prompt: finalPrompt, model: selectedModel });
+      // Step 3: Designing - Create the project
+      setLoadingState("designing");
+      
+      // Map creative to the appropriate device type
+      // Creative designs can be mobile-sized (App Store screenshots) or custom
+      const deviceType = designType === "web" ? "web" : designType === "creative" ? "creative" : "mobile";
+      
+      // Then create the project with enhanced prompt and detected device type
+      mutate({ 
+        prompt: finalPrompt, 
+        model: selectedModel, 
+        deviceType: deviceType,
+        dimensions: analyzeData.dimensions,
+      });
     } catch (error) {
-      console.error("Error enhancing prompt:", error);
-      // Fallback to original prompt if enhancement fails
-      mutate({ prompt: promptText, model: selectedModel });
-    } finally {
-      setIsEnhancing(false);
+      console.error("Error in design process:", error);
+      // Fallback to original prompt with mobile design if anything fails
+      setLoadingState("designing");
+      mutate({ prompt: promptText, model: selectedModel, deviceType: "mobile" });
     }
   };
 
@@ -496,13 +558,13 @@ const LandingSection = () => {
             tracking-tight sm:text-5xl bg-linear-to-r from-zinc-900 dark:from-white to-zinc-800 bg-clip-text text-transparent pb-1
             "
                 >
-                  Design mobile apps <br className="md:hidden" />
+                  Design apps & creatives <br className="md:hidden" />
                   <span className="text-primary">in minutes</span>
                 </h1>
                 <div className="mx-auto max-w-2xl ">
                   <p className="text-center font-normal text-foreground leading-relaxed sm:text-lg">
-                    Go from idea to beautiful app mockups in minutes by chatting
-                    with AI.
+                    Go from idea to beautiful mobile, web, or App Store designs
+                    in minutes by chatting with AI.
                   </p>
                 </div>
               </div>
@@ -517,7 +579,8 @@ const LandingSection = () => {
                   className=""
                   promptText={promptText}
                   setPromptText={setPromptText}
-                  isLoading={isPending}
+                  isLoading={loadingState !== "idle" || isPending}
+                  loadingText={getLoadingText(loadingState, detectedDesignType)}
                   onSubmit={handleSubmit}
                   selectedModel={selectedModel}
                   onModelChange={handleModelChange}

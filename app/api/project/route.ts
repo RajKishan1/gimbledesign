@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { prompt, model, deviceType = "mobile" } = await request.json();
+    const { prompt, model, deviceType = "mobile", dimensions } = await request.json();
     const session = await getKindeServerSession();
     const user = await session.getUser();
 
@@ -87,6 +87,7 @@ export async function POST(request: Request) {
 
     const projectName = await generateProjectName(prompt, selectedModel);
 
+    // Store the device type (creative maps to a specific type with custom dimensions)
     const project = await prisma.project.create({
       data: {
         userId,
@@ -95,9 +96,20 @@ export async function POST(request: Request) {
       },
     });
 
-    //Trigger the appropriate Inngest function based on device type
+    // Trigger the appropriate Inngest function based on device type
     try {
-      const eventName = deviceType === "web" ? "ui/generate.web-screens" : "ui/generate.screens";
+      let eventName: string;
+      
+      switch (deviceType) {
+        case "web":
+          eventName = "ui/generate.web-screens";
+          break;
+        case "creative":
+          eventName = "ui/generate.creative-screens";
+          break;
+        default:
+          eventName = "ui/generate.screens";
+      }
       
       await inngest.send({
         name: eventName,
@@ -106,6 +118,7 @@ export async function POST(request: Request) {
           projectId: project.id,
           prompt,
           model: selectedModel,
+          dimensions: dimensions, // Pass dimensions for creative designs
         },
       });
     } catch (error) {

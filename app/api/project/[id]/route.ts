@@ -127,11 +127,24 @@ export async function POST(
       );
     }
 
-    //Trigger the Inngest - don't fail the request if Inngest fails
+    //Trigger the appropriate Inngest function based on device type
     // The function will be retried automatically by Inngest if it's configured
     try {
+      // Determine the correct event name based on device type
+      let eventName: string;
+      switch (project.deviceType) {
+        case "web":
+          eventName = "ui/generate.web-screens";
+          break;
+        case "creative":
+          eventName = "ui/generate.creative-screens";
+          break;
+        default:
+          eventName = "ui/generate.screens";
+      }
+
       await inngest.send({
-        name: "ui/generate.screens",
+        name: eventName,
         data: {
           userId,
           projectId: id,
@@ -140,7 +153,7 @@ export async function POST(
           theme: project.theme,
         },
       });
-      console.log("Inngest event sent successfully for project:", id);
+      console.log(`Inngest event ${eventName} sent successfully for project:`, id);
     } catch (inngestError) {
       console.error("Failed to send Inngest event:", inngestError);
       console.error("Inngest error details:", {

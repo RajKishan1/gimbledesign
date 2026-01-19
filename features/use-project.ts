@@ -3,16 +3,29 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+export type DeviceType = "mobile" | "web" | "creative";
+
+export interface CreateProjectData {
+  prompt: string;
+  model?: string;
+  deviceType?: DeviceType;
+  dimensions?: {
+    width: number;
+    height: number;
+  };
+}
+
 export const useCreateProject = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { prompt: string; model?: string; deviceType?: "mobile" | "web" }) =>
+    mutationFn: async (data: CreateProjectData) =>
       await axios
         .post("/api/project", {
           prompt: data.prompt,
           model: data.model || "google/gemini-3-pro-preview",
           deviceType: data.deviceType || "mobile",
+          dimensions: data.dimensions,
         })
         .then((res) => res.data),
     onSuccess: (data) => {

@@ -28,7 +28,7 @@ const Page = () => {
     <CanvasProvider
       initialFrames={project?.frames}
       initialThemeId={project?.theme}
-      initialDeviceType={project?.deviceType as "mobile" | "web" || "mobile"}
+      initialDeviceType={(project?.deviceType as "mobile" | "web" | "creative") || "mobile"}
       hasInitialData={hasInitialData}
       projectId={project?.id}
     >
