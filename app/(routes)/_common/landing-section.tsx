@@ -9,15 +9,15 @@ import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
-import { FolderOpenDotIcon } from "lucide-react";
+import { FolderOpen, FolderOpenDotIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Faq from "@/components/landing/Faq";
 import HowItWorks from "@/components/landing/HowItWorks";
 import PricingPage from "@/components/landing/PricingPage";
 import FeaturesBento from "@/components/landing/FeaturesBento";
 import { Inter_Tight } from "next/font/google";
-import { DeviceTypeModal } from "@/components/device-type-modal";
-import { BlurFade } from "@/components/ui/blur-fade";
+import HeroGlobeBackground from "@/components/landing/atoms/HeroGlobeBackground";
+import { motion, useInView, Variants } from "framer-motion";
 const inter = Inter_Tight({ subsets: ["latin"] });
 
 const LandingSection = () => {
@@ -27,9 +27,6 @@ const LandingSection = () => {
     "google/gemini-3-pro-preview",
   );
   const [showAllProjects, setShowAllProjects] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [showDeviceTypeModal, setShowDeviceTypeModal] = useState(false);
-  const [pendingPrompt, setPendingPrompt] = useState<string>("");
   const userId = user?.id;
 
   // Fetch limited projects initially, all projects when showAllProjects is true
@@ -95,139 +92,82 @@ const LandingSection = () => {
     setPromptText(val);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!promptText) return;
-
-    // Show device type modal first
-    setPendingPrompt(promptText);
-    setShowDeviceTypeModal(true);
-  };
-
-  const handleDeviceTypeSelect = async (deviceType: "web" | "mobile") => {
-    setShowDeviceTypeModal(false);
-
-    // Start enhancing the prompt
-    setIsEnhancing(true);
-
-    try {
-      const enhanceResponse = await fetch("/api/enhance-prompt", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: pendingPrompt,
-          model: selectedModel,
-        }),
-      });
-
-      const enhanceData = await enhanceResponse.json();
-
-      // Use the enhanced prompt if available, otherwise fallback to original
-      const finalPrompt = enhanceData.enhancedPrompt || pendingPrompt;
-
-      // Stop enhancing state, start designing
-      setIsEnhancing(false);
-
-      // Create project with enhanced prompt and device type
-      mutate({ prompt: finalPrompt, model: selectedModel, deviceType });
-    } catch (error) {
-      console.error("Error enhancing prompt:", error);
-      // If enhancement fails, proceed with original prompt
-      setIsEnhancing(false);
-      mutate({ prompt: pendingPrompt, model: selectedModel, deviceType });
-    }
+    mutate({ prompt: promptText, model: selectedModel });
   };
 
   return (
     <div className=" w-full min-h-screen">
-      <DeviceTypeModal
-        open={showDeviceTypeModal}
-        onOpenChange={setShowDeviceTypeModal}
-        onSelect={handleDeviceTypeSelect}
-      />
-
       <div className="flex flex-col ">
         <Header />
 
-        <BlurFade>
-          <div
-            className={`relative overflow-hidden py-28 border border-zinc-900
+        <div
+          className={`relative overflow-hidden py-28 border border-zinc-900
            ${inter.className}`}
-          >
-            <div
-              className="absolute inset-0  top-[-50]
-           z-[-1]"
-            >
-              {" "}
-            </div>
-            <div
-              className="max-w-6xl mx-auto flex flex-col
+        >
+          <div className="absolute inset-0 z-[-1]">
+            <HeroGlobeBackground theme="dark" />
+          </div>
+          <div
+            className="max-w-6xl mx-auto flex flex-col
          items-center justify-center gap-8 
         "
-            >
-              <div className="space-y-3">
-                <h1
-                  className="text-center font-semibold text-4xl
+          >
+            <div className="space-y-3">
+              <h1
+                className="text-center font-semibold text-4xl
             tracking-tight sm:text-5xl bg-linear-to-r from-zinc-900 dark:from-white to-zinc-800 bg-clip-text text-transparent pb-1
             "
-                >
-                  Design mobile & web apps <br className="md:hidden" />
-                  <span className="text-primary">in minutes</span>
-                </h1>
-
-                <div className="mx-auto max-w-2xl ">
-                  <p className="text-center font-normal text-foreground leading-relaxed sm:text-lg">
-                    Go from idea to beautiful mobile or web mockups in minutes
-                    by chatting with AI.
-                  </p>
-                </div>
+              >
+                Design mobile apps <br className="md:hidden" />
+                <span className="text-primary">in minutes</span>
+              </h1>
+              <div className="mx-auto max-w-2xl ">
+                <p className="text-center font-normal text-foreground leading-relaxed sm:text-lg">
+                  Go from idea to beautiful app mockups in minutes by chatting
+                  with AI.
+                </p>
               </div>
+            </div>
 
-              <div
-                className="flex w-full max-w-3xl flex-col
+            <div
+              className="flex w-full max-w-3xl flex-col
             item-center gap-8 relative 
             "
-              >
-                <div className="w-full">
-                  <PromptInput
-                    className=""
-                    promptText={promptText}
-                    setPromptText={setPromptText}
-                    isLoading={isEnhancing || isPending}
-                    loadingText={
-                      isEnhancing
-                        ? "Enhancing..."
-                        : isPending
-                          ? "Designing..."
-                          : undefined
-                    }
-                    onSubmit={handleSubmit}
-                    selectedModel={selectedModel}
-                    onModelChange={handleModelChange}
-                  />
-                </div>
+            >
+              <div className="w-full">
+                <PromptInput
+                  className=""
+                  promptText={promptText}
+                  setPromptText={setPromptText}
+                  isLoading={isPending}
+                  onSubmit={handleSubmit}
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
+                />
+              </div>
 
-                <div className="flex flex-wrap justify-center">
-                  <Suggestions>
-                    {suggestions.map((s) => (
-                      <Suggestion
-                        key={s.label}
-                        suggestion={s.label}
-                        className="text-sm! h-7!   dark:bg-zinc-900 border border-zinc-900
+              <div className="flex flex-wrap justify-center">
+                <Suggestions>
+                  {suggestions.map((s) => (
+                    <Suggestion
+                      key={s.label}
+                      suggestion={s.label}
+                      className="text-sm! h-7!   dark:bg-zinc-900 border border-zinc-900
                       "
-                        onClick={() => handleSuggestionClick(s.value)}
-                      >
-                        {s.icon}
-                        <span>{s.label}</span>
-                      </Suggestion>
-                    ))}
-                  </Suggestions>
-                </div>
+                      onClick={() => handleSuggestionClick(s.value)}
+                    >
+                      {s.icon}
+                      <span>{s.label}</span>
+                    </Suggestion>
+                  ))}
+                </Suggestions>
               </div>
             </div>
           </div>
-        </BlurFade>
+        </div>
+
         <div className="w-full py-10 border-x border-zinc-900">
           <div className="mx-auto max-w-3xl">
             {userId && (
@@ -250,14 +190,19 @@ const LandingSection = () => {
                   </div>
                 ) : (
                   <>
-                    <div
-                      className="grid grid-cols-1 sm:grid-cols-2
-                    md:grid-cols-3 gap-3 mt-3
-                      "
-                    >
-                      {projects?.map((project: ProjectType) => (
-                        <ProjectCard key={project.id} project={project} />
-                      ))}
+                    <div className="mt-3">
+                      {projects && projects.length <= 10 ? (
+                        <ProjectsArc projects={projects} />
+                      ) : (
+                        <div
+                          className="grid grid-cols-1 sm:grid-cols-2
+                    md:grid-cols-3 gap-3 overflow-y-auto max-h-[80vh]"
+                        >
+                          {projects?.map((project: ProjectType) => (
+                            <ProjectCard key={project.id} project={project} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                     {!showAllProjects && projects && projects.length >= 9 && (
                       <div className="flex justify-center mt-6">
@@ -284,6 +229,54 @@ const LandingSection = () => {
       <PricingPage />
       <HowItWorks />
       <Faq />
+    </div>
+  );
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 50, scale: 0.95 },
+  visible: (index: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      delay: index * 0.1,
+      ease: [0.22, 1, 0.36, 1], // Custom ease for futuristic feel
+    },
+  }),
+};
+
+const ProjectsArc = ({ projects }: { projects: ProjectType[] }) => {
+  const ref = React.useRef(null);
+  const isInView = useInView(ref, { once: false, amount: 0.3 });
+
+  return (
+    <div
+      ref={ref}
+      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"
+    >
+      {projects.map((project: ProjectType, index: number) => (
+        <motion.div
+          key={project.id}
+          custom={index}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          variants={cardVariants}
+          whileHover={{ scale: 1.01, transition: { duration: 0.3 } }} // Subtle hover for modern feel
+          className="relative overflow-hidden" // Add futuristic glow on hover via CSS
+          style={
+            { "--glow-color": "rgba(100, 100,100, 0.2)" } as React.CSSProperties
+          } // Cyan glow for futuristic
+        >
+          <style>{`
+            .relative.overflow-hidden:hover {
+              box-shadow: 0 0 15px var(--glow-color);
+            }
+          `}</style>
+          <ProjectCard project={project} />
+        </motion.div>
+      ))}
     </div>
   );
 };
@@ -324,7 +317,7 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
               flex items-center justify-center text-primary
             "
           >
-            <FolderOpenDotIcon className="text-white" size={36} />
+            <FolderOpen strokeWidth={1.25} className="text-white" size={36} />
           </div>
         )}
       </div>
