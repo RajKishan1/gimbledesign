@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { INTERACTIVE_ELEMENT_SELECTORS } from "@/constant/canvas";
 import { PrototypeLink } from "@/context/prototype-context";
+import { FrameType } from "@/types/project";
 
 // Storage key for prototype links (shared with main editor)
 const getLinksStorageKey = (projectId: string) => `prototype-links-${projectId}`;
@@ -128,7 +129,7 @@ const PreviewPage = () => {
 
   // Get current frame
   const currentFrame = useMemo(() => {
-    return frames.find((f) => f.id === currentScreenId);
+    return frames.find((f: FrameType) => f.id === currentScreenId);
   }, [frames, currentScreenId]);
 
   // Navigate to a screen - use ref to avoid stale closure
