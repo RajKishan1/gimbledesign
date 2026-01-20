@@ -367,18 +367,27 @@ import { Inter_Tight } from "next/font/google";
 import { motion, useInView, Variants } from "framer-motion";
 import { BlurFade } from "@/components/ui/blur-fade";
 import TrustedBy from "@/components/landing/atoms/TrustedBy";
+import FooterDemo from "@/components/landing/Footer";
 const inter = Inter_Tight({ subsets: ["latin"] });
 
 // Loading state type for the design process
 type LoadingState = "idle" | "thinking" | "enhancing" | "designing";
 
 // Helper function to get loading text based on state
-const getLoadingText = (state: LoadingState, designType: string | null): string | undefined => {
+const getLoadingText = (
+  state: LoadingState,
+  designType: string | null,
+): string | undefined => {
   switch (state) {
     case "thinking":
       return "Analyzing your idea...";
     case "enhancing":
-      const typeLabel = designType === "web" ? "web app" : designType === "creative" ? "creative" : "mobile app";
+      const typeLabel =
+        designType === "web"
+          ? "web app"
+          : designType === "creative"
+            ? "creative"
+            : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";
@@ -395,7 +404,9 @@ const LandingSection = () => {
   );
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
-  const [detectedDesignType, setDetectedDesignType] = useState<string | null>(null);
+  const [detectedDesignType, setDetectedDesignType] = useState<string | null>(
+    null,
+  );
   const userId = user?.id;
 
   // Fetch limited projects initially, all projects when showAllProjects is true
@@ -405,7 +416,7 @@ const LandingSection = () => {
     isError,
   } = useGetProjects(userId, showAllProjects ? undefined : 10);
   const { mutate, isPending } = useCreateProject();
-  
+
   // Reset loading state when mutation completes (success redirects, error needs reset)
   React.useEffect(() => {
     if (!isPending && loadingState === "designing") {
@@ -474,12 +485,12 @@ const LandingSection = () => {
 
   const handleSubmit = async () => {
     if (!promptText) return;
-    
+
     try {
       // Step 1: Thinking - Analyze the prompt to detect design type
       setLoadingState("thinking");
       setDetectedDesignType(null);
-      
+
       const analyzeResponse = await fetch("/api/analyze-prompt", {
         method: "POST",
         headers: {
@@ -494,10 +505,10 @@ const LandingSection = () => {
       const analyzeData = await analyzeResponse.json();
       const designType = analyzeData.designType || "mobile";
       setDetectedDesignType(designType);
-      
+
       // Step 2: Enhancing - Enhance the prompt with design-type-specific guidance
       setLoadingState("enhancing");
-      
+
       const enhanceResponse = await fetch("/api/enhance-prompt", {
         method: "POST",
         headers: {
@@ -511,21 +522,26 @@ const LandingSection = () => {
       });
 
       const enhanceData = await enhanceResponse.json();
-      
+
       // Use enhanced prompt if available, otherwise fallback to original
       const finalPrompt = enhanceData.enhancedPrompt || promptText;
-      
+
       // Step 3: Designing - Create the project
       setLoadingState("designing");
-      
+
       // Map creative to the appropriate device type
       // Creative designs can be mobile-sized (App Store screenshots) or custom
-      const deviceType = designType === "web" ? "web" : designType === "creative" ? "creative" : "mobile";
-      
+      const deviceType =
+        designType === "web"
+          ? "web"
+          : designType === "creative"
+            ? "creative"
+            : "mobile";
+
       // Then create the project with enhanced prompt and detected device type
-      mutate({ 
-        prompt: finalPrompt, 
-        model: selectedModel, 
+      mutate({
+        prompt: finalPrompt,
+        model: selectedModel,
         deviceType: deviceType,
         dimensions: analyzeData.dimensions,
       });
@@ -533,7 +549,11 @@ const LandingSection = () => {
       console.error("Error in design process:", error);
       // Fallback to original prompt with mobile design if anything fails
       setLoadingState("designing");
-      mutate({ prompt: promptText, model: selectedModel, deviceType: "mobile" });
+      mutate({
+        prompt: promptText,
+        model: selectedModel,
+        deviceType: "mobile",
+      });
     }
   };
 
@@ -573,19 +593,22 @@ const LandingSection = () => {
                 className="flex w-full max-w-3xl flex-col
             item-center gap-8 relative 
             "
-            >
-              <div className="w-full">
-                <PromptInput
-                  className=""
-                  promptText={promptText}
-                  setPromptText={setPromptText}
-                  isLoading={loadingState !== "idle" || isPending}
-                  loadingText={getLoadingText(loadingState, detectedDesignType)}
-                  onSubmit={handleSubmit}
-                  selectedModel={selectedModel}
-                  onModelChange={handleModelChange}
-                />
-              </div>
+              >
+                <div className="w-full">
+                  <PromptInput
+                    className=""
+                    promptText={promptText}
+                    setPromptText={setPromptText}
+                    isLoading={loadingState !== "idle" || isPending}
+                    loadingText={getLoadingText(
+                      loadingState,
+                      detectedDesignType,
+                    )}
+                    onSubmit={handleSubmit}
+                    selectedModel={selectedModel}
+                    onModelChange={handleModelChange}
+                  />
+                </div>
 
                 <div className="flex flex-wrap justify-center">
                   <Suggestions>
@@ -669,6 +692,7 @@ const LandingSection = () => {
       <PricingPage />
       <HowItWorks />
       <Faq />
+      <FooterDemo />
     </div>
   );
 };
