@@ -45,7 +45,7 @@ const Header = () => {
 
           "
           >
-            {/* <Button
+            <Button
               variant="outline"
               size="icon"
               className="relative rounded-full h-8 w-8"
@@ -63,7 +63,7 @@ const Header = () => {
                   isDark ? "scale-0" : "scale-100"
                 )}
               />
-            </Button> */}
+            </Button>
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger>
