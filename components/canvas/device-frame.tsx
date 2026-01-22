@@ -10,6 +10,7 @@ import { getHTMLWrapper } from "@/lib/frame-wrapper";
 import { cn } from "@/lib/utils";
 import DeviceFrameToolbar from "./device-frame-toolbar";
 import PrototypeElementOverlay from "./prototype-element-overlay";
+import ElementHoverOverlay from "./element-hover-overlay";
 import { toast } from "sonner";
 import DeviceFrameSkeleton from "./device-frame-skeleton";
 import { useRegenerateFrame, useDeleteFrame } from "@/features/use-frame";
@@ -389,11 +390,20 @@ const DeviceFrame = ({
                     minHeight: DEVICE_MIN_HEIGHT,
                     height: actualHeight,
                     border: "none",
-                    pointerEvents: "none",
+                    // Enable pointer events when selected in design mode for hover detection
+                    pointerEvents: isSelected && !isPrototypeMode && toolMode === TOOL_MODE_ENUM.SELECT ? "auto" : "none",
                     display: "block",
                     background: "transparent",
                   }}
                 />
+                
+                {/* Element hover overlay for design mode */}
+                {!isPrototypeMode && (
+                  <ElementHoverOverlay
+                    iframeRef={iframeRef}
+                    isActive={isSelected && toolMode === TOOL_MODE_ENUM.SELECT}
+                  />
+                )}
                 
                 {/* Prototype element overlay */}
                 {isPrototypeMode && !isLoading && (

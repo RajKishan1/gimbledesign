@@ -28,7 +28,9 @@ const Page = () => {
     <CanvasProvider
       initialFrames={project?.frames}
       initialThemeId={project?.theme}
-      initialDeviceType={(project?.deviceType as "mobile" | "web" | "creative") || "mobile"}
+      initialDeviceType={
+        (project?.deviceType as "mobile" | "web" | "creative") || "mobile"
+      }
       hasInitialData={hasInitialData}
       projectId={project?.id}
     >
@@ -68,7 +70,11 @@ const PageContent = ({
       <Header projectName={projectName} />
 
       <div className="flex flex-1 overflow-hidden">
-        <ProjectsSidebar />
+        <DesignSidebar
+          projectId={projectId}
+          onGenerate={handleGenerate}
+          isPending={isGenerating}
+        />
         <div className="relative flex-1">
           <Canvas
             projectId={projectId}
@@ -76,11 +82,8 @@ const PageContent = ({
             isPending={isPending}
           />
         </div>
-        <DesignSidebar
-          projectId={projectId}
-          onGenerate={handleGenerate}
-          isPending={isGenerating}
-        />
+
+        <ProjectsSidebar />
       </div>
     </div>
   );
