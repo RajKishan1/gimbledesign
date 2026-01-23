@@ -368,6 +368,7 @@ import { motion, useInView, Variants } from "framer-motion";
 import { BlurFade } from "@/components/ui/blur-fade";
 import TrustedBy from "@/components/landing/atoms/TrustedBy";
 import FooterDemo from "@/components/landing/Footer";
+import ExploreTemplates from "@/components/landing/ExploreTemplates";
 const inter = Inter_Tight({ subsets: ["latin"] });
 
 // Loading state type for the design process
@@ -688,7 +689,8 @@ const LandingSection = () => {
         </div>
       </div>
 
-      <FeaturesBento />
+      {/* <FeaturesBento /> */}
+      <ExploreTemplates />
       <PricingPage />
       <HowItWorks />
       <Faq />
