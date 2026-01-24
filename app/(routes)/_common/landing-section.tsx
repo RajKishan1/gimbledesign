@@ -371,24 +371,19 @@ import FooterDemo from "@/components/landing/Footer";
 import ExploreTemplates from "@/components/landing/ExploreTemplates";
 const inter = Inter_Tight({ subsets: ["latin"] });
 
+import { DeviceType } from "@/components/prompt-input";
+
 // Loading state type for the design process
-type LoadingState = "idle" | "thinking" | "enhancing" | "designing";
+type LoadingState = "idle" | "enhancing" | "designing";
 
 // Helper function to get loading text based on state
 const getLoadingText = (
   state: LoadingState,
-  designType: string | null,
+  deviceType: DeviceType,
 ): string | undefined => {
   switch (state) {
-    case "thinking":
-      return "Analyzing your idea...";
     case "enhancing":
-      const typeLabel =
-        designType === "web"
-          ? "web app"
-          : designType === "creative"
-            ? "creative"
-            : "mobile app";
+      const typeLabel = deviceType === "web" ? "web app" : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";
@@ -405,9 +400,7 @@ const LandingSection = () => {
   );
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
-  const [detectedDesignType, setDetectedDesignType] = useState<string | null>(
-    null,
-  );
+  const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
   const userId = user?.id;
 
   // Fetch limited projects initially, all projects when showAllProjects is true
@@ -488,26 +481,7 @@ const LandingSection = () => {
     if (!promptText) return;
 
     try {
-      // Step 1: Thinking - Analyze the prompt to detect design type
-      setLoadingState("thinking");
-      setDetectedDesignType(null);
-
-      const analyzeResponse = await fetch("/api/analyze-prompt", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: promptText,
-          model: selectedModel,
-        }),
-      });
-
-      const analyzeData = await analyzeResponse.json();
-      const designType = analyzeData.designType || "mobile";
-      setDetectedDesignType(designType);
-
-      // Step 2: Enhancing - Enhance the prompt with design-type-specific guidance
+      // Step 1: Enhancing - Enhance the prompt with device-type-specific guidance
       setLoadingState("enhancing");
 
       const enhanceResponse = await fetch("/api/enhance-prompt", {
@@ -518,7 +492,7 @@ const LandingSection = () => {
         body: JSON.stringify({
           prompt: promptText,
           model: selectedModel,
-          designType: designType,
+          designType: deviceType,
         }),
       });
 
@@ -527,33 +501,22 @@ const LandingSection = () => {
       // Use enhanced prompt if available, otherwise fallback to original
       const finalPrompt = enhanceData.enhancedPrompt || promptText;
 
-      // Step 3: Designing - Create the project
+      // Step 2: Designing - Create the project with the user-selected device type
       setLoadingState("designing");
 
-      // Map creative to the appropriate device type
-      // Creative designs can be mobile-sized (App Store screenshots) or custom
-      const deviceType =
-        designType === "web"
-          ? "web"
-          : designType === "creative"
-            ? "creative"
-            : "mobile";
-
-      // Then create the project with enhanced prompt and detected device type
       mutate({
         prompt: finalPrompt,
         model: selectedModel,
         deviceType: deviceType,
-        dimensions: analyzeData.dimensions,
       });
     } catch (error) {
       console.error("Error in design process:", error);
-      // Fallback to original prompt with mobile design if anything fails
+      // Fallback to original prompt with selected device type if anything fails
       setLoadingState("designing");
       mutate({
         prompt: promptText,
         model: selectedModel,
-        deviceType: "mobile",
+        deviceType: deviceType,
       });
     }
   };
@@ -601,13 +564,12 @@ const LandingSection = () => {
                     promptText={promptText}
                     setPromptText={setPromptText}
                     isLoading={loadingState !== "idle" || isPending}
-                    loadingText={getLoadingText(
-                      loadingState,
-                      detectedDesignType,
-                    )}
+                    loadingText={getLoadingText(loadingState, deviceType)}
                     onSubmit={handleSubmit}
                     selectedModel={selectedModel}
                     onModelChange={handleModelChange}
+                    deviceType={deviceType}
+                    onDeviceTypeChange={setDeviceType}
                   />
                 </div>
 

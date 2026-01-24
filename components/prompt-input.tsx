@@ -7,7 +7,7 @@ import {
   InputGroupButton,
   InputGroupTextarea,
 } from "./ui/input-group";
-import { CornerDownLeftIcon, ChevronDownIcon } from "lucide-react";
+import { CornerDownLeftIcon, ChevronDownIcon, Smartphone, Globe } from "lucide-react";
 import { Spinner } from "./ui/spinner";
 import {
   DropdownMenu,
@@ -20,6 +20,8 @@ import {
 import { AI_MODELS, DEFAULT_MODEL, getModelName } from "@/constant/models";
 import { useState } from "react";
 
+export type DeviceType = "mobile" | "web";
+
 interface PropsType {
   promptText: string;
   setPromptText: (value: string) => void;
@@ -30,6 +32,8 @@ interface PropsType {
   onSubmit?: () => void;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
+  deviceType?: DeviceType;
+  onDeviceTypeChange?: (type: DeviceType) => void;
 }
 const PromptInput = ({
   promptText,
@@ -41,6 +45,8 @@ const PromptInput = ({
   onSubmit,
   selectedModel = DEFAULT_MODEL,
   onModelChange,
+  deviceType = "mobile",
+  onDeviceTypeChange,
 }: PropsType) => {
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
@@ -116,8 +122,38 @@ const PromptInput = ({
 
         <InputGroupAddon
           align="block-end"
-          className="flex items-center justify-end"
+          className="flex items-center justify-between"
         >
+          {/* Device Type Toggle */}
+          <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => onDeviceTypeChange?.("mobile")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                deviceType === "mobile"
+                  ? "bg-white dark:bg-zinc-700 text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Smartphone className="size-4" />
+              <span>Mobile</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onDeviceTypeChange?.("web")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                deviceType === "web"
+                  ? "bg-white dark:bg-zinc-700 text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Globe className="size-4" />
+              <span>Website</span>
+            </button>
+          </div>
+
           {!hideSubmitBtn && (
             <InputGroupButton
               variant="default"
