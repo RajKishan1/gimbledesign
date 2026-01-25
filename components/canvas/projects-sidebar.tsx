@@ -22,7 +22,7 @@ const ProjectsSidebar = () => {
   const currentProjectId = params.id as string;
   const { user } = useKindeBrowserClient();
   const { data: profile } = useGetProfile();
-  const { data: projects, isLoading: isLoadingProjects } = useGetProjects(
+  const { data: projects, isLoading: isLoadingProjects, isError: isProjectsError } = useGetProjects(
     user?.id,
     undefined // No limit - fetch all projects
   );
@@ -121,10 +121,18 @@ const ProjectsSidebar = () => {
               Recent Projects
             </h3>
             <ScrollArea className="flex-1 min-h-0">
-              {isLoadingProjects ? (
+              {!user ? (
                 <div className="flex items-center justify-center py-4">
                   <Spinner className="size-5" />
                 </div>
+              ) : isLoadingProjects ? (
+                <div className="flex items-center justify-center py-4">
+                  <Spinner className="size-5" />
+                </div>
+              ) : isProjectsError ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Failed to load projects
+                </p>
               ) : projects && projects.length > 0 ? (
                 <div className="flex flex-col gap-0.5 px-2">
                   {projects.map((project: ProjectType) => {

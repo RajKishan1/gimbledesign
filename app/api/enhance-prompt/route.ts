@@ -920,15 +920,7 @@ Remember: Creative designs are about conversion. Every element should serve the 
 
 // Select the appropriate prompt based on design type
 function getEnhancementPrompt(designType: string): string {
-  switch (designType) {
-    case "web":
-      return WEB_ENHANCEMENT_PROMPT;
-    case "creative":
-      return CREATIVE_ENHANCEMENT_PROMPT;
-    case "mobile":
-    default:
-      return MOBILE_ENHANCEMENT_PROMPT;
-  }
+  return designType === "web" ? WEB_ENHANCEMENT_PROMPT : MOBILE_ENHANCEMENT_PROMPT;
 }
 
 export async function POST(request: Request) {
@@ -951,12 +943,9 @@ export async function POST(request: Request) {
     const enhancementPrompt = getEnhancementPrompt(designType);
     
     // Customize the user prompt based on design type
-    let userPromptPrefix = "Enhance this design prompt with your expertise as a senior UI/UX designer";
-    if (designType === "web") {
-      userPromptPrefix = "Enhance this web application design prompt with your expertise as a senior web designer";
-    } else if (designType === "creative") {
-      userPromptPrefix = "Enhance this creative design prompt with your expertise as a creative director";
-    }
+    const userPromptPrefix = designType === "web"
+      ? "Enhance this web application design prompt with your expertise as a senior web designer"
+      : "Enhance this design prompt with your expertise as a senior UI/UX designer";
 
     // Enhance the prompt using AI
     const { text: enhancedPrompt } = await generateText({

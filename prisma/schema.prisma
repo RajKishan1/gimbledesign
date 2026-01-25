@@ -24,6 +24,7 @@ model Project {
   thumbnail  String?
   deviceType String   @default("mobile") // "mobile" or "web"
   frames     Frame[]
+  chatMessages ChatMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -33,6 +34,7 @@ model Frame {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   htmlContent String
+  designTree  Json?    // Structured design data (Design Tree)
 
   projectId   String   @db.ObjectId
   project     Project  @relation(fields: [projectId], references: [id])
@@ -41,6 +43,21 @@ model Frame {
   updatedAt   DateTime @updatedAt
 
   @@index([projectId])
+}
+
+model ChatMessage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectId String   @db.ObjectId
+  project   Project  @relation(fields: [projectId], references: [id])
+  frameId   String?  @db.ObjectId // Optional: if editing a specific frame
+  message   String
+  role      String   @default("user") // "user" or "assistant"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([frameId])
 }
 
 model User {

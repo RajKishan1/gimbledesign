@@ -5,6 +5,11 @@ import { GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
 import { unsplashTool } from "../tool";
+import {
+  buildDesignContext,
+  generateDesignDNAString,
+  generateComponentLibraryString,
+} from "@/lib/design-context-manager";
 
 export const regenerateFrame = inngest.createFunction(
   { id: "regenerate-frame" },
@@ -18,6 +23,7 @@ export const regenerateFrame = inngest.createFunction(
       model,
       theme: themeId,
       frame,
+      allFrames, // Optional: all frames in the project for context
     } = event.data;
     const CHANNEL = `user:${userId}`;
     const selectedModel = model || "google/gemini-3-pro-preview";
@@ -41,6 +47,22 @@ export const regenerateFrame = inngest.createFunction(
         ${selectedTheme?.style || ""}
       `;
 
+      // Build design context from all frames if available, for consistency
+      let designContextString = "";
+      if (allFrames && Array.isArray(allFrames) && allFrames.length > 0) {
+        const designContext = buildDesignContext(allFrames, themeId);
+        if (designContext.isInitialized) {
+          designContextString = `
+${generateDesignDNAString(designContext.dna)}
+
+${generateComponentLibraryString(designContext.components)}
+
+CRITICAL: When modifying this screen, you MUST maintain the Design DNA above.
+Any changes should seamlessly blend with the app's established visual style.
+`;
+        }
+      }
+
       const result = await generateText({
         model: openrouter.chat(selectedModel),
         system: GENERATION_SYSTEM_PROMPT,
@@ -54,34 +76,32 @@ export const regenerateFrame = inngest.createFunction(
         ORIGINAL SCREEN TITLE: ${frame.title}
         ORIGINAL SCREEN HTML: ${frame.htmlContent}
 
+        ${designContextString}
+
         THEME VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare these): ${fullThemeCSS}
 
 
-        CRITICAL REQUIREMENTS A MUST - READ CAREFULLY:
-        1. **PRESERVE the overall structure and layout - ONLY modify what the user explicitly requested**
+        CRITICAL REQUIREMENTS - READ CAREFULLY:
+        
+        **PRESERVE DESIGN DNA:**
+        1. PRESERVE the overall structure and layout - ONLY modify what the user explicitly requested
           - Keep all existing components, styling, and layout that are NOT mentioned in the user request
           - Only change the specific elements the user asked for
           - Do not add or remove sections unless requested
           - Maintain the exact same HTML structure and CSS classes except for requested changes
+        2. If Design DNA context is provided above, ensure changes maintain consistency with it
+        3. Keep navigation components (bottom nav, sidebar) EXACTLY as they are unless explicitly requested to change
 
-        2. **Generate ONLY raw HTML markup for this mobile app screen using Tailwind CSS.**
-          Use Tailwind classes for layout, spacing, typography, shadows, etc.
-          Use theme CSS variables ONLY for color-related properties (bg-[var(--background)], text-[var(--foreground)], border-[var(--border)], ring-[var(--ring)], etc.)
-        3. **All content must be inside a single root <div> that controls the layout.**
-          - No overflow classes on the root.
-          - All scrollable content must be in inner containers with hidden scrollbars: [&::-webkit-scrollbar]:hidden scrollbar-none
-        4. **For absolute overlays (maps, bottom sheets, modals, etc.):**
-          - Use \`relative w-full h-screen\` on the top div of the overlay.
-        5. **For regular content:**
-          - Use \`w-full h-full min-h-screen\` on the top div.
-        6. **Do not use h-screen on inner content unless absolutely required.**
-          - Height must grow with content; content must be fully visible inside an iframe.
-        7. **For z-index layering:**
-          - Ensure absolute elements do not block other content unnecessarily.
-        8. **Output raw HTML only, starting with <div>.**
-          - Do not include markdown, comments, <html>, <body>, or <head>.
-        9. **Ensure iframe-friendly rendering:**
-            - All elements must contribute to the final scrollHeight so your parent iframe can correctly resize.
+        **OUTPUT RULES:**
+        1. Generate ONLY raw HTML markup using Tailwind CSS
+          - Use theme CSS variables for colors: bg-[var(--background)], text-[var(--foreground)], etc.
+        2. All content inside a single root <div>
+          - No overflow classes on the root
+          - Scrollable content in inner containers with: [&::-webkit-scrollbar]:hidden scrollbar-none
+        3. For absolute overlays: Use \`relative w-full h-screen\` on top div
+        4. For regular content: Use \`w-full h-full min-h-screen\` on top div
+        5. Output raw HTML only, starting with <div> - no markdown, comments, or wrapper tags
+        
         Generate the complete, production-ready HTML for this screen now
         `.trim(),
       });

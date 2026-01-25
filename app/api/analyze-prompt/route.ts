@@ -22,48 +22,21 @@ Choose this when the user wants to create:
 - Admin panels
 - Web-based software
 - Browser-based tools
-- Keywords: "dashboard", "web app", "website", "admin panel", "SaaS", "web design", "desktop", "browser"
-
-## 3. CREATIVE DESIGN (type: "creative")
-Choose this when the user wants to create:
-- App Store preview screenshots
-- Play Store screenshots
-- Marketing materials
-- Social media graphics
-- Presentation slides
-- Promotional banners
-- Landing page hero sections
-- Product mockups
-- Portfolio showcases
-- Brand identity visuals
-- Keywords: "screenshot", "app store", "play store", "marketing", "promotional", "social media", "banner", "mockup", "preview"
+- Landing pages
+- Websites
+- Keywords: "dashboard", "web app", "website", "admin panel", "SaaS", "web design", "desktop", "browser", "landing page"
 
 # RULES
 1. Analyze the user's intent carefully
 2. If the prompt mentions "app" without "web", default to mobile
-3. If the prompt mentions "dashboard", "admin", or "SaaS", choose web
-4. If the prompt mentions "screenshots", "app store", "marketing", or "promotional", choose creative
-5. Generate a concise, descriptive name for the project (3-5 words max)
-6. For creative designs, also determine the appropriate dimensions based on context
+3. If the prompt mentions "dashboard", "admin", "SaaS", "website", or "landing page", choose web
+4. Generate a concise, descriptive name for the project (3-5 words max)
 
-# DIMENSION GUIDELINES FOR CREATIVE
-- App Store Screenshots (iPhone): 1290x2796px (portrait) or 2796x1290px (landscape)
-- App Store Screenshots (iPad): 2048x2732px
-- Play Store Screenshots: 1080x1920px
-- Social Media (Instagram): 1080x1080px (square) or 1080x1350px (portrait)
-- Banner/Header: 1440x400px
-- Presentation Slide: 1920x1080px
-- Default creative: 1440x900px
-
-Analyze the prompt and return the design type, project name, and dimensions (for creative).`;
+Analyze the prompt and return the design type and project name.`;
 
 const AnalysisSchema = z.object({
-  designType: z.enum(["mobile", "web", "creative"]).describe("The type of design the user wants to create"),
+  designType: z.enum(["mobile", "web"]).describe("The type of design the user wants to create"),
   projectName: z.string().describe("A concise, descriptive name for the project (3-5 words)"),
-  dimensions: z.object({
-    width: z.number().describe("Width in pixels"),
-    height: z.number().describe("Height in pixels"),
-  }).optional().describe("Dimensions for creative designs"),
   confidence: z.number().min(0).max(1).describe("Confidence score for the detection (0-1)"),
   reasoning: z.string().describe("Brief explanation of why this design type was chosen"),
 });
@@ -89,21 +62,10 @@ export async function POST(request: Request) {
       temperature: 0.3,
     });
 
-    // Set default dimensions based on design type if not provided
-    let dimensions = object.dimensions;
-    if (!dimensions) {
-      switch (object.designType) {
-        case "mobile":
-          dimensions = { width: 430, height: 932 };
-          break;
-        case "web":
-          dimensions = { width: 1440, height: 900 };
-          break;
-        case "creative":
-          dimensions = { width: 1290, height: 2796 }; // Default to App Store iPhone
-          break;
-      }
-    }
+    // Set default dimensions based on design type
+    const dimensions = object.designType === "web" 
+      ? { width: 1440, height: 900 }
+      : { width: 430, height: 932 };
 
     return NextResponse.json({
       success: true,

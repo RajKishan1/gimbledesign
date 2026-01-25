@@ -3,7 +3,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-export type DeviceType = "mobile" | "web" | "creative";
+export type DeviceType = "mobile" | "web";
 
 export interface CreateProjectData {
   prompt: string;
@@ -45,12 +45,13 @@ export const useCreateProject = () => {
 
 export const useGetProjects = (userId?: string, limit?: number) => {
   return useQuery({
-    queryKey: ["projects", limit],
+    queryKey: ["projects", limit ?? "all"],
     queryFn: async () => {
       const url = limit ? `/api/project?limit=${limit}` : "/api/project";
       const res = await axios.get(url);
       return res.data.data;
     },
     enabled: !!userId,
+    retry: 1,
   });
 };

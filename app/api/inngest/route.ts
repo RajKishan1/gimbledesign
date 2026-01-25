@@ -3,7 +3,6 @@ import { inngest } from "../../../inngest/client";
 import { helloWorld } from "@/inngest/functions/helloWorld";
 import { generateScreens } from "@/inngest/functions/generateScreens";
 import { generateWebScreens } from "@/inngest/functions/generateWebScreens";
-import { generateCreativeScreens } from "@/inngest/functions/generateCreativeScreens";
 import { regenerateFrame } from "@/inngest/functions/regenerateFrame";
 
 // The serve() function automatically:
@@ -16,7 +15,6 @@ export const { GET, POST, PUT } = serve({
     helloWorld,
     generateScreens,
     generateWebScreens,
-    generateCreativeScreens,
     regenerateFrame,
   ],
   // Optional: Explicitly set signing key (if not using INNGEST_SIGNING_KEY env var)

@@ -272,14 +272,7 @@ const Canvas = ({
                     {frames?.map((frame, index: number) => {
                       // Calculate spacing based on device type
                       const getFrameSpacing = () => {
-                        switch (deviceType) {
-                          case "web":
-                            return 1500;
-                          case "creative":
-                            return 1350; // Slightly more than creative width (1290px)
-                          default: // mobile
-                            return 480;
-                        }
+                        return deviceType === "web" ? 1500 : 480; // web or mobile
                       };
                       const frameSpacing = getFrameSpacing();
                       const baseX = 100 + index * frameSpacing;

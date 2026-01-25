@@ -29,7 +29,7 @@ const Page = () => {
       initialFrames={project?.frames}
       initialThemeId={project?.theme}
       initialDeviceType={
-        (project?.deviceType as "mobile" | "web" | "creative") || "mobile"
+        (project?.deviceType as "mobile" | "web") || "mobile"
       }
       hasInitialData={hasInitialData}
       projectId={project?.id}

@@ -183,7 +183,7 @@ export const SvgNodeSchema = BaseDesignNodeSchema.extend({
 });
 
 // Lazy schemas for recursive types
-export const FrameNodeSchema: z.ZodType<any> = BaseDesignNodeSchema.extend({
+export const FrameNodeSchema = BaseDesignNodeSchema.extend({
   type: z.literal("frame"),
   children: z.lazy(() => z.array(DesignNodeSchema)),
   layout: LayoutPropertiesSchema.optional(),
@@ -191,12 +191,12 @@ export const FrameNodeSchema: z.ZodType<any> = BaseDesignNodeSchema.extend({
   componentId: z.string().optional(),
 });
 
-export const GroupNodeSchema: z.ZodType<any> = BaseDesignNodeSchema.extend({
+export const GroupNodeSchema = BaseDesignNodeSchema.extend({
   type: z.literal("group"),
   children: z.lazy(() => z.array(DesignNodeSchema)),
 });
 
-export const ButtonNodeSchema: z.ZodType<any> = BaseDesignNodeSchema.extend({
+export const ButtonNodeSchema = BaseDesignNodeSchema.extend({
   type: z.literal("button"),
   children: z.lazy(() => z.array(DesignNodeSchema)),
   layout: LayoutPropertiesSchema.optional(),
@@ -216,7 +216,7 @@ export const DesignNodeSchema: z.ZodType<any> = z.lazy(() =>
     ButtonNodeSchema,
     InputNodeSchema,
     SvgNodeSchema,
-  ])
+  ] as const)
 );
 
 // ============================================================================
@@ -234,7 +234,7 @@ export const DesignTreeSchema = z.object({
   updatedAt: z.date().optional(),
   version: z.number().optional().default(1),
   themeId: z.string().optional(),
-  themeVariables: z.record(z.string()).optional(),
+  themeVariables: z.record(z.string(), z.string()).optional(),
 });
 
 // ============================================================================
@@ -259,9 +259,9 @@ export const ComponentDefinitionSchema = z.object({
   tree: FrameNodeSchema,
   variants: z.array(z.object({
     name: z.string(),
-    overrides: z.record(z.unknown()),
+    overrides: z.record(z.string(), z.unknown()),
   })).optional(),
-  defaultProps: z.record(z.unknown()).optional(),
+  defaultProps: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ============================================================================

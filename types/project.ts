@@ -2,7 +2,7 @@ export type ProjectType = {
   id: string;
   name: string;
   theme: string;
-  deviceType?: "mobile" | "web" | "creative";
+  deviceType?: "mobile" | "web";
   thumbnail?: string;
   frames: FrameType[];
   createdAt: Date;

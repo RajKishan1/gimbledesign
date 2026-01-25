@@ -20,7 +20,7 @@ export type LoadingStatusType =
   | "generating"
   | "completed";
 
-export type DeviceType = "mobile" | "web" | "creative";
+export type DeviceType = "mobile" | "web";
 
 interface CanvasContextType {
   theme?: ThemeType;

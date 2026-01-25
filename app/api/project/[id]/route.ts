@@ -131,17 +131,9 @@ export async function POST(
     // The function will be retried automatically by Inngest if it's configured
     try {
       // Determine the correct event name based on device type
-      let eventName: string;
-      switch (project.deviceType) {
-        case "web":
-          eventName = "ui/generate.web-screens";
-          break;
-        case "creative":
-          eventName = "ui/generate.creative-screens";
-          break;
-        default:
-          eventName = "ui/generate.screens";
-      }
+      const eventName = project.deviceType === "web" 
+        ? "ui/generate.web-screens" 
+        : "ui/generate.screens";
 
       await inngest.send({
         name: eventName,

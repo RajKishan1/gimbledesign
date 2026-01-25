@@ -9,30 +9,52 @@ export async function GET(request: Request) {
     const session = await getKindeServerSession();
     const user = await session.getUser();
 
-    if (!user) throw new Error("Unauthorized");
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // Get limit from query parameters
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
-    const projects = await prisma.project.findMany({
-      where: {
-        userId: user.id,
-      },
-      ...(limit && { take: limit }),
-      orderBy: { createdAt: "desc" },
-    });
+    try {
+      const projects = await prisma.project.findMany({
+        where: {
+          userId: user.id,
+        },
+        ...(limit && { take: limit }),
+        orderBy: { createdAt: "desc" },
+      });
 
-    return NextResponse.json({
-      success: true,
-      data: projects,
-    });
+      return NextResponse.json({
+        success: true,
+        data: projects,
+      });
+    } catch (dbError) {
+      console.error("Database error fetching projects:", dbError);
+      // Check if it's a Prisma client issue
+      if (dbError instanceof Error && dbError.message.includes("chatMessage")) {
+        return NextResponse.json(
+          {
+            error: "Database schema mismatch. Please run: npx prisma generate",
+            details: process.env.NODE_ENV === "development" ? dbError.message : undefined,
+          },
+          { status: 500 }
+        );
+      }
+      throw dbError;
+    }
   } catch (error) {
-    console.log("Error occured ", error);
+    console.error("Error fetching projects:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       {
         error: "Failed to fetch projects",
+        details: process.env.NODE_ENV === "development" ? errorMessage : undefined,
       },
       { status: 500 }
     );
@@ -87,7 +109,7 @@ export async function POST(request: Request) {
 
     const projectName = await generateProjectName(prompt, selectedModel);
 
-    // Store the device type (creative maps to a specific type with custom dimensions)
+    // Store the device type (mobile or web)
     const project = await prisma.project.create({
       data: {
         userId,
@@ -98,18 +120,9 @@ export async function POST(request: Request) {
 
     // Trigger the appropriate Inngest function based on device type
     try {
-      let eventName: string;
-      
-      switch (deviceType) {
-        case "web":
-          eventName = "ui/generate.web-screens";
-          break;
-        case "creative":
-          eventName = "ui/generate.creative-screens";
-          break;
-        default:
-          eventName = "ui/generate.screens";
-      }
+      const eventName = deviceType === "web" 
+        ? "ui/generate.web-screens" 
+        : "ui/generate.screens";
       
       await inngest.send({
         name: eventName,
@@ -118,7 +131,6 @@ export async function POST(request: Request) {
           projectId: project.id,
           prompt,
           model: selectedModel,
-          dimensions: dimensions, // Pass dimensions for creative designs
         },
       });
     } catch (error) {

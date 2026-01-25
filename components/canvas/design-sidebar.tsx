@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ChevronRight,
   ChevronLeft,
@@ -20,6 +20,9 @@ import { usePrototype } from "@/context/prototype-context";
 import { useCanvas } from "@/context/canvas-context";
 import { parseThemeColors, ThemeType } from "@/lib/themes";
 import { CheckIcon, Type } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { useRegenerateFrame } from "@/features/use-frame";
 
 interface DesignSidebarProps {
   projectId: string;
@@ -29,7 +32,210 @@ interface DesignSidebarProps {
 
 type DesignTab = "chat" | "theme" | "fonts";
 
-const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
+// Shimmer Card Component with cool animation (only for currently generating frame)
+function ShimmerCard({ title }: { title: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-lg border border-neutral-200 dark:border-[#2b2b2b] bg-white dark:bg-[#1f1f1f] p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="relative w-8 h-8 rounded bg-gradient-to-br from-purple-500/20 to-blue-500/20 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent" style={{ animation: "shimmer 2s ease-in-out infinite" }} />
+        </div>
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3 w-24 rounded bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 dark:from-neutral-700 dark:via-neutral-600 dark:to-neutral-700 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent" style={{ animation: "shimmer 2s ease-in-out infinite" }} />
+          </div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-2 w-full rounded bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 dark:from-neutral-700 dark:via-neutral-600 dark:to-neutral-700 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent" style={{ animation: "shimmer 2s ease-in-out infinite" }} />
+        </div>
+        <div className="h-2 w-3/4 rounded bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 dark:from-neutral-700 dark:via-neutral-600 dark:to-neutral-700 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent" style={{ animation: "shimmer 2s ease-in-out infinite", animationDelay: "0.2s" }} />
+        </div>
+        <div className="h-2 w-5/6 rounded bg-gradient-to-r from-neutral-200 via-neutral-300 to-neutral-200 dark:from-neutral-700 dark:via-neutral-600 dark:to-neutral-700 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent" style={{ animation: "shimmer 2s ease-in-out infinite", animationDelay: "0.4s" }} />
+        </div>
+      </div>
+      <div className="mt-2 flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-400">
+        <Sparkles className="w-3 h-3 animate-pulse" />
+        <span className="font-medium">Generating {title}...</span>
+      </div>
+    </div>
+  );
+}
+
+// Completed Frame Card Component
+function CompletedFrameCard({ title }: { title: string }) {
+  return (
+    <div className="rounded-lg border border-green-200 dark:border-green-800/30 bg-green-50/50 dark:bg-green-900/10 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-full bg-green-500 dark:bg-green-600 flex items-center justify-center flex-shrink-0">
+          <CheckIcon className="w-4 h-4 text-white" />
+        </div>
+        <span className="text-sm font-medium text-green-700 dark:text-green-400 flex-1">
+          {title}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Status Message Component
+function StatusMessage({ 
+  status, 
+  message 
+}: { 
+  status: string; 
+  message: string;
+}) {
+  const statusColors = {
+    analyzing: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    generating: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    running: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  };
+
+  const colorClass = statusColors[status as keyof typeof statusColors] || statusColors.generating;
+
+  return (
+    <div className={cn(
+      "rounded-lg border p-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
+      colorClass
+    )}>
+      <div className="flex items-center gap-2">
+        <Spinner className="w-4 h-4" />
+        <span className="text-sm font-medium">{message}</span>
+      </div>
+    </div>
+  );
+}
+
+// Chat Message Bubble Component
+function ChatBubble({ message, role }: { message: string; role: string }) {
+  const isUser = role === "user";
+  return (
+    <div className={cn(
+      "rounded-lg p-3 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300",
+      isUser 
+        ? "bg-foreground text-background ml-auto max-w-[80%]" 
+        : "bg-muted text-foreground mr-auto max-w-[80%]"
+    )}>
+      {message}
+    </div>
+  );
+}
+
+// Selected Frame Card Component
+function SelectedFrameCard({ title }: { title: string }) {
+  const screenName = `@${title}`;
+  return (
+    <div className="rounded-lg border border-blue-200 dark:border-blue-800/30 bg-blue-50/50 dark:bg-blue-900/10 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center flex-shrink-0">
+          <ImageIcon className="w-4 h-4 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-muted-foreground mb-1">Editing screen</p>
+          <p className="text-sm font-medium text-blue-700 dark:text-blue-400 truncate">
+            {screenName}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Chat Messages Component
+function ChatMessages({ 
+  loadingStatus, 
+  frames,
+  projectId,
+  selectedFrame,
+  chatMessages = []
+}: { 
+  loadingStatus: string | null;
+  frames?: Array<{ id: string; title: string; isLoading?: boolean; htmlContent?: string }>;
+  projectId: string;
+  selectedFrame: { id: string; title: string } | null;
+  chatMessages?: Array<{ id: string; message: string; role: string; frameId?: string | null; createdAt: Date }>;
+}) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const allFrames = frames || [];
+  
+  // Get frames that are currently loading
+  const loadingFrames = allFrames.filter((f) => f.isLoading);
+  // Get the first loading frame (currently being generated)
+  const currentlyGeneratingFrame = loadingFrames[0] || null;
+  
+  // Get completed frames (have htmlContent and are not loading)
+  const completedFrames = allFrames.filter(
+    (f) => !f.isLoading && f.htmlContent && f.htmlContent.trim().length > 0
+  );
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [loadingStatus, currentlyGeneratingFrame, completedFrames.length, chatMessages.length, selectedFrame]);
+
+  const getStatusMessage = () => {
+    switch (loadingStatus) {
+      case "analyzing":
+        return "Analyzing your prompt...";
+      case "generating":
+        return "Generating designs...";
+      case "running":
+        return "Starting generation...";
+      default:
+        return null;
+    }
+  };
+
+  const statusMessage = getStatusMessage();
+  const hasContent = loadingStatus || currentlyGeneratingFrame || completedFrames.length > 0 || chatMessages.length > 0 || selectedFrame;
+
+  if (!hasContent) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <MessageSquare className="w-8 h-8 text-muted-foreground/50 mb-2" />
+        <p className="text-sm text-muted-foreground">
+          Start generating designs
+        </p>
+        <p className="text-xs text-muted-foreground/70 mt-1">
+          Your generation status will appear here
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Show selected frame if one is selected */}
+      {selectedFrame && (
+        <SelectedFrameCard title={selectedFrame.title} />
+      )}
+      
+      {/* Show chat messages */}
+      {chatMessages.map((msg) => (
+        <ChatBubble key={msg.id} message={msg.message} role={msg.role} />
+      ))}
+      
+      {/* Only show status message for analyzing/running, not for generating */}
+      {statusMessage && loadingStatus !== "generating" && (
+        <StatusMessage status={loadingStatus || "generating"} message={statusMessage} />
+      )}
+      {/* Show completed frames first */}
+      {completedFrames.map((frame) => (
+        <CompletedFrameCard key={frame.id} title={frame.title} />
+      ))}
+      {/* Show shimmer only for the currently generating frame */}
+      {currentlyGeneratingFrame && (
+        <ShimmerCard key={currentlyGeneratingFrame.id} title={currentlyGeneratingFrame.title} />
+      )}
+      <div ref={messagesEndRef} />
+    </div>
+  );
+}
+
+const DesignSidebar = ({ projectId, onGenerate, isPending }: DesignSidebarProps) => {
   const {
     mode,
     links,
@@ -46,16 +252,84 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
     fonts,
     font: currentFont,
     setFont,
+    loadingStatus,
+    selectedFrame,
   } = useCanvas();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [promptText, setPromptText] = useState<string>("");
   const [activeTab, setActiveTab] = useState<DesignTab>("chat");
+  const queryClient = useQueryClient();
+  const regenerateFrame = useRegenerateFrame(projectId);
 
-  const handleGenerate = () => {
+  // Load chat messages
+  const { data: chatData } = useQuery({
+    queryKey: ["chat", projectId],
+    queryFn: async () => {
+      const res = await axios.get(`/api/project/${projectId}/chat`);
+      return res.data.messages || [];
+    },
+    enabled: !!projectId,
+  });
+
+  const chatMessages = chatData || [];
+
+  // Mutation to save chat message
+  const saveMessageMutation = useMutation({
+    mutationFn: async ({ message, frameId, role = "user" }: { message: string; frameId?: string | null; role?: string }) => {
+      const res = await axios.post(`/api/project/${projectId}/chat`, {
+        message,
+        frameId: frameId || null,
+        role,
+      });
+      return res.data.message;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat", projectId] });
+    },
+  });
+
+  const handleGenerate = async () => {
     if (!promptText.trim()) return;
-    const text = promptText;
+    let text = promptText.trim();
     setPromptText("");
-    onGenerate(text);
+
+    // If a frame is selected, edit it; otherwise generate new designs
+    if (selectedFrame) {
+      // Format message with @ScreenName if not already present
+      const screenName = `@${selectedFrame.title}`;
+      const messageText = text.startsWith("@") ? text : `${screenName} ${text}`;
+      
+      // Save user message to chat
+      await saveMessageMutation.mutateAsync({
+        message: messageText,
+        frameId: selectedFrame.id,
+        role: "user",
+      });
+
+      // Regenerate the selected frame (use the original prompt without @ScreenName for the API)
+      regenerateFrame.mutate(
+        { frameId: selectedFrame.id, prompt: text },
+        {
+          onSuccess: () => {
+            // Save assistant message
+            saveMessageMutation.mutate({
+              message: `Editing ${screenName}...`,
+              frameId: selectedFrame.id,
+              role: "assistant",
+            });
+          },
+        }
+      );
+    } else {
+      // Save user message to chat
+      await saveMessageMutation.mutateAsync({
+        message: text,
+        role: "user",
+      });
+
+      // Generate new designs
+      onGenerate(text);
+    }
   };
 
   return (
@@ -163,14 +437,28 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
 
           {activeTab === "chat" && (
             <div className="flex flex-col h-full p-4">
-              <div className="flex-1" />
+              <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+                <ChatMessages 
+                  loadingStatus={loadingStatus}
+                  frames={frames}
+                  projectId={projectId}
+                  selectedFrame={selectedFrame}
+                  chatMessages={chatMessages}
+                />
+              </div>
 
               <div className="flex flex-col gap-0 bg-[#F4F4F5] dark:bg-[#242424] rounded-none border-none shadow-sm">
                 <div className="p-3 pb-2">
                   <Textarea
-                    placeholder="What changes do you want to make ?"
+                    placeholder={selectedFrame ? `@${selectedFrame.title} What changes do you want?` : "What changes do you want to make ?"}
                     value={promptText}
                     onChange={(e) => setPromptText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleGenerate();
+                      }
+                    }}
                     className="min-h-[80px] rounded-none resize-none  border-0 bg-white dark:bg-[#202020] shadow-none focus-visible:ring-0 placeholder:text-neutral-500"
                   />
                 </div>
@@ -195,12 +483,12 @@ const DesignSidebar = ({ onGenerate, isPending }: DesignSidebarProps) => {
                     </Button>
 
                     <Button
-                      disabled={isPending || !promptText.trim()}
+                      disabled={(isPending || regenerateFrame.isPending || saveMessageMutation.isPending) || !promptText.trim()}
                       className="h-8 px-4 bg-foreground text-background hover:bg-foreground/90 rounded-none"
                       onClick={handleGenerate}
                       type="button"
                     >
-                      {isPending ? <Spinner className="size-4" /> : "Submit"}
+                      {(isPending || regenerateFrame.isPending || saveMessageMutation.isPending) ? <Spinner className="size-4" /> : "Submit"}
                     </Button>
                   </div>
                 </div>

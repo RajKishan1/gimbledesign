@@ -7,6 +7,19 @@ import { WEB_ANALYSIS_PROMPT, WEB_GENERATION_SYSTEM_PROMPT } from "@/lib/prompt"
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
 import { unsplashTool } from "../tool";
+import {
+  buildDesignContext,
+  generateFullContext,
+  updateDesignContext,
+  DesignContext,
+} from "@/lib/design-context-manager";
+import {
+  ComponentRegistry,
+  buildComponentRegistry,
+  updateRegistryIfNeeded,
+  generateFullScreenContext,
+  detectDesignSystem,
+} from "@/lib/component-registry";
 
 // Schema for individual screen
 const ScreenSchema = z.object({
@@ -58,6 +71,10 @@ const FlexibleAppSchema = z.object({
     ),
 });
 
+// Fast model for analysis, quality model for generation
+const FAST_MODEL = "google/gemini-3-flash-preview";
+const QUALITY_MODEL = "google/gemini-3-pro-preview";
+
 export const generateWebScreens = inngest.createFunction(
   { id: "generate-web-screens" },
   { event: "ui/generate.web-screens" },
@@ -72,7 +89,10 @@ export const generateWebScreens = inngest.createFunction(
     } = event.data;
     const CHANNEL = `user:${userId}`;
     const isExistingGeneration = Array.isArray(frames) && frames.length > 0;
-    const selectedModel = model || "google/gemini-3-pro-preview";
+    
+    // Use fast model for analysis, user-selected or quality model for generation
+    const analysisModel = FAST_MODEL;
+    const generationModel = model || QUALITY_MODEL;
 
     await publish({
       channel: CHANNEL,
@@ -83,7 +103,7 @@ export const generateWebScreens = inngest.createFunction(
       },
     });
 
-    //Analyze or plan
+    // PHASE 1: Analysis (using fast model)
     const analysis = await step.run("analyze-and-plan-screens", async () => {
       await publish({
         channel: CHANNEL,
@@ -94,13 +114,10 @@ export const generateWebScreens = inngest.createFunction(
         },
       });
 
-      const contextHTML = isExistingGeneration
-        ? frames
-            .map(
-              (frame: FrameType) =>
-                `<!-- ${frame.title} -->\n${frame.htmlContent}`
-            )
-            .join("\n\n")
+      const contextSummary = isExistingGeneration
+        ? `Existing web app with ${frames.length} screens. Theme: ${existingTheme}. 
+           Screen names: ${frames.map((f: FrameType) => f.title).join(", ")}.
+           Maintain exact same sidebar, navigation, design patterns, and visual style.`
         : "";
 
       const analysisPrompt = isExistingGeneration
@@ -108,17 +125,13 @@ export const generateWebScreens = inngest.createFunction(
           USER REQUEST: ${prompt}
           SELECTED THEME: ${existingTheme}
 
-          EXISTING SCREENS (analyze for consistency, navigation, layout, design system):
-          ${contextHTML}
+          ${contextSummary}
 
          CRITICAL REQUIREMENTS - MAINTAIN DETAILED CONTEXT:
-          - **Analyze ALL existing screens' layout, navigation patterns, and design system
-          - **Extract the EXACT sidebar navigation structure, menu items, and styling - MUST reuse identically
-          - **Identify common components (cards, buttons, headers, spacing patterns) for exact reuse
-          - **Maintain the same visual hierarchy, spacing scale, typography, and color usage
-          - **Generate new screens that seamlessly blend - users should see perfect visual continuity
-          - **Context awareness: Each new screen must reference and maintain consistency with ALL previous screens
-          - **Design system: All screens must share the same design language and component patterns
+          - Generate NEW screens that seamlessly blend with existing ones
+          - Match the sidebar navigation and design system already established
+          - Context awareness: Each new screen must maintain consistency with ALL previous screens
+          - Design system: All screens must share the same design language and component patterns
         `.trim()
         : `
           USER REQUEST: ${prompt}
@@ -148,21 +161,12 @@ export const generateWebScreens = inngest.createFunction(
           - Focus on what the user ACTUALLY requested
           - Don't force a structure that doesn't fit the request
           
-          EXAMPLES:
-          - "Create 4 screens for a dashboard" → Generate exactly 4 screens (e.g., overview, analytics, reports, settings)
-          - "Design a complete CRM web app" → Generate 10-12 screens (login, dashboard, contacts, deals, etc.)
-          - "Single landing page" → Generate exactly 1 screen
-          - "Login and dashboard screens" → Generate exactly 2 screens
-          
           Set totalScreenCount based on the user's actual request, not a predetermined formula.
         `.trim();
 
-      // Always use the flexible schema
-      const schemaToUse = FlexibleAppSchema;
-
       const { object } = await generateObject({
-        model: openrouter.chat(selectedModel),
-        schema: schemaToUse,
+        model: openrouter.chat(analysisModel),
+        schema: FlexibleAppSchema,
         system: WEB_ANALYSIS_PROMPT,
         prompt: analysisPrompt,
       });
@@ -197,32 +201,104 @@ export const generateWebScreens = inngest.createFunction(
       return { ...object, themeToUse };
     });
 
-    // Actual generation of each screen
-    const generatedFrames: typeof frames = isExistingGeneration
-      ? [...frames]
-      : [];
+    // PHASE 2: Sequential Generation with ENHANCED CONTEXT FIDELITY
+    // Uses Component Registry (immutable) + Design DNA + Recent Screen approach
+    const generatedFrames: typeof frames = isExistingGeneration ? [...frames] : [];
+    const selectedTheme = THEME_LIST.find((t) => t.id === analysis.themeToUse);
+    const fullThemeCSS = `${BASE_VARIABLES}\n${selectedTheme?.style || ""}`;
+
+    // Design Context - built from first screens, maintained throughout
+    let designContext: DesignContext = isExistingGeneration
+      ? buildDesignContext(frames, analysis.themeToUse)
+      : buildDesignContext([], analysis.themeToUse);
+
+    // Component Registry - stores exact HTML components for perfect consistency
+    // Built after first screen, used for ALL subsequent screens
+    let componentRegistry: ComponentRegistry | null = isExistingGeneration && frames.length > 0
+      ? buildComponentRegistry(frames[0], prompt)
+      : null;
+
+    // Detect if user requested a specific design system
+    const designSystemSpec = detectDesignSystem(prompt);
+    const designSystemContext = designSystemSpec.detected 
+      ? `
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  DESIGN SYSTEM REQUIRED: ${designSystemSpec.name?.toUpperCase()}
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+You MUST follow these rules on EVERY screen:
+${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+⚠️  VIOLATION OF THESE RULES WILL BREAK DESIGN CONSISTENCY
+`
+      : '';
 
     for (let i = 0; i < analysis.screens.length; i++) {
       const screenPlan = analysis.screens[i];
-      const selectedTheme = THEME_LIST.find(
-        (t) => t.id === analysis.themeToUse
-      );
 
-      //Combine the Theme Styles + Base Variable
-      const fullThemeCSS = `
-        ${BASE_VARIABLES}
-        ${selectedTheme?.style || ""}
-      `;
+      await step.run(`generate-screen-${i}`, async () => {
+        // After generating first screen, build Component Registry
+        if (generatedFrames.length === 1 && !componentRegistry) {
+          componentRegistry = buildComponentRegistry(generatedFrames[0] as FrameType, prompt);
+        }
+        
+        // After generating second screen, update registry if needed
+        if (generatedFrames.length === 2 && componentRegistry) {
+          componentRegistry = updateRegistryIfNeeded(componentRegistry, generatedFrames[1] as FrameType);
+        }
 
-      // Get all previous existing or generated frames
-      const allPreviousFrames = generatedFrames.slice(0, i);
-      const previousFramesContext = allPreviousFrames
-        .map((f: FrameType) => `<!-- ${f.title} -->\n${f.htmlContent}`)
-        .join("\n\n");
+        // After generating first 2-3 screens, rebuild design context
+        if (generatedFrames.length >= 2 && generatedFrames.length <= 3) {
+          designContext = buildDesignContext(generatedFrames, analysis.themeToUse);
+        }
 
-      await step.run(`generated-screen-${i}`, async () => {
+        // Generate context string based on whether we have a Component Registry
+        let contextString: string;
+        
+        if (componentRegistry && i > 0) {
+          // Use Component Registry for enhanced consistency
+          const recentFrame = generatedFrames.length > 0 
+            ? generatedFrames[generatedFrames.length - 1] as FrameType 
+            : null;
+          
+          contextString = generateFullScreenContext(
+            componentRegistry,
+            recentFrame,
+            i,
+            screenPlan.name,
+            analysis.screens.length
+          );
+          
+          // Also include Design DNA for additional patterns
+          contextString += '\n\n' + generateFullContext(
+            designContext,
+            screenPlan,
+            [], // Don't include recent frames again
+            i,
+            analysis.screens.length
+          );
+        } else if (designContext.isInitialized) {
+          // Fallback to Design DNA approach
+          const recentFrames = generatedFrames.slice(-2);
+          contextString = generateFullContext(
+            designContext,
+            screenPlan,
+            recentFrames,
+            i,
+            analysis.screens.length
+          );
+        } else {
+          contextString = `No previous screens - this is the first screen. Establish the Design DNA that ALL subsequent screens will follow.`;
+        }
+
+        // Determine which sidebar item should be active
+        const sidebarActiveHint = componentRegistry?.sidebar 
+          ? `\n\nACTIVE SIDEBAR ITEM: For this screen ("${screenPlan.name}"), highlight the appropriate sidebar navigation item.`
+          : '';
+
         const result = await generateText({
-          model: openrouter.chat(selectedModel),
+          model: openrouter.chat(generationModel),
           system: WEB_GENERATION_SYSTEM_PROMPT,
           tools: {
             searchUnsplash: unsplashTool,
@@ -235,62 +311,56 @@ export const generateWebScreens = inngest.createFunction(
           - Screen Purpose: ${screenPlan.purpose}
 
           VISUAL DESCRIPTION: ${screenPlan.visualDescription}
+          ${designSystemContext}
 
-          EXISTING SCREENS CONTEXT (CRITICAL - MAINTAIN CONSISTENCY):
-          ${
-            previousFramesContext ||
-            "No previous screens - this is the first screen"
-          }
+          ${contextString}
+          ${sidebarActiveHint}
 
-          THEME VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare these):
+          THEME CSS VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare):
           ${fullThemeCSS}
 
-        CRITICAL REQUIREMENTS - WEB DESKTOP INTERFACE (1440px WIDTH):
+          ════════════════════════════════════════════════════════════════════════════
+          WEB DESKTOP INTERFACE INSTRUCTIONS (1440px WIDTH)
+          ════════════════════════════════════════════════════════════════════════════
 
-        **CONTEXT MAINTENANCE (HIGHEST PRIORITY):**
-        - **If previous screens exist:** You MUST extract and EXACTLY reuse their design patterns:
-          - Copy the EXACT sidebar navigation structure, menu items, and styling - do NOT recreate or modify it
-          - Extract header/navbar components and reuse their exact styling
-          - Reuse card designs, button styles, spacing patterns from previous screens
-          - Maintain the exact same visual hierarchy, spacing scale, and color usage
-          - Use the same icon sizes and styles
-          - Keep typography hierarchy consistent
-        - **This screen MUST look like it belongs in the same app** - users should see seamless visual continuity
-        - **Design System Consistency:** All screens share the same design language, components, and patterns
+          ${i === 0 ? `
+          **FIRST SCREEN - ESTABLISH DESIGN DNA:**
+          You are creating the FOUNDATION for all subsequent web screens. Every decision you make here will be replicated:
+          - Sidebar navigation structure (items, icons, styling) - THESE ARE LOCKED
+          - Typography hierarchy (heading sizes, body text, captions)
+          - Spacing system (padding, margins, gaps - use 16px, 24px, 32px, 48px scale)
+          - Component patterns (cards, buttons, tables, inputs)
+          - Visual style (shadows, borders, hover states)
+          
+          Make deliberate, professional choices that will scale across all screens.
+          The sidebar items and icons you choose here are LOCKED for the entire app.
+          ` : `
+          **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${analysis.screens.length}):**
+          This screen MUST be indistinguishable in style from previous screens.
+          
+          MANDATORY REQUIREMENTS:
+          1. SIDEBAR: Copy EXACTLY from Component Registry - same items, icons, order, styling
+          2. HEADER: Use same header structure and elements
+          3. ICONS: Use ONLY icons from Icon Lock - NO substitutions
+          4. TYPOGRAPHY: Same heading sizes, font weights, text colors
+          5. SPACING: Same padding, margins, gaps (16px, 24px, 32px, 48px scale)
+          6. Only the main CONTENT area changes - sidebar and chrome stay IDENTICAL
+          7. Highlight the appropriate sidebar item for "${screenPlan.name}"
+          
+          ⚠️ If you change sidebar items, icons, or styling, the app will look broken.
+          `}
 
-        **PROFESSIONAL WEB DESIGN STANDARDS:**
-        - Desktop-first layout optimized for 1440px width
-        - Use sidebar navigation (fixed left side, typically 240-280px wide) OR top navbar with horizontal menu
-        - Main content area should utilize the full remaining width
-        - Grid systems: Use CSS Grid or Flexbox for responsive layouts
-        - Generous whitespace and professional spacing (16px, 24px, 32px, 48px scale)
-        - Modern, clean aesthetics - subtle shadows, purposeful gradients
-        - Clear visual hierarchy - primary content prominent, secondary content subtle
-        - Use modern Hugeicons stroke icons exclusively (free version) - via <iconify-icon icon="hugeicons:NAME"></iconify-icon>
-        - Ensure proper hover states for all interactive elements
+          **LAYOUT STRUCTURE:**
+          - Root: \`relative w-full min-h-screen flex\`
+          - Sidebar: \`fixed left-0 top-0 h-screen w-64 bg-[var(--card)]\`
+          - Main: \`flex-1 ml-64 p-8\`
 
-        1. **Generate ONLY raw HTML markup for this web application screen using Tailwind CSS.**
-          Use Tailwind classes for layout, spacing, typography, shadows, etc.
-          Use theme CSS variables ONLY for color-related properties (bg-[var(--background)], text-[var(--foreground)], border-[var(--border)], ring-[var(--ring)], etc.)
-        2. **Layout structure for web (1440px):**
-          - Root: \`relative w-full min-h-screen flex\` (for sidebar + content layout)
-          - Sidebar (if applicable): \`fixed left-0 top-0 h-screen w-64 bg-[var(--card)]\` with navigation items
-          - Main content: \`flex-1 ml-64\` (if sidebar exists) or full width
-          - Top navbar (if no sidebar): \`fixed top-0 left-0 right-0 h-16 bg-[var(--card)]\`
-        3. **All content must be inside proper semantic HTML structure.**
-          - Use proper sections, headers, main, aside tags
-          - Scrollable content in inner containers with hidden scrollbars: [&::-webkit-scrollbar]:hidden scrollbar-none
-        4. **For regular content:**
-          - Use \`w-full min-h-screen\` on the main container
-        5. **For z-index layering:**
-          - Sidebar/navbar: z-40, Dropdowns: z-50, Modals: z-60
-        6. **Output raw HTML only, starting with <div>.**
-          - Do not include markdown, comments, <html>, <body>, or <head>
-        7. **Ensure desktop-optimized rendering:**
-          - Multi-column layouts where appropriate
-          - Data tables with proper structure
-          - Charts and visualizations sized for desktop viewing
-        Generate the complete, production-ready HTML for this web screen now
+          **OUTPUT RULES:**
+          1. Generate ONLY raw HTML starting with <div>
+          2. Use Tailwind CSS for layout/spacing, CSS variables for colors
+          3. No markdown, comments, <html>, <body>, or <head>
+          
+          Generate the complete, production-ready HTML for this web screen now.
       `.trim(),
         });
 
@@ -299,7 +369,6 @@ export const generateWebScreens = inngest.createFunction(
         finalHtml = match ? match[0] : finalHtml;
         finalHtml = finalHtml.replace(/```/g, "");
 
-        //Create the frame
         const frame = await prisma.frame.create({
           data: {
             projectId,
@@ -308,8 +377,14 @@ export const generateWebScreens = inngest.createFunction(
           },
         });
 
-        // Add to generatedFrames for next iteration's context
         generatedFrames.push(frame);
+
+        // Update design context
+        designContext = updateDesignContext(
+          designContext,
+          frame,
+          generatedFrames
+        );
 
         await publish({
           channel: CHANNEL,

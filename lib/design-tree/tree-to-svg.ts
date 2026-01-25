@@ -27,6 +27,7 @@ import {
   ButtonNode,
   RectangleNode,
   InputNode,
+  SvgNode,
   Fill,
   Shadow,
   Stroke,
@@ -329,8 +330,12 @@ function renderNodeToSvg(
     case 'rectangle':
       renderRectangle(node as RectangleNode, elements, x, y, w, h, scale);
       break;
+    case 'svg':
+      renderSvg(node as SvgNode, elements, x, y, w, h, scale);
+      break;
     default:
-      renderRectangle(node as RectangleNode, elements, x, y, w, h, scale);
+      // Fallback for unknown types - render as rectangle
+      renderRectangle(node as unknown as RectangleNode, elements, x, y, w, h, scale);
   }
 }
 
@@ -653,6 +658,26 @@ function renderRectangle(
   elements.push(`    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"${radius}${stroke}${opacity}${shadow}/>`);
 }
 
+function renderSvg(
+  node: SvgNode,
+  elements: string[],
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  scale: number
+): void {
+  const opacity = node.opacity !== 1 ? ` opacity="${node.opacity}"` : '';
+  const viewBox = node.viewBox || `0 0 ${w} ${h}`;
+  
+  // Wrap the SVG content in a group with proper positioning
+  elements.push(`    <g transform="translate(${x}, ${y})"${opacity}>`);
+  elements.push(`      <svg width="${w}" height="${h}" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet">`);
+  elements.push(`        ${node.svgContent}`);
+  elements.push(`      </svg>`);
+  elements.push(`    </g>`);
+}
+
 // ============================================================================
 // ATTRIBUTE HELPERS
 // ============================================================================
@@ -869,4 +894,4 @@ function escapeXml(text: string): string {
 // EXPORTS
 // ============================================================================
 
-export { convertTreeToSvg };
+// convertTreeToSvg is already exported above

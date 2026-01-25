@@ -54,26 +54,22 @@ const DeviceFrame = ({
   } = usePrototype();
   
   // Device dimensions based on type
-  // For web, height is dynamic (auto), for mobile/creative it's fixed
+  // Both web and mobile have dynamic (auto) height
   const getDeviceDimensions = () => {
-    switch (deviceType) {
-      case "web":
-        return { width: 1440, height: null, minHeight: 800 }; // Height is dynamic for web
-      case "creative":
-        return { width: 1290, height: 2796, minHeight: 2796 };
-      default: // mobile
-        return { width: 430, height: 932, minHeight: 932 };
+    if (deviceType === "web") {
+      return { width: 1440, height: null, minHeight: 800 }; // Height is dynamic for web
     }
+    return { width: 430, height: null, minHeight: 932 }; // mobile - height is dynamic
   };
   const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT, minHeight: DEVICE_MIN_HEIGHT } = getDeviceDimensions();
-  const isFlexibleHeight = deviceType === "web"; // Web has flexible height
+  const isFlexibleHeight = true; // Both web and mobile have flexible height
   
   const [frameSize, setFrameSize] = useState({
     width: DEVICE_WIDTH,
     height: DEVICE_HEIGHT || DEVICE_MIN_HEIGHT,
   });
   
-  // Track actual content height for web designs
+  // Track actual content height for both web and mobile designs
   const [contentHeight, setContentHeight] = useState<number>(DEVICE_MIN_HEIGHT);
   const [framePosition, setFramePosition] = useState(initialPosition);
   const [frameRect, setFrameRect] = useState<DOMRect | null>(null);
@@ -98,14 +94,12 @@ const DeviceFrame = ({
       x: framePosition.x,
       y: framePosition.y,
       width: DEVICE_WIDTH,
-      height: isFlexibleHeight ? contentHeight : (DEVICE_HEIGHT || DEVICE_MIN_HEIGHT),
+      height: contentHeight,
     });
-  }, [frameId, framePosition, updateScreenPosition, DEVICE_WIDTH, DEVICE_HEIGHT, DEVICE_MIN_HEIGHT, isFlexibleHeight, contentHeight]);
+  }, [frameId, framePosition, updateScreenPosition, DEVICE_WIDTH, contentHeight]);
 
-  // Listen for iframe content height changes (for web designs with flexible height)
+  // Listen for iframe content height changes (for both web and mobile designs with flexible height)
   useEffect(() => {
-    if (!isFlexibleHeight) return;
-    
     const handleMessage = (event: MessageEvent) => {
       if (
         event.data.type === "FRAME_HEIGHT" &&
@@ -117,7 +111,7 @@ const DeviceFrame = ({
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [frameId, isFlexibleHeight, DEVICE_MIN_HEIGHT]);
+  }, [frameId, DEVICE_MIN_HEIGHT]);
 
   // Track frame rect for element overlay
   useEffect(() => {
@@ -137,32 +131,18 @@ const DeviceFrame = ({
     };
   }, [framePosition]);
 
-  // Disable dynamic height updates - use fixed iPhone 17 Pro Max dimensions
-  // useEffect(() => {
-  //   const handleMessage = (event: MessageEvent) => {
-  //     if (
-  //       event.data.type === "FRAME_HEIGHT" &&
-  //       event.data.frameId === frameId
-  //     ) {
-  //       setFrameSize((prev) => ({
-  //         ...prev,
-  //         height: event.data.height,
-  //       }));
-  //     }
-  //   };
-  //   window.addEventListener("message", handleMessage);
-  //   return () => window.removeEventListener("message", handleMessage);
-  // }, [frameId]);
+  // Note: Dynamic height updates are now enabled for both mobile and web
+  // The height listener is implemented above (lines 101-116) using contentHeight state
 
   // Calculate the actual height to use (must be defined before callbacks that use it)
-  const actualHeight = isFlexibleHeight ? contentHeight : (DEVICE_HEIGHT || DEVICE_MIN_HEIGHT);
+  const actualHeight = contentHeight;
 
   const handleDownloadPng = useCallback(async () => {
     if (isDownloading) return;
     setIsDownloading(true);
     try {
-      // For web designs, use actual content height; for others use fixed height
-      const screenshotHeight = isFlexibleHeight ? contentHeight : actualHeight;
+      // Use actual content height
+      const screenshotHeight = contentHeight;
       
       const response = await axios.post(
         "/api/screenshot",
@@ -190,7 +170,7 @@ const DeviceFrame = ({
     } finally {
       setIsDownloading(false);
     }
-  }, [fullHtml, isDownloading, title, isFlexibleHeight, contentHeight, actualHeight, DEVICE_WIDTH]);
+    }, [fullHtml, isDownloading, title, contentHeight, DEVICE_WIDTH]);
 
   const handleRegenerate = useCallback(
     (prompt: string) => {
@@ -217,8 +197,8 @@ const DeviceFrame = ({
     if (isCopyingToFigma) return;
     setIsCopyingToFigma(true);
     try {
-      // For web designs, use actual content height; for others use fixed height
-      const figmaHeight = isFlexibleHeight ? contentHeight : actualHeight;
+      // Use actual content height
+      const figmaHeight = contentHeight;
       
       // Pass the iframe reference for better conversion
       await copyDesignToFigma(
@@ -236,7 +216,7 @@ const DeviceFrame = ({
     } finally {
       setIsCopyingToFigma(false);
     }
-  }, [html, title, isCopyingToFigma, isFlexibleHeight, contentHeight, actualHeight, DEVICE_WIDTH]);
+    }, [html, title, isCopyingToFigma, contentHeight, DEVICE_WIDTH]);
 
   // Handle click in prototype mode - used for drop target
   const handlePrototypeClick = useCallback(
@@ -358,15 +338,15 @@ const DeviceFrame = ({
         <div
           className={cn(
             `relative w-full h-auto overflow-hidden bg-black shadow-2xl`,
-            deviceType === "mobile" ? "rounded-[36px]" : deviceType === "creative" ? "rounded-xl" : "rounded-lg",
+            deviceType === "mobile" ? "rounded-[36px]" : "rounded-lg",
             isSelected && toolMode !== TOOL_MODE_ENUM.HAND && !isPrototypeMode && "rounded-none",
-            isPrototypeMode && (deviceType === "mobile" ? "rounded-2xl" : deviceType === "creative" ? "rounded-lg" : "rounded-lg")
+            isPrototypeMode && (deviceType === "mobile" ? "rounded-2xl" : "rounded-lg")
           )}
           onClick={handlePrototypeClick}
         >
           <div className={cn(
             "relative bg-white dark:bg-background",
-            isFlexibleHeight ? "overflow-visible" : "overflow-hidden"
+            "overflow-visible"
           )}>
             {isLoading ? (
               <DeviceFrameSkeleton

@@ -13,23 +13,22 @@ export const CANVAS_MODE_ENUM = {
 
 export type CanvasModeType = (typeof CANVAS_MODE_ENUM)[keyof typeof CANVAS_MODE_ENUM];
 
-// Device type enum for Mobile vs Web vs Creative designs
+// Device type enum for Mobile vs Web designs
 export const DEVICE_TYPE_ENUM = {
   MOBILE: "mobile",
   WEB: "web",
-  CREATIVE: "creative",
 } as const;
 
 export type DeviceType = (typeof DEVICE_TYPE_ENUM)[keyof typeof DEVICE_TYPE_ENUM];
 
 // Device dimensions
-// Note: Web has flexible height (minHeight only), Mobile and Creative have fixed heights
+// Note: Both Web and Mobile have flexible height (minHeight only)
 export const DEVICE_DIMENSIONS = {
   MOBILE: {
     width: 430,
-    height: 932,
+    height: null, // Flexible - determined by content
     minHeight: 932,
-    flexibleHeight: false,
+    flexibleHeight: true,
     label: "iPhone 17 Pro Max",
   },
   WEB: {
@@ -38,13 +37,6 @@ export const DEVICE_DIMENSIONS = {
     minHeight: 800,
     flexibleHeight: true,
     label: "Desktop (1440px)",
-  },
-  CREATIVE: {
-    width: 1290,
-    height: 2796,
-    minHeight: 2796,
-    flexibleHeight: false,
-    label: "App Store Screenshot",
   },
 } as const;
 

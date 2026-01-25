@@ -12,6 +12,7 @@ import {
   DesignNode,
   DesignTree,
   FrameNode,
+  GroupNode,
   TextNode,
   ImageNode,
   IconNode,
@@ -133,7 +134,7 @@ function renderFrameNode(
 }
 
 function renderGroupNode(
-  node: FrameNode,
+  node: GroupNode,
   baseStyles: string,
   dataAttrs: string,
   options: RenderOptions

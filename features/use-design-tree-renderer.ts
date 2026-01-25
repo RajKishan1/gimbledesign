@@ -102,7 +102,19 @@ export function useDesignTreeRenderer(
     try {
       const parsed = safeParseDesignTree(json);
       if (parsed) {
-        setTreeState(parsed);
+        // Ensure required fields are present and properly typed
+        const treeWithDefaults: DesignTree = {
+          ...parsed,
+          createdAt: parsed.createdAt ?? new Date(),
+          updatedAt: parsed.updatedAt ?? new Date(),
+          version: parsed.version ?? 1,
+          themeVariables: parsed.themeVariables 
+            ? (Object.fromEntries(
+                Object.entries(parsed.themeVariables).map(([k, v]) => [k, String(v)])
+              ) as Record<string, string>)
+            : undefined,
+        };
+        setTreeState(treeWithDefaults);
         setError(null);
         return true;
       }
