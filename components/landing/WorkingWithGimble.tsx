@@ -115,7 +115,7 @@ const WorkingWithGimble = () => {
   const baseY = useMotionValue(0);
 
   useAnimationFrame((_, delta) => {
-    baseY.set(baseY.get() - delta * 0.03); // smoother speed
+    baseY.set(baseY.get() - delta * 0.07); // smoother speed
   });
 
   return (
