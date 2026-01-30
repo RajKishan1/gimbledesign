@@ -58,20 +58,10 @@ export {
   buildTextStyles,
 } from "./tree-to-html";
 
-// Tree to Figma Export (JSON format - for Figma plugin import)
-// NOTE: All container elements (frame, group, button, etc.) are now converted
-// to Figma FRAME nodes for proper layer hierarchy and auto-layout support
+// Tree to SVG Export (Figma paste - no plugin)
 export {
-  copyDesignTreeToFigma,
-  convertTreeToFigma,
-  convertTreeToFigmaPlugin,
-  convertNode as convertNodeToFigma,
-  parseColorToFigma,
-  downloadFigmaPluginJson,
-  setThemeColors,
+  copyDesignTreeAsSvg,
+  convertTreeToSvg,
   collectImageUrlsFromTree,
-} from "./tree-to-figma";
-export type { FigmaExportOptions } from "./tree-to-figma";
-
-// Tree to SVG Export (BEST for Figma clipboard paste)
-export { copyDesignTreeAsSvg, convertTreeToSvg } from "./tree-to-svg";
+} from "./tree-to-svg";
+export type { SvgExportOptions } from "./tree-to-svg";

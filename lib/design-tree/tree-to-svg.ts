@@ -1,20 +1,8 @@
 /**
  * Design Tree to SVG Export
  *
- * Converts a Design Tree to high-fidelity SVG format for visual export.
- *
- * IMPORTANT LIMITATION - SVG PASTE INTO FIGMA:
- * When pasting SVG into Figma, ALL elements become Groups or basic shapes.
- * This is a fundamental Figma limitation - SVG format cannot create Frames.
- *
- * For PROPER FRAME HIERARCHY in Figma, use:
- * - Figma Plugin JSON export → Import via XDesign Figma plugin
- * - This creates real FRAME nodes with auto-layout support
- *
- * SVG export is best for:
- * - Quick visual preview/paste
- * - Sharing designs as images
- * - Web/HTML embedding
+ * Converts a Design Tree to high-fidelity SVG for Figma (no plugin).
+ * Copy to Figma uses SVG on clipboard; paste in Figma (Ctrl+V) for vector layers.
  */
 
 import {
@@ -52,6 +40,37 @@ export interface SvgExportOptions {
   scale?: number;
   /** URL -> base64 string; images embedded as data URLs in SVG for Figma paste */
   embeddedImages?: Record<string, string>;
+}
+
+/**
+ * Collect all image URLs from a design tree (ImageNode.src and image fills).
+ * Used to resolve them to base64 before SVG export so images embed correctly.
+ */
+export function collectImageUrlsFromTree(tree: DesignTree): string[] {
+  const urls = new Set<string>();
+  function visit(node: DesignNode) {
+    if (node.type === "image" && (node as ImageNode).src) {
+      const src = (node as ImageNode).src;
+      if (src.startsWith("http") || src.startsWith("data:")) urls.add(src);
+    }
+    if (node.fills) {
+      node.fills.forEach((f) => {
+        if (
+          f.type === "image" &&
+          f.imageUrl &&
+          (f.imageUrl.startsWith("http") || f.imageUrl.startsWith("data:"))
+        ) {
+          urls.add(f.imageUrl);
+        }
+      });
+    }
+    const withChildren = node as DesignNode & { children?: DesignNode[] };
+    if (Array.isArray(withChildren.children)) {
+      withChildren.children.forEach(visit);
+    }
+  }
+  visit(tree.root);
+  return Array.from(urls);
 }
 
 /**

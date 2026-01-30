@@ -283,14 +283,6 @@ export interface SelectionState {
   hoveredId: string | null;
 }
 
-// For Figma export
-export interface FigmaExportOptions {
-  includeComponents: boolean;
-  flattenText: boolean;
-  embedImages: boolean;
-  preserveCSSVariables: boolean;
-}
-
 // ============================================================================
 // UTILITY FUNCTIONS (to be implemented)
 // ============================================================================
