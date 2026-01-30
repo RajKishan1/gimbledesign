@@ -42,8 +42,10 @@ const getLoadingText = (
 const DashboardSection = () => {
   const { data: session } = authClient.useSession();
   const user = session?.user;
+  const router = useRouter();
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("auto");
+  const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
@@ -78,7 +80,39 @@ const DashboardSection = () => {
   };
 
   const handleSubmit = async () => {
-    if (!promptText) return;
+    const hasPrompt = !!promptText?.trim();
+    const hasImage = !!referenceFile;
+
+    if (deviceType === "inspirations") {
+      if (!hasPrompt && !hasImage) return;
+      try {
+        setLoadingState("designing");
+        const formData = new FormData();
+        if (hasPrompt) formData.append("prompt", promptText.trim());
+        if (hasImage && referenceFile) formData.append("image", referenceFile);
+        formData.append("model", selectedModel);
+        const res = await fetch("/api/inspiration-redesign", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          console.error(data.error ?? data);
+          setLoadingState("idle");
+          return;
+        }
+        if (data?.data?.id) {
+          router.push(`/project/${data.data.id}`);
+        }
+        setLoadingState("idle");
+      } catch (error) {
+        console.error("Inspiration redesign error:", error);
+        setLoadingState("idle");
+      }
+      return;
+    }
+
+    if (!hasPrompt) return;
     try {
       setLoadingState("enhancing");
       const enhanceResponse = await fetch("/api/enhance-prompt", {
@@ -131,6 +165,8 @@ const DashboardSection = () => {
                   onModelChange={handleModelChange}
                   deviceType={deviceType}
                   onDeviceTypeChange={setDeviceType}
+                  referenceFile={referenceFile}
+                  onReferenceChange={setReferenceFile}
                 />
               </div>
             </div>

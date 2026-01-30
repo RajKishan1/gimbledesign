@@ -243,7 +243,7 @@ const PromptInput = ({
               variant="default"
               className="rounded-full"
               size="sm"
-              disabled={!promptText?.trim() || isLoading}
+              disabled={(!promptText?.trim() && !referenceFile) || isLoading}
               onClick={() => onSubmit?.()}
             >
               {isLoading ? (

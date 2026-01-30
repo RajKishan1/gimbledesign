@@ -4,6 +4,7 @@ import { helloWorld } from "@/inngest/functions/helloWorld";
 import { generateScreens } from "@/inngest/functions/generateScreens";
 import { generateWebScreens } from "@/inngest/functions/generateWebScreens";
 import { regenerateFrame } from "@/inngest/functions/regenerateFrame";
+import { generateInspirationVariations } from "@/inngest/functions/generateInspirationVariations";
 
 // The serve() function automatically:
 // - Detects INNGEST_SIGNING_KEY from environment for production webhook verification
@@ -16,6 +17,7 @@ export const { GET, POST, PUT } = serve({
     generateScreens,
     generateWebScreens,
     regenerateFrame,
+    generateInspirationVariations,
   ],
   // Optional: Explicitly set signing key (if not using INNGEST_SIGNING_KEY env var)
   // signingKey: process.env.INNGEST_SIGNING_KEY,
