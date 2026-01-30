@@ -1,11 +1,12 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 
 export async function GET() {
   try {
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getSession(await headers());
+    const user = session?.user;
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -36,15 +37,15 @@ export async function GET() {
     console.log("Error fetching credits:", error);
     return NextResponse.json(
       { error: "Failed to fetch credits" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getSession(await headers());
+    const user = session?.user;
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,10 +54,7 @@ export async function PATCH(request: NextRequest) {
     const { amount } = await request.json();
 
     if (typeof amount !== "number") {
-      return NextResponse.json(
-        { error: "Invalid amount" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
     // Find or create user
@@ -91,7 +89,7 @@ export async function PATCH(request: NextRequest) {
     console.log("Error updating credits:", error);
     return NextResponse.json(
       { error: "Failed to update credits" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

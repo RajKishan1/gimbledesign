@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@inngest/realtime": "^0.4.5",
-    "@kinde-oss/kinde-auth-nextjs": "^2.11.0",
-    "@kinde-oss/kinde-auth-react": "^5.10.1",
+    "better-auth": "^1.2.0",
+    "mongodb": "^6.12.0",
     "@openrouter/ai-sdk-provider": "^1.5.4",
     "@prisma/client": "^6.19.0",
     "@radix-ui/react-avatar": "^1.1.11",

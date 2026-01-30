@@ -353,7 +353,7 @@ import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import PromptInput from "@/components/prompt-input";
 import Header from "./header";
 import { useCreateProject, useGetProjects } from "@/features/use-project";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
@@ -399,7 +399,8 @@ const getLoadingText = (
 };
 
 const LandingSection = () => {
-  const { user } = useKindeBrowserClient();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>(
     "google/gemini-3-pro-preview",

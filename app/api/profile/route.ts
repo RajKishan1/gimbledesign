@@ -1,11 +1,12 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 
 export async function GET() {
   try {
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getSession(await headers());
+    const user = session?.user;
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,20 +24,19 @@ export async function GET() {
           userId: user.id,
           credits: 10.0,
           totalCreditsUsed: 0.0,
-          name: `${user.given_name || ""} ${user.family_name || ""}`.trim() || null,
-          email: user.email || null,
-          profilePicture: user.picture || null,
+          name: user.name ?? null,
+          email: user.email ?? null,
+          profilePicture: user.image ?? null,
         },
       });
     } else {
-      // Update user record with latest Kinde data if not already set
       if (!userRecord.name || !userRecord.email || !userRecord.profilePicture) {
         userRecord = await prisma.user.update({
           where: { userId: user.id },
           data: {
-            name: userRecord.name || `${user.given_name || ""} ${user.family_name || ""}`.trim() || null,
+            name: userRecord.name || user.name || null,
             email: userRecord.email || user.email || null,
-            profilePicture: userRecord.profilePicture || user.picture || null,
+            profilePicture: userRecord.profilePicture || user.image || null,
           },
         });
       }
@@ -47,9 +47,9 @@ export async function GET() {
       data: {
         id: userRecord.id,
         userId: userRecord.userId,
-        name: userRecord.name || `${user.given_name || ""} ${user.family_name || ""}`.trim(),
-        email: userRecord.email || user.email,
-        profilePicture: userRecord.profilePicture || user.picture,
+        name: userRecord.name || user.name || "",
+        email: userRecord.email || user.email || "",
+        profilePicture: userRecord.profilePicture || user.image || null,
         headerImage: userRecord.headerImage,
         credits: userRecord.credits,
         totalCreditsUsed: userRecord.totalCreditsUsed || 0,
@@ -59,15 +59,15 @@ export async function GET() {
     console.log("Error fetching profile:", error);
     return NextResponse.json(
       { error: "Failed to fetch profile" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getSession(await headers());
+    const user = session?.user;
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -87,9 +87,9 @@ export async function PATCH(request: NextRequest) {
           userId: user.id,
           credits: 10.0,
           totalCreditsUsed: 0.0,
-          name: name || `${user.given_name || ""} ${user.family_name || ""}`.trim() || null,
+          name: name || user.name || null,
           email: email || user.email || null,
-          profilePicture: profilePicture || user.picture || null,
+          profilePicture: profilePicture || user.image || null,
           headerImage: headerImage || null,
         },
       });
@@ -104,7 +104,8 @@ export async function PATCH(request: NextRequest) {
 
       if (name !== undefined) updateData.name = name;
       if (email !== undefined) updateData.email = email;
-      if (profilePicture !== undefined) updateData.profilePicture = profilePicture;
+      if (profilePicture !== undefined)
+        updateData.profilePicture = profilePicture;
       if (headerImage !== undefined) updateData.headerImage = headerImage;
 
       userRecord = await prisma.user.update({
@@ -118,9 +119,9 @@ export async function PATCH(request: NextRequest) {
       data: {
         id: userRecord.id,
         userId: userRecord.userId,
-        name: userRecord.name || `${user.given_name || ""} ${user.family_name || ""}`.trim(),
-        email: userRecord.email || user.email,
-        profilePicture: userRecord.profilePicture || user.picture,
+        name: userRecord.name || user.name || "",
+        email: userRecord.email || user.email || "",
+        profilePicture: userRecord.profilePicture || user.image || null,
         headerImage: userRecord.headerImage,
         credits: userRecord.credits,
         totalCreditsUsed: userRecord.totalCreditsUsed || 0,
@@ -130,7 +131,7 @@ export async function PATCH(request: NextRequest) {
     console.log("Error updating profile:", error);
     return NextResponse.json(
       { error: "Failed to update profile" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

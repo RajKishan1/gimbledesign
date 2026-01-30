@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 // Cache the Chromium executable path to avoid re-downloading
 let cachedExecutablePath: string | null = null;
 let downloadPromise: Promise<string> | null = null;
@@ -38,8 +39,8 @@ export async function POST(req: Request) {
 
   try {
     const { html, width = 800, height = 600, projectId } = await req.json();
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getSession(await headers());
+    const user = session?.user;
 
     if (!user) throw new Error("Unauthorized");
     const userId = user.id;

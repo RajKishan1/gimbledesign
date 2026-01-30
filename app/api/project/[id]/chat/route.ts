@@ -1,17 +1,18 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 
 // GET - Retrieve chat messages for a project
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: projectId } = await params;
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
-    
+    const session = await getSession(await headers());
+    const user = session?.user;
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -43,7 +44,7 @@ export async function GET(
     console.error("Get chat messages error:", error);
     return NextResponse.json(
       { error: "Failed to retrieve chat messages" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -51,13 +52,13 @@ export async function GET(
 // POST - Create a new chat message
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: projectId } = await params;
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
-    
+    const session = await getSession(await headers());
+    const user = session?.user;
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -67,7 +68,7 @@ export async function POST(
     if (!message) {
       return NextResponse.json(
         { error: "Message is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -112,7 +113,7 @@ export async function POST(
     console.error("Create chat message error:", error);
     return NextResponse.json(
       { error: "Failed to create chat message" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

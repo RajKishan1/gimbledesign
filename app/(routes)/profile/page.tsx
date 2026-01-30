@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, memo } from "react";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { Edit2, Coins, ArrowLeft, Upload, X } from "lucide-react";
@@ -28,13 +28,14 @@ import { FolderOpenDotIcon } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfilePage = () => {
-  const { user: kindeUser } = useKindeBrowserClient();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const router = useRouter();
   const { data: profile, isLoading: isLoadingProfile } = useGetProfile();
-  const { data: credits } = useGetCredits(kindeUser?.id);
+  const { data: credits } = useGetCredits(user?.id);
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects(
-    kindeUser?.id,
-    undefined
+    user?.id,
+    undefined,
   );
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
 
@@ -48,7 +49,7 @@ const ProfilePage = () => {
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const [profilePicPreview, setProfilePicPreview] = useState<string | null>(
-    null
+    null,
   );
   const [headerPreview, setHeaderPreview] = useState<string | null>(null);
 
@@ -81,7 +82,7 @@ const ProfilePage = () => {
 
   const handleFileUpload = async (
     file: File,
-    type: "profilePicture" | "headerImage"
+    type: "profilePicture" | "headerImage",
   ) => {
     if (type === "profilePicture") {
       setUploadingProfilePic(true);
@@ -128,7 +129,7 @@ const ProfilePage = () => {
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "profilePicture" | "headerImage"
+    type: "profilePicture" | "headerImage",
   ) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -151,13 +152,9 @@ const ProfilePage = () => {
     );
   }
 
-  const displayName =
-    profile?.name ||
-    `${kindeUser?.given_name || ""} ${kindeUser?.family_name || ""}`.trim() ||
-    "User";
-  const displayEmail = profile?.email || kindeUser?.email || "";
-  const displayProfilePicture =
-    profile?.profilePicture || kindeUser?.picture || "";
+  const displayName = profile?.name || user?.name || "User";
+  const displayEmail = profile?.email || user?.email || "";
+  const displayProfilePicture = profile?.profilePicture || user?.image || "";
   const displayHeaderImage = profile?.headerImage || "";
 
   return (

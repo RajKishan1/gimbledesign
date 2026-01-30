@@ -1,10 +1,38 @@
-import { withAuth } from "@kinde-oss/kinde-auth-nextjs/middleware";
+import { NextRequest, NextResponse } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
 
-export default withAuth(async function middleware() {}, {
-  // Middleware still runs on all routes, but doesn't protect the blog route
-  isReturnToCurrentPage: true,
-  publicPaths: ["/", "/api/inngest"],
-});
+const PUBLIC_PATHS = ["/", "/login", "/FAQ", "/Howitworks", "/Pricing"];
+const PROTECTED_PATHS = ["/dashboard", "/profile"];
+
+export async function proxy(request: NextRequest) {
+  const sessionCookie = getSessionCookie(request);
+  const pathname = request.nextUrl.pathname;
+  const isPublic =
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
+    pathname.startsWith("/api/inngest") ||
+    pathname.startsWith("/api/auth");
+  const isProtected =
+    PROTECTED_PATHS.some(
+      (p) => pathname === p || pathname.startsWith(p + "/"),
+    ) || pathname.startsWith("/project/");
+
+  if (sessionCookie && (pathname === "/" || pathname === "/login")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+  if (!sessionCookie && isProtected) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+  if (!sessionCookie && !isPublic) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

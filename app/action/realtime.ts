@@ -2,12 +2,13 @@
 
 import { inngest } from "@/inngest/client";
 import { getSubscriptionToken } from "@inngest/realtime";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function fetchRealtimeSubscriptionToken() {
   try {
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await auth.api.getSession({ headers: await headers() });
+    const user = session?.user;
     if (!user) {
       console.error("[Realtime] Unauthorized: No user session");
       throw new Error("Unauthorized");

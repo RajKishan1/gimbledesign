@@ -1,16 +1,17 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { inngest } from "@/inngest/client";
+import { headers } from "next/headers";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: projectId } = await params;
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getSession(await headers());
+    const user = session?.user;
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -19,7 +20,7 @@ export async function POST(
     if (!frameId || !prompt) {
       return NextResponse.json(
         { error: "frameId and prompt are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const project = await prisma.project.findFirst({
@@ -63,16 +64,17 @@ export async function POST(
     if (userRecord.credits < creditCost) {
       return NextResponse.json(
         {
-          error: "Insufficient credits. You need at least 0.5 credits to regenerate a frame.",
+          error:
+            "Insufficient credits. You need at least 0.5 credits to regenerate a frame.",
         },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
     // Deduct credits and track total used
     await prisma.user.update({
       where: { userId: user.id },
-      data: { 
+      data: {
         credits: userRecord.credits - creditCost,
         totalCreditsUsed: (userRecord.totalCreditsUsed || 0) + creditCost,
       },
@@ -99,7 +101,7 @@ export async function POST(
     console.log("Regenerate frame error:", error);
     return NextResponse.json(
       { error: "Failed to regenerate frame" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

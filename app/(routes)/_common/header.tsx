@@ -1,9 +1,9 @@
 "use client";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LoginLink, LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
+import { authClient } from "@/lib/auth-client";
 import { LogOutIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -20,16 +20,13 @@ import { useGetProfile } from "@/features/use-profile";
 
 const Header = () => {
   const { theme, setTheme } = useTheme();
-  const { user } = useKindeBrowserClient();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const { data: profile } = useGetProfile();
   const isDark = theme === "dark";
 
-  // Use profile picture from database if available, otherwise fall back to Kinde
-  const profilePicture = profile?.profilePicture || user?.picture || "";
-  const displayName =
-    profile?.name ||
-    `${user?.given_name || ""} ${user?.family_name || ""}`.trim() ||
-    "";
+  const profilePicture = profile?.profilePicture || user?.image || "";
+  const displayName = profile?.name || user?.name || "";
   return (
     <div className="sticky top-0 right-0 left-0 z-30  ">
       <header className=" border-x border-zinc-50 dark:border-zinc-900 px-6  p-6 bg-white dark:bg-black">
@@ -38,11 +35,26 @@ const Header = () => {
          flex items-center justify-between"
         >
           <Logo />
-          <div className="flex gap-6 items-center hover:cursor-pointer">
-            <p>Dashboard</p>
-            <p>Explore</p>
-            <p>Pricing</p>
-          </div>
+          <nav className="flex gap-6 items-center">
+            <Link
+              href={user ? "/dashboard" : "/login"}
+              className="text-sm font-medium text-foreground hover:opacity-80 transition-opacity"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Explore
+            </Link>
+            <Link
+              href="/Pricing"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Pricing
+            </Link>
+          </nav>
           <div
             className="flex flex-1 items-center
            justify-end gap-3
@@ -77,7 +89,7 @@ const Header = () => {
                   >
                     <AvatarImage
                       src={profilePicture}
-                      alt={displayName || user?.given_name || ""}
+                      alt={displayName || user?.name || ""}
                     />
                     <AvatarFallback className="rounded-lg">
                       {displayName
@@ -86,25 +98,31 @@ const Header = () => {
                             .map((n) => n.charAt(0))
                             .join("")
                             .slice(0, 2)
-                        : `${user?.given_name?.charAt(0) || ""}${user?.family_name?.charAt(0) || ""}`}
+                        : user?.name?.charAt(0) || ""}
                     </AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LogoutLink className="w-full flex items-center">
-                      <LogOutIcon className="size-4" />
-                      Logout
-                    </LogoutLink>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="w-full flex items-center cursor-pointer"
+                    onClick={() => authClient.signOut()}
+                  >
+                    <LogOutIcon className="size-4" />
+                    Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <LoginLink>
-                <Button className="rounded-full">Get Started</Button>
-              </LoginLink>
+              <Button className="rounded-full" asChild>
+                <Link href="/login">Get Started</Link>
+              </Button>
             )}
           </div>
         </div>

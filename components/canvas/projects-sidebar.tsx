@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 import { cn } from "@/lib/utils";
 import { useGetProjects } from "@/features/use-project";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { authClient } from "@/lib/auth-client";
 import { useRouter, useParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { ProjectType } from "@/types/project";
@@ -20,22 +20,23 @@ const ProjectsSidebar = () => {
   const router = useRouter();
   const params = useParams();
   const currentProjectId = params.id as string;
-  const { user } = useKindeBrowserClient();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const { data: profile } = useGetProfile();
-  const { data: projects, isLoading: isLoadingProjects, isError: isProjectsError } = useGetProjects(
+  const {
+    data: projects,
+    isLoading: isLoadingProjects,
+    isError: isProjectsError,
+  } = useGetProjects(
     user?.id,
-    undefined // No limit - fetch all projects
+    undefined, // No limit - fetch all projects
   );
   const { data: credits, isLoading: isLoadingCredits } = useGetCredits(
-    user?.id
+    user?.id,
   );
 
-  // Use profile data from database if available, otherwise fall back to Kinde
-  const profilePicture = profile?.profilePicture || user?.picture || "";
-  const displayName =
-    profile?.name ||
-    `${user?.given_name || ""} ${user?.family_name || ""}`.trim() ||
-    "";
+  const profilePicture = profile?.profilePicture || user?.image || "";
+  const displayName = profile?.name || user?.name || "";
   const displayEmail = profile?.email || user?.email || "";
 
   const handleProjectClick = (projectId: string) => {
@@ -46,7 +47,7 @@ const ProjectsSidebar = () => {
     <div
       className={cn(
         "relative flex flex-col bg-white dark:bg-[#191919] border-neutral-200 dark:border-[#212121] border-r transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-12" : "w-64"
+        isCollapsed ? "w-12" : "w-64",
       )}
     >
       <div
@@ -151,7 +152,7 @@ const ProjectsSidebar = () => {
                           "flex flex-col gap-0 m-0 px-2 py-1.5 rounded-none cursor-pointer transition-colors",
                           isActive
                             ? "bg-primary/10 border-primary"
-                            : "hover:bg-primary/20 border-border"
+                            : "hover:bg-primary/20 border-border",
                         )}
                       >
                         <h4 className="text-xs line-clamp-1 text-neutral-600 dark:text-neutral-400">

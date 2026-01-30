@@ -1,5 +1,6 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 
 /**
  * POST /api/embed-images
@@ -9,8 +10,8 @@ import { NextResponse } from "next/server";
  */
 export async function POST(req: Request) {
   try {
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getSession(await headers());
+    const user = session?.user;
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

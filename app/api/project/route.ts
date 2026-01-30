@@ -1,19 +1,17 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { generateProjectName } from "@/app/action/action";
 import { inngest } from "@/inngest/client";
+import { headers } from "next/headers";
 
 export async function GET(request: Request) {
   try {
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getSession(await headers());
+    const user = session?.user;
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get limit from query parameters
@@ -41,31 +39,41 @@ export async function GET(request: Request) {
         return NextResponse.json(
           {
             error: "Database schema mismatch. Please run: npx prisma generate",
-            details: process.env.NODE_ENV === "development" ? dbError.message : undefined,
+            details:
+              process.env.NODE_ENV === "development"
+                ? dbError.message
+                : undefined,
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
       throw dbError;
     }
   } catch (error) {
     console.error("Error fetching projects:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       {
         error: "Failed to fetch projects",
-        details: process.env.NODE_ENV === "development" ? errorMessage : undefined,
+        details:
+          process.env.NODE_ENV === "development" ? errorMessage : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const { prompt, model, deviceType = "mobile", dimensions } = await request.json();
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const {
+      prompt,
+      model,
+      deviceType = "mobile",
+      dimensions,
+    } = await request.json();
+    const session = await getSession(await headers());
+    const user = session?.user;
 
     if (!user) throw new Error("Unauthorized");
     if (!prompt) throw new Error("Missing Prompt");
@@ -92,16 +100,17 @@ export async function POST(request: Request) {
     if (userRecord.credits < creditCost) {
       return NextResponse.json(
         {
-          error: "Insufficient credits. You need at least 1 credit to create a project.",
+          error:
+            "Insufficient credits. You need at least 1 credit to create a project.",
         },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
     // Deduct credits and track total used
     await prisma.user.update({
       where: { userId: user.id },
-      data: { 
+      data: {
         credits: userRecord.credits - creditCost,
         totalCreditsUsed: (userRecord.totalCreditsUsed || 0) + creditCost,
       },
@@ -120,10 +129,11 @@ export async function POST(request: Request) {
 
     // Trigger the appropriate Inngest function based on device type
     try {
-      const eventName = deviceType === "web" 
-        ? "ui/generate.web-screens" 
-        : "ui/generate.screens";
-      
+      const eventName =
+        deviceType === "web"
+          ? "ui/generate.web-screens"
+          : "ui/generate.screens";
+
       await inngest.send({
         name: eventName,
         data: {
@@ -149,7 +159,7 @@ export async function POST(request: Request) {
       {
         error: "Failed to create project",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
