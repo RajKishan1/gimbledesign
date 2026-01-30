@@ -227,3 +227,33 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Generate button shimmer while loading */
+.generate-btn-shimmer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.generate-btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 50%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 100%
+  );
+  animation: shimmer-btn 1.5s ease-in-out infinite;
+}
+@keyframes shimmer-btn {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}

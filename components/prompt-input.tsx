@@ -241,11 +241,15 @@ const PromptInput = ({
           {!hideSubmitBtn && (
             <InputGroupButton
               variant="default"
-              className="rounded-full"
+              className={cn(
+                "rounded-full relative overflow-hidden",
+                isLoading && "min-w-28",
+              )}
               size="sm"
               disabled={(!promptText?.trim() && !referenceFile) || isLoading}
               onClick={() => onSubmit?.()}
             >
+              {isLoading && <span className="generate-btn-shimmer" aria-hidden />}
               {isLoading ? (
                 <>
                   <Spinner />

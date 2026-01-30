@@ -22,7 +22,9 @@ model Project {
   name       String
   theme      String?
   thumbnail  String?
-  deviceType String   @default("mobile") // "mobile" or "web"
+  deviceType String   @default("mobile") // "mobile", "web", or "inspirations"
+  width      Int?     // Custom width for inspirations / variable-size designs
+  height     Int?     // Custom height for inspirations / variable-size designs
   frames     Frame[]
   chatMessages ChatMessage[]
 

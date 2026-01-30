@@ -48,7 +48,7 @@ const DeviceFrame = ({
   projectId,
   onOpenHtmlDialog,
 }: PropsType) => {
-  const { selectedFrameId, setSelectedFrameId, updateFrame, deviceType } =
+  const { selectedFrameId, setSelectedFrameId, updateFrame, deviceType, customDimensions } =
     useCanvas();
   const {
     mode,
@@ -58,13 +58,19 @@ const DeviceFrame = ({
     cancelLinking,
   } = usePrototype();
 
-  // Device dimensions based on type
-  // Both web and mobile have dynamic (auto) height
+  // Device dimensions: custom (e.g. inspirations) or based on deviceType
   const getDeviceDimensions = () => {
-    if (deviceType === "web") {
-      return { width: 1440, height: null, minHeight: 800 }; // Height is dynamic for web
+    if (customDimensions?.width != null && customDimensions?.height != null) {
+      return {
+        width: customDimensions.width,
+        height: customDimensions.height,
+        minHeight: customDimensions.height,
+      };
     }
-    return { width: 430, height: null, minHeight: 932 }; // mobile - height is dynamic
+    if (deviceType === "web") {
+      return { width: 1440, height: null, minHeight: 800 };
+    }
+    return { width: 430, height: null, minHeight: 932 };
   };
   const {
     width: DEVICE_WIDTH,

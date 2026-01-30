@@ -5,7 +5,8 @@ import { headers } from "next/headers";
 import { generateProjectName } from "@/app/action/action";
 import { inngest } from "@/inngest/client";
 import { describeImageFromBuffer } from "@/lib/describe-image-server";
-import { getImageDimensions, DEFAULT_WIDTH, DEFAULT_HEIGHT } from "@/lib/get-image-dimensions";
+import { getImageDimensions } from "@/lib/get-image-dimensions";
+import { inferDesignDimensions } from "@/lib/infer-design-dimensions";
 import { getGenerationModel } from "@/constant/models";
 
 const VALID_IMAGE_TYPES = [
@@ -40,8 +41,8 @@ export async function POST(request: Request) {
     }
 
     let combinedPrompt: string;
-    let width = DEFAULT_WIDTH;
-    let height = DEFAULT_HEIGHT;
+    let imageDescription: string | undefined;
+    let imageDimensions: { width: number; height: number } | undefined;
 
     if (imageFile && imageFile.size > 0) {
       if (!VALID_IMAGE_TYPES.includes(imageFile.type)) {
@@ -60,18 +61,23 @@ export async function POST(request: Request) {
       const arrayBuffer = await imageFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      const [imageDescription, dimensions] = await Promise.all([
+      const [desc, dims] = await Promise.all([
         describeImageFromBuffer(buffer, imageFile.type),
         Promise.resolve(getImageDimensions(buffer)),
       ]);
-
-      width = dimensions.width;
-      height = dimensions.height;
+      imageDescription = desc;
+      imageDimensions = dims;
 
       combinedPrompt = `Redesign this design for inspiration. Same type of content, four different visual styles.\n\nReference design (from image): ${imageDescription}.${prompt ? `\n\nAdditional context from user: ${prompt}` : ""}`;
     } else {
       combinedPrompt = `Generate four design variations for inspiration. Same concept, four different visual styles (e.g. minimal, bold, classic, modern).\n\nUser request: ${prompt}`;
     }
+
+    const { width, height } = inferDesignDimensions(
+      prompt,
+      imageDescription,
+      imageDimensions
+    );
 
     const creditCost = 1.0;
     let userRecord = await prisma.user.findUnique({
@@ -99,13 +105,31 @@ export async function POST(request: Request) {
 
     const projectName = await generateProjectName(combinedPrompt, model);
 
-    const project = await prisma.project.create({
-      data: {
-        userId: user.id,
-        name: projectName,
-        deviceType: "inspirations",
-      },
-    });
+    let project: { id: string; userId: string; name: string; deviceType: string };
+    try {
+      project = await prisma.project.create({
+        data: {
+          userId: user.id,
+          name: projectName,
+          deviceType: "inspirations",
+          width,
+          height,
+        },
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("Unknown argument") && msg.includes("width")) {
+        project = await prisma.project.create({
+          data: {
+            userId: user.id,
+            name: projectName,
+            deviceType: "inspirations",
+          },
+        });
+      } else {
+        throw e;
+      }
+    }
 
     try {
       await inngest.send({

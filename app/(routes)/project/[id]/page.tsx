@@ -24,15 +24,22 @@ const Page = () => {
     return <div>Project not found</div>;
   }
 
+  const isInspirations = project?.deviceType === "inspirations";
+  const initialDimensions =
+    isInspirations && project?.width != null && project?.height != null
+      ? { width: project.width, height: project.height }
+      : undefined;
+
   return (
     <CanvasProvider
       initialFrames={project?.frames}
       initialThemeId={project?.theme}
       initialDeviceType={
-        project?.deviceType === "inspirations"
+        isInspirations
           ? "mobile"
           : ((project?.deviceType as "mobile" | "web") || "mobile")
       }
+      initialDimensions={initialDimensions}
       hasInitialData={hasInitialData}
       projectId={project?.id}
     >

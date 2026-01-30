@@ -22,6 +22,8 @@ export type LoadingStatusType =
 
 export type DeviceType = "mobile" | "web";
 
+export type CustomDimensions = { width: number; height: number };
+
 interface CanvasContextType {
   theme?: ThemeType;
   setTheme: (id: string) => void;
@@ -44,6 +46,8 @@ interface CanvasContextType {
   setLoadingStatus: (status: LoadingStatusType | null) => void;
 
   deviceType: DeviceType;
+  /** When set (e.g. inspirations project), frame uses these instead of deviceType presets */
+  customDimensions?: CustomDimensions;
 }
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -53,6 +57,7 @@ export const CanvasProvider = ({
   initialFrames,
   initialThemeId,
   initialDeviceType = "mobile",
+  initialDimensions,
   hasInitialData,
   projectId,
 }: {
@@ -60,6 +65,8 @@ export const CanvasProvider = ({
   initialFrames: FrameType[];
   initialThemeId?: string;
   initialDeviceType?: DeviceType;
+  /** Custom width/height for inspirations or variable-size projects */
+  initialDimensions?: CustomDimensions;
   hasInitialData: boolean;
   projectId: string | null;
 }) => {
@@ -69,6 +76,7 @@ export const CanvasProvider = ({
 
   const [fontId, setFontId] = useState<string>(DEFAULT_FONT);
   const [deviceType, setDeviceType] = useState<DeviceType>(initialDeviceType);
+  const customDimensions = initialDimensions ?? undefined;
 
   const [frames, setFrames] = useState<FrameType[]>(initialFrames);
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null);
@@ -203,6 +211,7 @@ export const CanvasProvider = ({
         loadingStatus,
         setLoadingStatus,
         deviceType,
+        customDimensions,
       }}
     >
       {children}

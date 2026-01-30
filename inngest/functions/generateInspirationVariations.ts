@@ -7,22 +7,29 @@ import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
 import { unsplashTool } from "../tool";
 
+const THEME_IDS = [
+  "ocean-breeze", "netflix", "acid-lime", "purple-yellow", "green-lime",
+  "teal-coral", "lilac-teal", "orange-gray", "neo-brutalism", "glassmorphism",
+  "swiss-style", "sunset", "ocean", "forest", "lavender", "monochrome",
+  "neon", "midnight", "peach", "glacier", "rose-gold", "cyber",
+];
+
 const INSPIRATION_ANALYSIS_PROMPT = `You are a Lead UI/UX designer planning inspiration design variations.
 
-Your task: From the user's redesign brief (which may describe an existing design from an image and/or a text prompt), output ONE design concept and EXACTLY 4 different visual styles for that same concept.
+CRITICAL: Pick exactly ONE theme for all 4 variations. All 4 must use the SAME theme (same colors, same CSS variables). The 4 variations must differ ONLY in LAYOUT and COMPOSITION—not in theme or color scheme.
 
-Examples:
-- Concept: "Calendar" → 4 styles: Minimal (clean grid, lots of whitespace), Bold (strong typography, dark accents), Classic (serif, traditional layout), Modern (glassmorphism, soft gradients).
-- Concept: "Event card" → 4 styles: Minimal, Editorial, Playful, Corporate.
+Layout differences to use: grid vs list, sidebar vs top nav, card layout vs full-bleed, centered vs asymmetric, dense vs spacious, single column vs multi-column, etc.
 
-Each style must be distinctly different (layout, typography, color feel, density) so the user gets real inspiration variety.`;
+Theme IDs (pick one): ${THEME_IDS.join(", ")}
+
+Output: one concept, one theme id, and exactly 4 layout/style descriptions (structure and composition only; colors come from the chosen theme).`;
 
 const StyleSchema = z.object({
-  name: z.string().describe("Short style name (e.g. Minimal, Bold, Classic, Modern)"),
+  name: z.string().describe("Short layout style name (e.g. Grid Layout, Sidebar Layout, Card Stack, Full-bleed)"),
   visualDescription: z
     .string()
     .describe(
-      "Dense visual directive for this variation: layout, typography, colors, components, mood. One paragraph."
+      "Layout and composition only: structure, component arrangement, spacing, hierarchy. No colors or theme—those are fixed. One paragraph."
     ),
 });
 
@@ -30,12 +37,15 @@ const InspirationAnalysisSchema = z.object({
   concept: z
     .string()
     .describe(
-      "Single design concept (e.g. 'Calendar', 'Event card', 'Dashboard widget')"
+      "Single design concept (e.g. 'Calendar', 'Web app dashboard', 'Event card')"
     ),
+  theme: z
+    .string()
+    .describe(`Exactly one theme ID from: ${THEME_IDS.join(", ")}`),
   styles: z
     .array(StyleSchema)
     .length(4)
-    .describe("Exactly 4 style variations for the same concept"),
+    .describe("Exactly 4 layout/composition variations for the same concept"),
 });
 
 const FAST_MODEL = "google/gemini-3-flash-preview";
@@ -68,7 +78,13 @@ export const generateInspirationVariations = inngest.createFunction(
         model: openrouter.chat(FAST_MODEL),
         schema: InspirationAnalysisSchema,
         system: INSPIRATION_ANALYSIS_PROMPT,
-        prompt: `Redesign brief:\n\n${prompt}\n\nOutput one concept and exactly 4 style variations (same content, 4 different visual formats).`,
+        prompt: `Redesign brief:\n\n${prompt}\n\nOutput one concept, one theme id (from the list), and exactly 4 layout variations (same theme for all; only layout/structure differs).`,
+      });
+
+      const themeId = THEME_IDS.includes(object.theme) ? object.theme : THEME_IDS[0];
+      await prisma.project.update({
+        where: { id: projectId, userId },
+        data: { theme: themeId },
       });
 
       await publish({
@@ -78,14 +94,15 @@ export const generateInspirationVariations = inngest.createFunction(
           status: "generating",
           totalScreens: 4,
           concept: object.concept,
+          theme: themeId,
           projectId,
         },
       });
 
-      return object;
+      return { ...object, themeToUse: themeId };
     });
 
-    const theme = THEME_LIST[0];
+    const theme = THEME_LIST.find((t) => t.id === analysis.themeToUse) ?? THEME_LIST[0];
     const fullThemeCSS = `${BASE_VARIABLES}\n${theme?.style || ""}`;
 
     for (let i = 0; i < 4; i++) {
@@ -100,18 +117,18 @@ export const generateInspirationVariations = inngest.createFunction(
 Single design variation ${i + 1}/4 — Inspiration re-design.
 
 CONCEPT: ${analysis.concept}
-THIS VARIATION: ${style.name}
-VISUAL DESCRIPTION: ${style.visualDescription}
+THIS LAYOUT VARIATION: ${style.name}
+LAYOUT DESCRIPTION (structure and composition only; use the theme colors below): ${style.visualDescription}
 
-CANVAS: Generate for a single screen/view with width ${width}px and min-height ${height}px. Root container should feel like a complete, self-contained design at this size (e.g. one calendar, one card, one widget).
+VIEWPORT: Width is exactly ${width}px, min-height ${height}px. The root div MUST have style="width: ${width}px; min-height: ${height}px" or equivalent Tailwind so the design fits this canvas. For web/desktop (${width}px wide) use full-width layout; for mobile/narrow use single-column. Do not assume mobile-only—match the ${width}px width.
 
-THEME CSS VARIABLES (reference only, do not redeclare):
+THEME (use for ALL colors—do not invent new colors): Same theme for all 4 variations. Use these CSS variables only:
 ${fullThemeCSS}
 
 OUTPUT RULES:
 1. Generate ONLY raw HTML starting with <div>
-2. Root: class="relative w-full min-h-screen bg-[var(--background)]" (or use min-height that fits ${height}px content)
-3. Use Tailwind and CSS variables. No markdown, no <html>/<body>/<head>
+2. Root div: width ${width}px, min-height ${height}px (e.g. class="w-full" with a wrapper that has max-w-[${width}px] or inline style width:${width}px)
+3. Use Tailwind and the theme CSS variables above. No markdown, no <html>/<body>/<head>
 4. Hidden scrollbars: [&::-webkit-scrollbar]:hidden scrollbar-none
 
 Generate the complete HTML for this single design variation now.

@@ -103,8 +103,8 @@ const DashboardSection = () => {
         }
         if (data?.data?.id) {
           router.push(`/project/${data.data.id}`);
+          // Keep loading/shimmer until navigation unmounts this page
         }
-        setLoadingState("idle");
       } catch (error) {
         console.error("Inspiration redesign error:", error);
         setLoadingState("idle");

@@ -3,6 +3,8 @@ export type ProjectType = {
   name: string;
   theme: string;
   deviceType?: "mobile" | "web" | "inspirations";
+  width?: number;
+  height?: number;
   thumbnail?: string;
   frames: FrameType[];
   createdAt: Date;
