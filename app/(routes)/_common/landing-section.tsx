@@ -378,6 +378,7 @@ import LatestPost from "@/components/landing/LatestPost";
 import UsersFeedback from "@/components/landing/UsersFeedback";
 import { openSauceOne } from "@/app/fonts";
 import WhatYouGet from "@/components/landing/WhatYouGet";
+import { getGenerationModel } from "@/constant/models";
 
 // Loading state type for the design process
 type LoadingState = "idle" | "enhancing" | "designing";
@@ -389,7 +390,12 @@ const getLoadingText = (
 ): string | undefined => {
   switch (state) {
     case "enhancing":
-      const typeLabel = deviceType === "web" ? "web app" : "mobile app";
+      const typeLabel =
+        deviceType === "web"
+          ? "web app"
+          : deviceType === "inspirations"
+            ? "inspirations"
+            : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";
@@ -402,9 +408,7 @@ const LandingSection = () => {
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const [promptText, setPromptText] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>(
-    "google/gemini-3-pro-preview",
-  );
+  const [selectedModel, setSelectedModel] = useState<string>("auto");
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
@@ -498,7 +502,7 @@ const LandingSection = () => {
         },
         body: JSON.stringify({
           prompt: promptText,
-          model: selectedModel,
+          model: getGenerationModel(selectedModel),
           designType: deviceType,
         }),
       });
@@ -513,7 +517,7 @@ const LandingSection = () => {
 
       mutate({
         prompt: finalPrompt,
-        model: selectedModel,
+        model: getGenerationModel(selectedModel),
         deviceType: deviceType,
       });
     } catch (error) {
@@ -522,7 +526,7 @@ const LandingSection = () => {
       setLoadingState("designing");
       mutate({
         prompt: promptText,
-        model: selectedModel,
+        model: getGenerationModel(selectedModel),
         deviceType: deviceType,
       });
     }

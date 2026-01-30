@@ -29,7 +29,9 @@ const Page = () => {
       initialFrames={project?.frames}
       initialThemeId={project?.theme}
       initialDeviceType={
-        (project?.deviceType as "mobile" | "web") || "mobile"
+        project?.deviceType === "inspirations"
+          ? "mobile"
+          : ((project?.deviceType as "mobile" | "web") || "mobile")
       }
       hasInitialData={hasInitialData}
       projectId={project?.id}

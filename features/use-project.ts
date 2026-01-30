@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { getGenerationModel } from "@/constant/models";
 
-export type DeviceType = "mobile" | "web";
+export type DeviceType = "mobile" | "web" | "inspirations";
 
 export interface CreateProjectData {
   prompt: string;
@@ -23,7 +24,7 @@ export const useCreateProject = () => {
       await axios
         .post("/api/project", {
           prompt: data.prompt,
-          model: data.model || "google/gemini-3-pro-preview",
+          model: getGenerationModel(data.model) || "google/gemini-3-pro-preview",
           deviceType: data.deviceType || "mobile",
           dimensions: data.dimensions,
         })

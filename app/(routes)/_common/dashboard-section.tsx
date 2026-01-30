@@ -4,6 +4,7 @@ import React, { memo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import PromptInput from "@/components/prompt-input";
 import Header from "./header";
+import DashboardSidebar from "./dashboard-sidebar";
 import { useCreateProject, useGetProjects } from "@/features/use-project";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { motion, useInView, Variants } from "framer-motion";
 import { DeviceType } from "@/components/prompt-input";
 import { openSauceOne } from "@/app/fonts";
+import { getGenerationModel } from "@/constant/models";
 
 type LoadingState = "idle" | "enhancing" | "designing";
 
@@ -23,7 +25,12 @@ const getLoadingText = (
 ): string | undefined => {
   switch (state) {
     case "enhancing":
-      const typeLabel = deviceType === "web" ? "web app" : "mobile app";
+      const typeLabel =
+        deviceType === "web"
+          ? "web app"
+          : deviceType === "inspirations"
+            ? "inspirations"
+            : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";
@@ -36,9 +43,7 @@ const DashboardSection = () => {
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const [promptText, setPromptText] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>(
-    "google/gemini-3-pro-preview",
-  );
+  const [selectedModel, setSelectedModel] = useState<string>("auto");
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
@@ -81,7 +86,7 @@ const DashboardSection = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
-          model: selectedModel,
+          model: getGenerationModel(selectedModel),
           designType: deviceType,
         }),
       });
@@ -90,7 +95,7 @@ const DashboardSection = () => {
       setLoadingState("designing");
       mutate({
         prompt: finalPrompt,
-        model: selectedModel,
+        model: getGenerationModel(selectedModel),
         deviceType,
       });
     } catch (error) {
@@ -98,79 +103,82 @@ const DashboardSection = () => {
       setLoadingState("designing");
       mutate({
         prompt: promptText,
-        model: selectedModel,
+        model: getGenerationModel(selectedModel),
         deviceType,
       });
     }
   };
 
   return (
-    <div className={`w-full min-h-screen ${openSauceOne.className}`}>
-      <div className="flex flex-col">
-        <Header />
-        <div className="relative overflow-hidden py-16 border-b border-zinc-50 dark:border-zinc-900">
-          <div className="max-w-6xl mx-auto flex flex-col items-center justify-center gap-8 px-4">
-            <h1 className="text-center font-bold text-3xl sm:text-4xl tracking-tight text-foreground">
-              What should we design?
-            </h1>
-            <div className="w-full max-w-3xl">
-              <PromptInput
-                promptText={promptText}
-                setPromptText={setPromptText}
-                isLoading={loadingState !== "idle" || isPending}
-                loadingText={getLoadingText(loadingState, deviceType)}
-                onSubmit={handleSubmit}
-                selectedModel={selectedModel}
-                onModelChange={handleModelChange}
-                deviceType={deviceType}
-                onDeviceTypeChange={setDeviceType}
-              />
+    <div className={`w-full min-h-screen flex flex-col ${openSauceOne.className}`}>
+      <Header />
+      <div className="flex flex-1 min-h-0">
+        <DashboardSidebar />
+        <main className="flex-1 min-w-0 overflow-auto">
+          <div className="relative overflow-hidden py-12 border-b border-zinc-50 dark:border-zinc-900">
+            <div className="w-full flex flex-col items-center justify-center gap-8 px-6">
+              <h1 className="text-center font-bold text-3xl sm:text-4xl tracking-tight text-foreground">
+                What should we design?
+              </h1>
+              <div className="w-full">
+                <PromptInput
+                  promptText={promptText}
+                  setPromptText={setPromptText}
+                  isLoading={loadingState !== "idle" || isPending}
+                  loadingText={getLoadingText(loadingState, deviceType)}
+                  onSubmit={handleSubmit}
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
+                  deviceType={deviceType}
+                  onDeviceTypeChange={setDeviceType}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="w-full py-10 border-b border-zinc-50 dark:border-zinc-900">
-          <div className="mx-auto max-w-6xl px-4">
-            <h2 className="font-medium text-xl tracking-tight mb-4">
-              Recent Projects
-            </h2>
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Spinner className="size-10" />
-              </div>
-            ) : (
-              <>
-                <div className="mt-3">
-                  {projects && projects.length <= 10 ? (
-                    <ProjectsGrid projects={projects} />
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 overflow-y-auto max-h-[80vh]">
-                      {projects?.map((project: ProjectType) => (
-                        <ProjectCard key={project.id} project={project} />
-                      ))}
+          <div className="w-full py-10 border-b border-zinc-50 dark:border-zinc-900">
+            <div className="w-full px-6">
+              <h2 className="font-medium text-xl tracking-tight mb-4">
+                Recent Projects
+              </h2>
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <Spinner className="size-10" />
+                </div>
+              ) : (
+                <>
+                  <div className="mt-3">
+                    {projects && projects.length <= 10 ? (
+                      <ProjectsGrid projects={projects} />
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 overflow-y-auto max-h-[80vh]">
+                        {projects?.map((project: ProjectType) => (
+                          <ProjectCard key={project.id} project={project} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {!showAllProjects && projects && projects.length >= 9 && (
+                    <div className="flex justify-center mt-6">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowAllProjects(true)}
+                        className="px-6 rounded-lg"
+                      >
+                        Show All Projects
+                      </Button>
                     </div>
                   )}
-                </div>
-                {!showAllProjects && projects && projects.length >= 9 && (
-                  <div className="flex justify-center mt-6">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAllProjects(true)}
-                      className="px-6 rounded-lg"
-                    >
-                      Show All Projects
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-            {isError && (
-              <p className="text-destructive text-sm">
-                Failed to load projects
-              </p>
-            )}
+                </>
+              )}
+              {isError && (
+                <p className="text-destructive text-sm">
+                  Failed to load projects
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
@@ -196,7 +204,7 @@ const ProjectsGrid = ({ projects }: { projects: ProjectType[] }) => {
   return (
     <div
       ref={ref}
-      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"
+      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
     >
       {projects.map((project: ProjectType, index: number) => (
         <motion.div
