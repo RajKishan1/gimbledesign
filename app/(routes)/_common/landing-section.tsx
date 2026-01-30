@@ -377,6 +377,7 @@ import WorkingWithGimble from "@/components/landing/WorkingWithGimble";
 import LatestPost from "@/components/landing/LatestPost";
 import UsersFeedback from "@/components/landing/UsersFeedback";
 import { openSauceOne } from "@/app/fonts";
+import WhatYouGet from "@/components/landing/WhatYouGet";
 
 // Loading state type for the design process
 type LoadingState = "idle" | "enhancing" | "designing";
@@ -546,7 +547,7 @@ const LandingSection = () => {
                   5.0 rating . 110+ reviews
                 </div>
                 <h1
-                  className="text-center font-semibold  text-5xl
+                  className="text-center font-bold  text-5xl
             tracking-tight  bg-black dark:bg-linear-to-r dark:from-white dark:to-zinc-900 bg-clip-text text-transparent pb-1 "
                 >
                   Design your entire digital <br className="" />
@@ -658,6 +659,7 @@ const LandingSection = () => {
         </div>
       </div>
       <ExploreTemplates />
+      <WhatYouGet />
       <WorkingWithGimble />
       {/* <FeaturesBento /> */}
 
