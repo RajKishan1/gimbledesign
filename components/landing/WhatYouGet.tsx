@@ -38,8 +38,8 @@ const WhatYouGet = () => {
     <section className="bg-[#f9f9f9] dark:bg-black border border-zinc-200 dark:border-zinc-900 px-6">
       <div className="flex flex-col items-center my-21">
         <span
-          className="p-2 px-3
-         rounded-full bg-white"
+          className="p-1 px-3.75 text-[13px]
+         rounded-full bg-white font-medium"
         >
           What you get
         </span>
@@ -96,7 +96,7 @@ const WhatYouGet = () => {
             ))}
           </div>{" "}
         </div>
-        <div className="w-1/2 border-t border-r border-zinc-200"></div>
+        <div className="w-1/2 bg-white border-t border-r border-zinc-200"></div>
       </div>
     </section>
   );

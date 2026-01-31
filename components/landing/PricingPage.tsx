@@ -202,7 +202,7 @@ const PricingPage = () => {
       <div className=" bg-[#f9f9f9] px-4 pt-12 dark:bg-black sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col items-center">
-            <h2 className="bg-white p-1.5 px-3 rounded-full mb-2.5 text-black text-sm">
+            <h2 className="bg-white p-1.5 px-3 rounded-full mb-2.5 text-black text-[13px] font-medium">
               Choose a plan
             </h2>
             <h1 className="text-[40px] font-semibold tracking-[-0.045] text-black dark:text-white my-3">

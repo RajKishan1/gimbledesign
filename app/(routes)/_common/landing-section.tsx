@@ -541,7 +541,7 @@ const LandingSection = () => {
         <Header />
         <BlurFade>
           <div
-            className={`relative  overflow-hidden py-28 border border-zinc-50 dark:border-zinc-900
+            className={`relative  overflow-hidden py-24 border border-zinc-50 dark:border-zinc-900
            `}
           >
             <div className="absolute inset-0 z-[-1]"></div>
@@ -550,7 +550,7 @@ const LandingSection = () => {
          items-center justify-center gap-8  
         "
             >
-              <div className="flex flex-col items-center space-y-3">
+              <div className="flex flex-col items-center space-y-2">
                 <div
                   className="flex items-center gap-2
                  mx-auto text-center"
@@ -585,7 +585,7 @@ const LandingSection = () => {
                 className="flex w-full max-w-3xl flex-col
             item-center gap-8 relative "
               >
-                <div className="w-full mt-14.5">
+                <div className="w-full mt-10">
                   <PromptInput
                     className=""
                     promptText={promptText}

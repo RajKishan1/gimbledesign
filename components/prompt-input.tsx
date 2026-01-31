@@ -109,7 +109,7 @@ const PromptInput = ({
   };
 
   return (
-    <div className="max-w-187.5 mx-auto">
+    <div className="max-w-156 mx-auto">
       <input
         ref={fileInputRef}
         type="file"

@@ -35,7 +35,7 @@ export default function BillingToggle() {
       />
 
       <span className="select-none text-sm font-medium text-heading">
-        Yearly
+        Anually
       </span>
       <span className="text-xs p-1 px-2 mx-4 text-purple-800 bg-purple-100 rounded-full">
         -20%
