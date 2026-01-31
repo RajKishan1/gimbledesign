@@ -140,6 +140,8 @@
 // export default PricingPage;
 "use client";
 import React from "react";
+import BillingToggle from "./atoms/BillingToggle";
+import { Check } from "lucide-react";
 
 const PricingPage = () => {
   const [isDark, setIsDark] = React.useState(false);
@@ -197,28 +199,26 @@ const PricingPage = () => {
 
   return (
     <div className={isDark ? "dark" : ""}>
-      <div className="min-h-screen bg-white px-4 py-12 dark:bg-black sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#f9f9f9] px-4 py-12 dark:bg-black sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          {/* Demo theme toggle - hidden but functional */}
-          {/* <button
-            onClick={() => setIsDark(!isDark)}
-            className="mb-8 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300"
-          >
-            Toggle Theme (Demo)
-          </button> */}
-          <div className="">
-            <h2>Choose a plan</h2>
-            <h1 className="text-4xl">Choose the best plan</h1>
-            <p>
-              See all the pricing options available, compare features across
-              plans and find the one that perfectly.
+          <div className="flex flex-col items-center">
+            <h2 className="bg-white p-1.5 px-3 rounded-full mb-2.5 text-black text-sm">
+              Choose a plan
+            </h2>
+            <h1 className="text-[40px] font-semibold tracking-[-0.045] text-black my-3">
+              Choose the best plan
+            </h1>
+            <p className="text-center mb-13">
+              See all the pricing options available, compare
+              <br /> features across plans and find the one that perfectly.
             </p>
+            <BillingToggle />
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 mt-10">
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className="relative flex flex-col rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-900 dark:bg-zinc-950 sm:p-8"
+                className="relative flex flex-col  border border-gray-200 bg-[#f9f9f9]  dark:border-zinc-900 dark:bg-zinc-950 "
               >
                 {/* Popular Badge */}
                 {plan.popular && (
@@ -230,19 +230,19 @@ const PricingPage = () => {
                 )}
 
                 {/* Plan Header */}
-                <div className="mb-6">
-                  <h3 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="mb-6 px-6 pt-6">
+                  <h3 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">
                     {plan.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-base text-gray-600 dark:text-gray-400">
                     {plan.description}
                   </p>
                 </div>
 
                 {/* Price */}
-                <div className="mb-8">
+                <div className="mb-2 px-6">
                   <div className="flex items-baseline">
-                    <span className="text-5xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-3xl font-medium text-gray-900 dark:text-white">
                       {plan.price}
                     </span>
                     <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
@@ -252,25 +252,14 @@ const PricingPage = () => {
                 </div>
 
                 {/* Features */}
-                <div className="mb-8 flex-1 space-y-4">
+                <hr className=" my-8" />
+                <div className="mb-8 flex-1 space-y-5 px-6">
                   {plan.features.map((feature, featureIndex) => (
                     <div key={featureIndex} className="flex items-start gap-3">
                       {feature.highlighted ? (
-                        <svg
-                          className="mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-600"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <circle cx="10" cy="10" r="10" />
-                          <path
-                            fill="white"
-                            d="M14.5 7.5l-5 5-2.5-2.5"
-                            stroke="white"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                        <span className="bg-indigo-600 flex items-center justify-center rounded-full h-5 w-5">
+                          <Check stroke="white" size={12} />
+                        </span>
                       ) : (
                         <svg
                           className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400 dark:text-gray-600"
@@ -286,7 +275,7 @@ const PricingPage = () => {
                           />
                         </svg>
                       )}
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-base text-gray-700 dark:text-gray-300">
                         {feature.text}
                       </span>
                     </div>
@@ -294,15 +283,18 @@ const PricingPage = () => {
                 </div>
 
                 {/* Button */}
-                <button
-                  className={`w-full rounded-lg px-6 py-3 font-semibold transition-all ${
-                    plan.buttonVariant === "primary"
-                      ? "bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800"
-                      : "border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 active:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {plan.buttonText}
-                </button>
+                <div className="p-6 border-t border-zinc-200">
+                  {" "}
+                  <button
+                    className={`w-full rounded-lg px-6 py-3 font-semibold transition-all ${
+                      plan.buttonVariant === "primary"
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800"
+                        : "border border-gray-100 bg-white text-gray-900 hover:bg-gray-50 active:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    {plan.buttonText}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

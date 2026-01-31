@@ -20,7 +20,7 @@ const WhatYouGet = () => {
     },
   ];
   return (
-    <section className="bg-[#f9f9f9] border border-zinc-200 dark:border-zinc-900 px-6">
+    <section className="bg-[#f9f9f9] dark:bg-black border border-zinc-200 dark:border-zinc-900 px-6">
       <div className="flex flex-col items-center my-21">
         <span
           className="p-2 px-3
