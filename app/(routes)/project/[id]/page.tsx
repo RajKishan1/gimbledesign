@@ -35,9 +35,7 @@ const Page = () => {
       initialFrames={project?.frames}
       initialThemeId={project?.theme}
       initialDeviceType={
-        isInspirations
-          ? "mobile"
-          : ((project?.deviceType as "mobile" | "web") || "mobile")
+        project?.deviceType === "web" ? "web" : "mobile"
       }
       initialDimensions={initialDimensions}
       hasInitialData={hasInitialData}

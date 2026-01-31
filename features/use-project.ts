@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getGenerationModel } from "@/constant/models";
 
-export type DeviceType = "mobile" | "web" | "inspirations";
+export type DeviceType = "mobile" | "web" | "inspirations" | "wireframe";
 
 export interface CreateProjectData {
   prompt: string;

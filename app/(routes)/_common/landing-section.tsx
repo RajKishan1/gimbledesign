@@ -395,7 +395,9 @@ const getLoadingText = (
           ? "web app"
           : deviceType === "inspirations"
             ? "inspirations"
-            : "mobile app";
+            : deviceType === "wireframe"
+              ? "wireframe"
+              : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";

@@ -17,6 +17,7 @@ import {
   Zap,
   Lightbulb,
   ArrowUp,
+  Layout,
 } from "lucide-react";
 import { Spinner } from "./ui/spinner";
 import {
@@ -31,12 +32,13 @@ import {
 } from "@/constant/models";
 import { useState, useRef } from "react";
 
-export type DeviceType = "mobile" | "web" | "inspirations";
+export type DeviceType = "mobile" | "web" | "inspirations" | "wireframe";
 
 const DESIGN_TYPES: { value: DeviceType; label: string; icon: React.ReactNode }[] = [
   { value: "mobile", label: "Mobile", icon: <Smartphone className="size-4" /> },
   { value: "web", label: "Website", icon: <Globe className="size-4" /> },
   { value: "inspirations", label: "Inspirations", icon: <Lightbulb className="size-4" /> },
+  { value: "wireframe", label: "Wireframe", icon: <Layout className="size-4" /> },
 ];
 
 interface PropsType {
@@ -72,7 +74,12 @@ const PromptInput = ({
   onReferenceChange,
 }: PropsType) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showAllModels, setShowAllModels] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // When popover opens with Auto selected, show only Auto; when another model is selected, show all
+  const isAutoSelected = selectedModel === AUTO_MODEL_ID;
+  const modelsExpanded = showAllModels || !isAutoSelected;
 
   const handleModelSelect = (modelId: string) => {
     onModelChange?.(modelId);
@@ -156,7 +163,13 @@ const PromptInput = ({
             )}
 
             {/* Type + Model popover (filter) */}
-            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <Popover
+              open={isFilterOpen}
+              onOpenChange={(open) => {
+                setIsFilterOpen(open);
+                if (!open) setShowAllModels(false);
+              }}
+            >
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -207,31 +220,61 @@ const PromptInput = ({
                     Model
                   </p>
                   <div className="mt-2 space-y-0.5">
-                    {SELECTABLE_MODELS.map((model) => (
-                      <button
-                        key={model.id}
-                        type="button"
-                        onClick={() => handleModelSelect(model.id)}
-                        className={cn(
-                          "w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md transition-colors",
-                          selectedModel === model.id
-                            ? "bg-accent text-accent-foreground"
-                            : "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                        )}
-                      >
-                        <div className="flex items-center gap-2 w-full">
-                          <span className="font-medium text-sm">{model.name}</span>
-                          {selectedModel === model.id && (
-                            <Check className="size-4 ml-auto text-primary shrink-0" />
+                    {modelsExpanded ? (
+                      SELECTABLE_MODELS.map((model) => (
+                        <button
+                          key={model.id}
+                          type="button"
+                          onClick={() => handleModelSelect(model.id)}
+                          className={cn(
+                            "w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md transition-colors",
+                            selectedModel === model.id
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800",
                           )}
-                        </div>
-                        {model.description && (
-                          <span className="text-xs text-muted-foreground">
-                            {model.description}
-                          </span>
-                        )}
-                      </button>
-                    ))}
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <span className="font-medium text-sm">{model.name}</span>
+                            {selectedModel === model.id && (
+                              <Check className="size-4 ml-auto text-primary shrink-0" />
+                            )}
+                          </div>
+                          {model.description && (
+                            <span className="text-xs text-muted-foreground">
+                              {model.description}
+                            </span>
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <>
+                        {SELECTABLE_MODELS.filter((m) => m.id === AUTO_MODEL_ID).map((model) => (
+                          <button
+                            key={model.id}
+                            type="button"
+                            className="w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md bg-accent text-accent-foreground"
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <span className="font-medium text-sm">{model.name}</span>
+                              <Check className="size-4 ml-auto text-primary shrink-0" />
+                            </div>
+                            {model.description && (
+                              <span className="text-xs text-muted-foreground">
+                                {model.description}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setShowAllModels(true)}
+                          className="w-full flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+                        >
+                          <ChevronDownIcon className="size-4" />
+                          Change model
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </PopoverContent>

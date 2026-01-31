@@ -22,7 +22,7 @@ model Project {
   name       String
   theme      String?
   thumbnail  String?
-  deviceType String   @default("mobile") // "mobile", "web", or "inspirations"
+  deviceType String   @default("mobile") // "mobile", "web", "inspirations", or "wireframe"
   width      Int?     // Custom width for inspirations / variable-size designs
   height     Int?     // Custom height for inspirations / variable-size designs
   frames     Frame[]
