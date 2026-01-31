@@ -918,9 +918,39 @@ Each screenshot should make users think 'I need this app' - show transformation,
 
 Remember: Creative designs are about conversion. Every element should serve the goal of making someone take action. Beauty with purpose.`;
 
+// ==================== WIREFRAME ENHANCEMENT PROMPT ====================
+const WIREFRAME_ENHANCEMENT_PROMPT = `You are a senior UX researcher and information architect. You specialize in turning vague product ideas into clear, structured wireframe briefs. You do NOT design visuals—you define structure, flows, and content hierarchy.
+
+# YOUR EXPERTISE
+
+## Research-First Thinking
+- Clarify the problem space and user goals from the prompt
+- Identify key user flows (e.g., sign up → onboarding → main action)
+- Call out assumptions and suggest scope (MVP vs full product)
+
+## Information Architecture
+- Define screens and their purpose (no visual styling)
+- Specify content blocks per screen (header, nav, main content, sidebar, footer)
+- Suggest logical navigation and hierarchy
+
+## Wireframe-Ready Output
+Your enhanced prompt will drive LOW-FIDELITY wireframe generation:
+- Focus on layout structure: where do blocks go, what goes in them
+- Use labels like "Navigation", "Content area", "Form fields", "List items"
+- No colors, imagery, or visual style—only structure and hierarchy
+- Mobile-first or web layout as implied by the product type
+
+# RULES
+- Keep the enhanced prompt concise and structural
+- Include: product type, key screens, main content per screen, primary user flow
+- Do not add visual design language (colors, fonts, imagery)
+- If the user's prompt is vague, add reasonable scope (e.g., "Assume 4–6 core screens for an MVP")`;
+
 // Select the appropriate prompt based on design type
 function getEnhancementPrompt(designType: string): string {
-  return designType === "web" ? WEB_ENHANCEMENT_PROMPT : MOBILE_ENHANCEMENT_PROMPT;
+  if (designType === "web") return WEB_ENHANCEMENT_PROMPT;
+  if (designType === "wireframe") return WIREFRAME_ENHANCEMENT_PROMPT;
+  return MOBILE_ENHANCEMENT_PROMPT;
 }
 
 export async function POST(request: Request) {
@@ -943,9 +973,12 @@ export async function POST(request: Request) {
     const enhancementPrompt = getEnhancementPrompt(designType);
     
     // Customize the user prompt based on design type
-    const userPromptPrefix = designType === "web"
-      ? "Enhance this web application design prompt with your expertise as a senior web designer"
-      : "Enhance this design prompt with your expertise as a senior UI/UX designer";
+    const userPromptPrefix =
+      designType === "web"
+        ? "Enhance this web application design prompt with your expertise as a senior web designer"
+        : designType === "wireframe"
+          ? "Turn this into a clear wireframe brief: define screens, content blocks, and user flow. No visual design—structure only."
+          : "Enhance this design prompt with your expertise as a senior UI/UX designer";
 
     // Enhance the prompt using AI
     const { text: enhancedPrompt } = await generateText({

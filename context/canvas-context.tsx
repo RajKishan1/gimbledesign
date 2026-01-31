@@ -20,7 +20,7 @@ export type LoadingStatusType =
   | "generating"
   | "completed";
 
-export type DeviceType = "mobile" | "web";
+export type DeviceType = "mobile" | "web" | "wireframe";
 
 export type CustomDimensions = { width: number; height: number };
 

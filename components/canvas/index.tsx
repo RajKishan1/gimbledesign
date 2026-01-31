@@ -271,12 +271,26 @@ const Canvas = ({
                   >
                     {/* Device Frames */}
                     {frames?.map((frame, index: number) => {
-                      const getFrameSpacing = () => {
-                        if (customDimensions?.width) return customDimensions.width + 80;
-                        return deviceType === "web" ? 1500 : 480;
-                      };
-                      const frameSpacing = getFrameSpacing();
-                      const baseX = 100 + index * frameSpacing;
+                      const GAP = 80;
+                      const isWireframe = deviceType === "wireframe";
+                      const wireframeWidths = [1440, 768, 430];
+                      const wireframeMinHeights = [800, 1024, 932];
+                      const frameWidth = isWireframe ? (wireframeWidths[index] ?? 430) : undefined;
+                      const frameMinHeight = isWireframe ? (wireframeMinHeights[index] ?? 932) : undefined;
+
+                      let baseX: number;
+                      if (isWireframe && frameWidth != null) {
+                        baseX = 100 + wireframeWidths
+                          .slice(0, index)
+                          .reduce((acc, w) => acc + w + GAP, 0);
+                      } else {
+                        const frameSpacing = customDimensions?.width
+                          ? customDimensions.width + GAP
+                          : deviceType === "web"
+                            ? 1500
+                            : 480;
+                        baseX = 100 + index * frameSpacing;
+                      }
                       const y = 100;
 
                       return (
@@ -295,6 +309,8 @@ const Canvas = ({
                           toolMode={toolMode}
                           theme_style={theme?.style}
                           onOpenHtmlDialog={onOpenHtmlDialog}
+                          overrideWidth={frameWidth}
+                          overrideMinHeight={frameMinHeight}
                         />
                       );
                     })}

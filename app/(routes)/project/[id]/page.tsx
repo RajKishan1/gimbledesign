@@ -30,13 +30,18 @@ const Page = () => {
       ? { width: project.width, height: project.height }
       : undefined;
 
+  const initialDeviceType =
+    project?.deviceType === "web"
+      ? "web"
+      : project?.deviceType === "wireframe"
+        ? "wireframe"
+        : "mobile";
+
   return (
     <CanvasProvider
       initialFrames={project?.frames}
       initialThemeId={project?.theme}
-      initialDeviceType={
-        project?.deviceType === "web" ? "web" : "mobile"
-      }
+      initialDeviceType={initialDeviceType}
       initialDimensions={initialDimensions}
       hasInitialData={hasInitialData}
       projectId={project?.id}

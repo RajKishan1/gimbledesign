@@ -132,7 +132,9 @@ export async function POST(request: Request) {
       const eventName =
         deviceType === "web"
           ? "ui/generate.web-screens"
-          : "ui/generate.screens";
+          : deviceType === "wireframe"
+            ? "ui/generate.wireframe-screens"
+            : "ui/generate.screens";
 
       await inngest.send({
         name: eventName,

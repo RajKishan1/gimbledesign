@@ -3,6 +3,7 @@ import { inngest } from "../../../inngest/client";
 import { helloWorld } from "@/inngest/functions/helloWorld";
 import { generateScreens } from "@/inngest/functions/generateScreens";
 import { generateWebScreens } from "@/inngest/functions/generateWebScreens";
+import { generateWireframeScreens } from "@/inngest/functions/generateWireframeScreens";
 import { regenerateFrame } from "@/inngest/functions/regenerateFrame";
 import { generateInspirationVariations } from "@/inngest/functions/generateInspirationVariations";
 
@@ -16,6 +17,7 @@ export const { GET, POST, PUT } = serve({
     helloWorld,
     generateScreens,
     generateWebScreens,
+    generateWireframeScreens,
     regenerateFrame,
     generateInspirationVariations,
   ],

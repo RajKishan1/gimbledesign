@@ -33,6 +33,9 @@ type PropsType = {
   isLoading?: boolean;
   projectId: string;
   onOpenHtmlDialog: () => void;
+  /** Override dimensions (e.g. wireframe: web 1440, tablet 768, mobile 430) */
+  overrideWidth?: number;
+  overrideMinHeight?: number;
 };
 const DeviceFrame = ({
   html,
@@ -47,6 +50,8 @@ const DeviceFrame = ({
   isLoading = false,
   projectId,
   onOpenHtmlDialog,
+  overrideWidth,
+  overrideMinHeight,
 }: PropsType) => {
   const { selectedFrameId, setSelectedFrameId, updateFrame, deviceType, customDimensions } =
     useCanvas();
@@ -58,8 +63,15 @@ const DeviceFrame = ({
     cancelLinking,
   } = usePrototype();
 
-  // Device dimensions: custom (e.g. inspirations) or based on deviceType
+  // Device dimensions: per-frame override (wireframe), custom (inspirations), or deviceType
   const getDeviceDimensions = () => {
+    if (overrideWidth != null) {
+      return {
+        width: overrideWidth,
+        height: null as number | null,
+        minHeight: overrideMinHeight ?? 800,
+      };
+    }
     if (customDimensions?.width != null && customDimensions?.height != null) {
       return {
         width: customDimensions.width,
