@@ -551,18 +551,10 @@ function getElementName(element: Element, styles: CSSStyleDeclaration): string {
 
 function parseFills(styles: CSSStyleDeclaration): Fill[] | undefined {
   const fills: Fill[] = [];
+  let hasGradient = false;
 
-  // Background color
-  const bgColor = styles.backgroundColor;
-  if (bgColor && bgColor !== "rgba(0, 0, 0, 0)" && bgColor !== "transparent") {
-    fills.push({
-      type: "solid",
-      color: bgColor,
-      opacity: 1,
-    });
-  }
-
-  // Background image/gradient
+  // Background image/gradient first - gradient takes precedence over solid color
+  // (avoids exporting a div's solid overlay instead of the intended linear gradient + blur)
   const bgImage = styles.backgroundImage;
   if (bgImage && bgImage !== "none") {
     // Parse linear gradient
@@ -574,6 +566,7 @@ function parseFills(styles: CSSStyleDeclaration): Fill[] | undefined {
           color: bgImage, // Store full gradient string
           gradientStops: parseGradientStops(gradientMatch[1]),
         });
+        hasGradient = true;
       }
     }
     // Parse radial gradient
@@ -582,6 +575,7 @@ function parseFills(styles: CSSStyleDeclaration): Fill[] | undefined {
         type: "gradient",
         color: bgImage,
       });
+      hasGradient = true;
     }
     // Parse image URL
     else if (bgImage.includes("url(")) {
@@ -618,6 +612,18 @@ function parseFills(styles: CSSStyleDeclaration): Fill[] | undefined {
           });
         }
       }
+    }
+  }
+
+  // Only add solid fill when there's no gradient (so gradient + blur exports correctly)
+  if (!hasGradient) {
+    const bgColor = styles.backgroundColor;
+    if (bgColor && bgColor !== "rgba(0, 0, 0, 0)" && bgColor !== "transparent") {
+      fills.push({
+        type: "solid",
+        color: bgColor,
+        opacity: 1,
+      });
     }
   }
 
@@ -902,14 +908,251 @@ function parseLayout(
 // SPECIFIC NODE BUILDERS - IMPROVED
 // ============================================================================
 
+/**
+ * Detect visual line breaks in rendered text.
+ * HTML text wraps automatically based on container width, but textContent
+ * doesn't preserve this. We use multiple strategies to detect line breaks.
+ */
+function getTextWithVisualLineBreaks(element: Element, win: Window): string {
+  const text = element.textContent?.trim() || "";
+  if (!text) return "";
+
+  const styles = win.getComputedStyle(element);
+  const fontSize = parseFloat(styles.fontSize) || 16;
+  const containerWidth = element.getBoundingClientRect().width;
+  
+  // Dynamic line threshold based on font size (half the line height)
+  const lineHeight = parseFloat(styles.lineHeight) || fontSize * 1.2;
+  const lineThreshold = Math.max(fontSize * 0.4, 6);
+
+  // Strategy 1: Handle explicit <br> tags
+  const html = element.innerHTML;
+  if (html.includes("<br")) {
+    const temp = element.cloneNode(true) as Element;
+    temp.querySelectorAll("br").forEach((br) => {
+      br.replaceWith("\n");
+    });
+    const result = temp.textContent?.trim() || text;
+    // Still need to check for additional wrapping within lines
+    return result.split("\n").map(line => 
+      detectLineWrapping(element, line.trim(), win, fontSize, lineThreshold, containerWidth)
+    ).join("\n");
+  }
+
+  // Strategy 2: Estimate number of lines from element height
+  const elementHeight = element.getBoundingClientRect().height;
+  const estimatedLines = Math.max(1, Math.round(elementHeight / lineHeight));
+  
+  // If element height suggests single line and text is short, skip detection
+  if (estimatedLines <= 1 && text.length < 50) {
+    return text;
+  }
+
+  // Strategy 3: Word-by-word detection using Range API
+  const detectedText = detectLineBreaksByWordRects(element, text, win, lineThreshold);
+  if (detectedText !== text) {
+    return detectedText;
+  }
+
+  // Strategy 4: Calculate line breaks based on container width
+  if (containerWidth > 0 && estimatedLines > 1) {
+    return calculateLineBreaks(text, containerWidth, styles, win);
+  }
+
+  return text;
+}
+
+/**
+ * Detect line wrapping within a single text segment
+ */
+function detectLineWrapping(
+  element: Element, 
+  text: string, 
+  win: Window, 
+  fontSize: number,
+  lineThreshold: number,
+  containerWidth: number
+): string {
+  if (!text || text.length < 20) return text;
+  
+  const styles = win.getComputedStyle(element);
+  return calculateLineBreaks(text, containerWidth, styles, win);
+}
+
+/**
+ * Word-by-word line break detection using Range API and getClientRects
+ */
+function detectLineBreaksByWordRects(
+  element: Element, 
+  text: string, 
+  win: Window,
+  lineThreshold: number
+): string {
+  try {
+    const range = win.document.createRange();
+    
+    // Collect all text nodes with their positions
+    const textNodes: Array<{ node: Text; start: number; end: number }> = [];
+    const walker = win.document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+    let totalOffset = 0;
+    let node: Text | null;
+    
+    while ((node = walker.nextNode() as Text | null)) {
+      const content = node.textContent || "";
+      if (content.length > 0) {
+        textNodes.push({
+          node,
+          start: totalOffset,
+          end: totalOffset + content.length
+        });
+        totalOffset += content.length;
+      }
+    }
+
+    if (textNodes.length === 0) return text;
+
+    // Split into words and track their positions
+    const words = text.split(/(\s+)/); // Keep whitespace
+    const lines: string[] = [];
+    let currentLine = "";
+    let lastY: number | null = null;
+    let globalOffset = 0;
+
+    for (const word of words) {
+      if (!word) continue;
+      
+      // Find which text node contains this word
+      const wordStart = globalOffset;
+      const wordEnd = wordStart + word.length;
+      globalOffset = wordEnd;
+
+      // Skip pure whitespace for y-detection but keep it in the line
+      if (word.trim() === "") {
+        currentLine += word;
+        continue;
+      }
+
+      // Find the text node and offset for this word
+      let wordY: number | null = null;
+      
+      for (const textNodeInfo of textNodes) {
+        if (wordStart >= textNodeInfo.start && wordStart < textNodeInfo.end) {
+          const localStart = wordStart - textNodeInfo.start;
+          const localEnd = Math.min(wordEnd - textNodeInfo.start, textNodeInfo.node.textContent?.length || 0);
+          
+          try {
+            range.setStart(textNodeInfo.node, localStart);
+            range.setEnd(textNodeInfo.node, localEnd);
+            
+            const rects = range.getClientRects();
+            if (rects.length > 0) {
+              // Use the first rect's top position
+              wordY = rects[0].top;
+              
+              // If word spans multiple rects (wrapped mid-word), handle it
+              if (rects.length > 1) {
+                const firstY = rects[0].top;
+                const lastY = rects[rects.length - 1].top;
+                if (Math.abs(lastY - firstY) > lineThreshold) {
+                  // Word is split across lines - this is complex, use first part's Y
+                  wordY = firstY;
+                }
+              }
+            }
+          } catch (e) {
+            // Range operation failed, skip this word
+          }
+          break;
+        }
+      }
+
+      if (wordY !== null) {
+        if (lastY !== null && Math.abs(wordY - lastY) > lineThreshold) {
+          // New line detected
+          if (currentLine.trim()) {
+            lines.push(currentLine.trim());
+          }
+          currentLine = word;
+        } else {
+          currentLine += word;
+        }
+        lastY = wordY;
+      } else {
+        currentLine += word;
+      }
+    }
+
+    // Add the last line
+    if (currentLine.trim()) {
+      lines.push(currentLine.trim());
+    }
+
+    return lines.length > 1 ? lines.join("\n") : text;
+  } catch (e) {
+    return text;
+  }
+}
+
+/**
+ * Calculate line breaks based on container width and font metrics
+ * This is a fallback when Range API detection doesn't work
+ */
+function calculateLineBreaks(
+  text: string,
+  containerWidth: number,
+  styles: CSSStyleDeclaration,
+  win: Window
+): string {
+  if (containerWidth <= 0) return text;
+
+  const fontSize = parseFloat(styles.fontSize) || 16;
+  const fontFamily = styles.fontFamily || "Inter";
+  
+  // Create a canvas to measure text width
+  const canvas = win.document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return text;
+
+  ctx.font = `${styles.fontWeight || "400"} ${fontSize}px ${fontFamily}`;
+  
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let currentLine = "";
+  
+  // Account for padding
+  const paddingLeft = parseFloat(styles.paddingLeft) || 0;
+  const paddingRight = parseFloat(styles.paddingRight) || 0;
+  const availableWidth = containerWidth - paddingLeft - paddingRight;
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = ctx.measureText(testLine).width;
+    
+    if (testWidth > availableWidth && currentLine) {
+      // Line would be too long, start a new line
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  
+  // Add the last line
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.length > 1 ? lines.join("\n") : text;
+}
+
 function buildTextNode(
   element: Element,
   styles: CSSStyleDeclaration,
   baseProps: BaseNodeProps,
   win: Window,
 ): TextNode {
-  // Get all text content, including from nested inline elements
-  const content = element.textContent?.trim() || "";
+  // Get text content with visual line breaks preserved
+  const content = getTextWithVisualLineBreaks(element, win);
 
   const textStyle: TextStyle = {
     fontFamily:

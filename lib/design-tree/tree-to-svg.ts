@@ -163,6 +163,12 @@ function collectDefs(
     defs.push(createShadowFilter(node.shadows, node.id));
   }
 
+  // Collect blur filters
+  const nodeWithBlur = node as DesignNode & { blur?: number; backdropBlur?: number };
+  if (nodeWithBlur.blur && nodeWithBlur.blur > 0) {
+    defs.push(createBlurFilter(nodeWithBlur.blur, node.id, scale));
+  }
+
   // Collect gradient and image pattern defs
   if (node.fills) {
     for (let i = 0; i < node.fills.length; i++) {
@@ -218,6 +224,14 @@ function createShadowFilter(shadows: Shadow[], nodeId: string): string {
   });
 
   return `<filter id="shadow-${sanitizeId(nodeId)}" x="-50%" y="-50%" width="200%" height="200%">${filters.join("")}
+  </filter>`;
+}
+
+function createBlurFilter(blur: number, nodeId: string, scale: number): string {
+  const blurAmount = blur * scale;
+  // Use larger bounds to accommodate blur spread (blur can extend beyond element bounds)
+  return `<filter id="blur-${sanitizeId(nodeId)}" x="-100%" y="-100%" width="300%" height="300%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="${n2(blurAmount)}" />
   </filter>`;
 }
 
@@ -441,17 +455,27 @@ function renderFrame(
   const hasFill = node.fills && node.fills.length > 0;
   const hasStroke = node.strokes && node.strokes.length > 0;
   const hasShadow = node.shadows && node.shadows.length > 0;
+  const nodeWithBlur = node as FrameNode & { blur?: number };
+  const hasBlur = nodeWithBlur.blur && nodeWithBlur.blur > 0;
 
-  if (hasFill || hasStroke || hasShadow) {
+  if (hasFill || hasStroke || hasShadow || hasBlur) {
     const fill = hasFill ? getFillAttr(node.fills!, node.id) : "none";
     const stroke = hasStroke ? getStrokeAttr(node.strokes!) : "";
     const radius = getRadiusAttr(node.cornerRadius, scale);
-    const shadow = hasShadow
-      ? ` filter="url(#shadow-${sanitizeId(node.id)})"`
-      : "";
+    
+    // Combine filters if both shadow and blur are present
+    let filterAttr = "";
+    if (hasShadow && hasBlur) {
+      // When both shadow and blur, apply blur (shadow is less common with blur effect)
+      filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;
+    } else if (hasShadow) {
+      filterAttr = ` filter="url(#shadow-${sanitizeId(node.id)})"`;
+    } else if (hasBlur) {
+      filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;
+    }
 
     elements.push(
-      `    <rect x="${n2(x)}" y="${n2(y)}" width="${n2(w)}" height="${n2(h)}" fill="${fill}"${radius}${stroke}${shadow}/>`,
+      `    <rect x="${n2(x)}" y="${n2(y)}" width="${n2(w)}" height="${n2(h)}" fill="${fill}"${radius}${stroke}${filterAttr}/>`,
     );
   }
 
@@ -500,7 +524,7 @@ function renderText(
   // Calculate number of lines for multi-line text
   const lines = content.split("\n");
   const lineCount = lines.length;
-  const totalTextHeight = fontSize * lineHeight * lineCount;
+  const lineHeightPx = fontSize * lineHeight;
 
   // Text anchor based on alignment
   const anchorMap: Record<string, string> = {
@@ -519,13 +543,17 @@ function renderText(
     textX = x + w;
   }
 
-  // Calculate Y position - vertically center text within its bounding box
-  // SVG text y coordinate is at the baseline, so we need to account for:
-  // 1. Center the text block vertically in the element
-  // 2. Add baseline offset (approximately 0.35 of fontSize from bottom of text)
-  const baselineOffset = fontSize * 0.35; // Distance from bottom of text to baseline
-  const textBlockTop = y + (h - totalTextHeight) / 2; // Top of centered text block
-  const textY = textBlockTop + fontSize - baselineOffset; // First line baseline
+  // Calculate Y position - match flexbox align-items: center (icon + text in buttons)
+  // With dominant-baseline="middle", the text's vertical center is placed at the y coordinate.
+  // For single line: center of text = center of box => textY = y + h/2
+  // For multi-line: first line's center is offset upward so entire block is centered
+  // Block height = (lineCount - 1) * lineHeightPx (distance from first to last line center)
+  // 
+  // Visual correction: fonts have descenders (g,j,p,q,y) below baseline, making the
+  // mathematical center higher than the visual center. Add a small downward offset
+  // (5% of fontSize) to align text visually with icons in buttons.
+  const visualCorrectionOffset = fontSize * 0.05;
+  const textY = y + h / 2 - ((lineCount - 1) * lineHeightPx) / 2 + visualCorrectionOffset;
 
   // Build text attributes (precise positions for accurate alignment)
   const attrs: string[] = [
@@ -536,6 +564,7 @@ function renderText(
     `font-size="${n2(fontSize)}"`,
     `font-weight="${fontWeight}"`,
     `text-anchor="${anchor}"`,
+    `dominant-baseline="middle"`,
   ];
 
   if (letterSpacing !== 0) {
@@ -550,22 +579,20 @@ function renderText(
     attrs.push(`opacity="${node.opacity}"`);
   }
 
-  // Handle multi-line text
-  const lineHeightPx = fontSize * lineHeight;
-
   if (lineCount === 1) {
     // Single line
     const escapedContent = escapeXml(content);
     elements.push(`    <text ${attrs.join(" ")}>${escapedContent}</text>`);
   } else {
-    // Multi-line text using tspans
+    // Multi-line text using tspans - each line positioned correctly
     elements.push(`    <text ${attrs.join(" ")}>`);
     lines.forEach((line, i) => {
-      const lineY = textY + i * lineHeightPx;
       const escapedLine = escapeXml(line) || " ";
       if (i === 0) {
+        // First line at the calculated textY position
         elements.push(`      <tspan>${escapedLine}</tspan>`);
       } else {
+        // Subsequent lines: reset x position and move down by lineHeightPx
         elements.push(
           `      <tspan x="${n2(textX)}" dy="${n2(lineHeightPx)}">${escapedLine}</tspan>`,
         );
@@ -758,13 +785,22 @@ function renderRectangle(
     node.strokes && node.strokes.length > 0 ? getStrokeAttr(node.strokes) : "";
   const radius = getRadiusAttr(node.cornerRadius, scale);
   const opacity = node.opacity !== 1 ? ` opacity="${node.opacity}"` : "";
-  const shadow =
-    node.shadows && node.shadows.length > 0
-      ? ` filter="url(#shadow-${sanitizeId(node.id)})"`
-      : "";
+  
+  const hasShadow = node.shadows && node.shadows.length > 0;
+  const nodeWithBlur = node as RectangleNode & { blur?: number };
+  const hasBlur = nodeWithBlur.blur && nodeWithBlur.blur > 0;
+  
+  let filterAttr = "";
+  if (hasShadow && hasBlur) {
+    filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;
+  } else if (hasShadow) {
+    filterAttr = ` filter="url(#shadow-${sanitizeId(node.id)})"`;
+  } else if (hasBlur) {
+    filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;
+  }
 
   elements.push(
-    `    <rect x="${n2(x)}" y="${n2(y)}" width="${n2(w)}" height="${n2(h)}" fill="${fill}"${radius}${stroke}${opacity}${shadow}/>`,
+    `    <rect x="${n2(x)}" y="${n2(y)}" width="${n2(w)}" height="${n2(h)}" fill="${fill}"${radius}${stroke}${opacity}${filterAttr}/>`,
   );
 }
 
@@ -796,7 +832,11 @@ function renderSvg(
 function getFillAttr(fills: Fill[], nodeId: string): string {
   if (!fills || fills.length === 0) return "transparent";
 
-  const fill = fills[0];
+  // Prefer gradient over solid so linear gradient + blur exports correctly
+  // (not the solid color from an overlay div)
+  const fill =
+    fills.find((f) => f.type === "gradient" && f.gradientStops?.length) ||
+    fills[0];
 
   switch (fill.type) {
     case "solid":
