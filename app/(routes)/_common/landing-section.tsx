@@ -369,7 +369,7 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import TrustedBy from "@/components/landing/atoms/TrustedBy";
 import FooterDemo from "@/components/landing/Footer";
 import ExploreTemplates from "@/components/landing/ExploreTemplates";
-
+import { PiStarFourFill } from "react-icons/pi";
 const inter = Inter_Tight({ subsets: ["latin"] });
 
 import { DeviceType } from "@/components/prompt-input";
@@ -536,7 +536,9 @@ const LandingSection = () => {
   };
 
   return (
-    <div className={` w-full min-h-screen ${openSauceOne.className}`}>
+    <div
+      className={` w-full min-h-screen border-x border-black/5 ${openSauceOne.className}`}
+    >
       <div className="flex flex-col ">
         <Header />
         <BlurFade>
@@ -556,14 +558,15 @@ const LandingSection = () => {
                  mx-auto text-center"
                 >
                   <span className="flex gap-1 ">
-                    <Sparkle size={12} color="#6a3fde" strokeWidth={3} />
-                    <Sparkle size={12} color="#6a3fde" strokeWidth={3} />
-                    <Sparkle size={12} color="#6a3fde" strokeWidth={3} />
-                    <Sparkle size={12} color="#6a3fde" strokeWidth={3} />
-                    <Sparkle size={12} color="#6a3fde" strokeWidth={3} />
-                   
+                    <PiStarFourFill color="#6248FF" size={12} />
+                    <PiStarFourFill color="#6248FF" size={12} />
+                    <PiStarFourFill color="#6248FF" size={12} />
+                    <PiStarFourFill color="#6248FF" size={12} />
+                    <PiStarFourFill color="#6248FF" size={12} />
                   </span>
-                  <p className="font-medium text-black/80 dark:text-zinc-200 text-sm leading-[1.55em]">5.0 rating . 110+ reviews</p>
+                  <p className="font-medium text-black/60 dark:text-zinc-200 text-sm leading-[1.55em]">
+                    5.0 rating . 110+ reviews
+                  </p>
                 </div>
                 <h1
                   className="text-center font-bold  text-5xl
@@ -621,10 +624,9 @@ const LandingSection = () => {
           </div>
         </BlurFade>
         {/* <TrustedBy /> */}
-        <div className="w-full py-10 border-x border-zinc-200">
-          <div className="mx-auto max-w-3xl">
-            
-            {userId && (
+        {userId && (
+          <div className="w-full py-10 border-x border-zinc-200">
+            <div className="mx-auto max-w-3xl">
               <div>
                 <h1
                   className="font-medium text-xl
@@ -672,11 +674,13 @@ const LandingSection = () => {
                   </>
                 )}
               </div>
-            )}
 
-            {isError && <p className="text-red-500">Failed to load projects</p>}
+              {isError && (
+                <p className="text-red-500">Failed to load projects</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <ExploreTemplates />
       <Lines />

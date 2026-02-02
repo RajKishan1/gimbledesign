@@ -1,5 +1,4 @@
 "use client";
-
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,8 +27,8 @@ const Header = () => {
   const profilePicture = profile?.profilePicture || user?.image || "";
   const displayName = profile?.name || user?.name || "";
   return (
-    <div className="sticky top-0 right-0 left-0 z-30  ">
-      <header className=" border-x border-zinc-50 dark:border-zinc-900 px-6  p-6 bg-white dark:bg-black">
+    <div className="sticky top-0 right-0 left-0 z-30  border-b border-black/5  dark:border-zinc-900">
+      <header className=" px-6  p-6 bg-white dark:bg-black">
         <div
           className="w-full max-w-6xl mx-auto
          flex items-center justify-between"
@@ -120,7 +119,7 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button className="rounded-full" asChild>
+              <Button className="rounded-full bg-[#6248ff]" asChild>
                 <Link href="/login">Get Started</Link>
               </Button>
             )}

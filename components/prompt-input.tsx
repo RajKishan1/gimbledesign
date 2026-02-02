@@ -109,7 +109,7 @@ const PromptInput = ({
   };
 
   return (
-    <div className="max-w-156 mx-auto">
+    <div className="max-w-156  mx-auto">
       <input
         ref={fileInputRef}
         type="file"
@@ -120,7 +120,7 @@ const PromptInput = ({
       />
       <InputGroup
         className={cn(
-          "min-h-50 bg-[#ffffff] dark:bg-zinc-950 p-3 ",
+          "min-h-39 bg-[#ffffff] dark:bg-zinc-950 p-3 ",
           className && className,
         )}
       >
