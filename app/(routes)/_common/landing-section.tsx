@@ -391,7 +391,7 @@ type LoadingState = "idle" | "enhancing" | "designing";
 // Helper function to get loading text based on state
 const getLoadingText = (
   state: LoadingState,
-  deviceType: DeviceType,
+  deviceType: DeviceType
 ): string | undefined => {
   switch (state) {
     case "enhancing":
@@ -399,10 +399,10 @@ const getLoadingText = (
         deviceType === "web"
           ? "web app"
           : deviceType === "inspirations"
-            ? "inspirations"
-            : deviceType === "wireframe"
-              ? "wireframe"
-              : "mobile app";
+          ? "inspirations"
+          : deviceType === "wireframe"
+          ? "wireframe"
+          : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";
@@ -419,6 +419,10 @@ const LandingSection = () => {
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
+  const [wireframeKind, setWireframeKind] = useState<"web" | "mobile">("web");
+  const [inspirationKind, setInspirationKind] = useState<"web" | "mobile">(
+    "web"
+  );
   const userId = user?.id;
 
   // Fetch limited projects initially, all projects when showAllProjects is true
@@ -526,6 +530,7 @@ const LandingSection = () => {
         prompt: finalPrompt,
         model: getGenerationModel(selectedModel),
         deviceType: deviceType,
+        wireframeKind: deviceType === "wireframe" ? wireframeKind : undefined,
       });
     } catch (error) {
       console.error("Error in design process:", error);
@@ -535,6 +540,7 @@ const LandingSection = () => {
         prompt: promptText,
         model: getGenerationModel(selectedModel),
         deviceType: deviceType,
+        wireframeKind: deviceType === "wireframe" ? wireframeKind : undefined,
       });
     }
   };
@@ -608,6 +614,10 @@ const LandingSection = () => {
                     onModelChange={handleModelChange}
                     deviceType={deviceType}
                     onDeviceTypeChange={setDeviceType}
+                    wireframeKind={wireframeKind}
+                    onWireframeKindChange={setWireframeKind}
+                    inspirationKind={inspirationKind}
+                    onInspirationKindChange={setInspirationKind}
                   />
                 </div>
 

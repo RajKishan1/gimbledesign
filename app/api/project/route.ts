@@ -44,7 +44,7 @@ export async function GET(request: Request) {
                 ? dbError.message
                 : undefined,
           },
-          { status: 500 },
+          { status: 500 }
         );
       }
       throw dbError;
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
         details:
           process.env.NODE_ENV === "development" ? errorMessage : undefined,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
       prompt,
       model,
       deviceType = "mobile",
+      wireframeKind,
       dimensions,
     } = await request.json();
     const session = await getSession(await headers());
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
           error:
             "Insufficient credits. You need at least 1 credit to create a project.",
         },
-        { status: 402 },
+        { status: 402 }
       );
     }
 
@@ -118,12 +119,15 @@ export async function POST(request: Request) {
 
     const projectName = await generateProjectName(prompt, selectedModel);
 
-    // Store the device type (mobile or web)
+    // Store the device type (mobile or web) and wireframe kind when applicable
     const project = await prisma.project.create({
       data: {
         userId,
         name: projectName,
         deviceType: deviceType,
+        ...(deviceType === "wireframe" && {
+          wireframeKind: wireframeKind === "mobile" ? "mobile" : "web",
+        }),
       },
     });
 
@@ -133,8 +137,8 @@ export async function POST(request: Request) {
         deviceType === "web"
           ? "ui/generate.web-screens"
           : deviceType === "wireframe"
-            ? "ui/generate.wireframe-screens"
-            : "ui/generate.screens";
+          ? "ui/generate.wireframe-screens"
+          : "ui/generate.screens";
 
       await inngest.send({
         name: eventName,
@@ -143,6 +147,9 @@ export async function POST(request: Request) {
           projectId: project.id,
           prompt,
           model: selectedModel,
+          ...(deviceType === "wireframe" && {
+            wireframeKind: wireframeKind === "mobile" ? "mobile" : "web",
+          }),
         },
       });
     } catch (error) {
@@ -161,7 +168,7 @@ export async function POST(request: Request) {
       {
         error: "Failed to create project",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

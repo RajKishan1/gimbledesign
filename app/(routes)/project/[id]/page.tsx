@@ -34,8 +34,14 @@ const Page = () => {
     project?.deviceType === "web"
       ? "web"
       : project?.deviceType === "wireframe"
-        ? "wireframe"
-        : "mobile";
+      ? "wireframe"
+      : "mobile";
+
+  const initialWireframeKind =
+    project?.deviceType === "wireframe" &&
+    (project?.wireframeKind === "web" || project?.wireframeKind === "mobile")
+      ? project.wireframeKind
+      : null;
 
   return (
     <CanvasProvider
@@ -43,6 +49,7 @@ const Page = () => {
       initialThemeId={project?.theme}
       initialDeviceType={initialDeviceType}
       initialDimensions={initialDimensions}
+      initialWireframeKind={initialWireframeKind}
       hasInitialData={hasInitialData}
       projectId={project?.id}
     >

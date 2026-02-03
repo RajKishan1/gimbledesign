@@ -48,6 +48,8 @@ interface CanvasContextType {
   deviceType: DeviceType;
   /** When set (e.g. inspirations project), frame uses these instead of deviceType presets */
   customDimensions?: CustomDimensions;
+  /** When deviceType is "wireframe": "web" = one responsive frame shown at 3 sizes, "mobile" = one mobile frame. null = legacy 3 separate frames */
+  wireframeKind: "web" | "mobile" | null;
 }
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -58,6 +60,7 @@ export const CanvasProvider = ({
   initialThemeId,
   initialDeviceType = "mobile",
   initialDimensions,
+  initialWireframeKind,
   hasInitialData,
   projectId,
 }: {
@@ -67,6 +70,8 @@ export const CanvasProvider = ({
   initialDeviceType?: DeviceType;
   /** Custom width/height for inspirations or variable-size projects */
   initialDimensions?: CustomDimensions;
+  /** When deviceType is wireframe: "web" | "mobile" | null (legacy 3 frames) */
+  initialWireframeKind?: "web" | "mobile" | null;
   hasInitialData: boolean;
   projectId: string | null;
 }) => {
@@ -77,6 +82,7 @@ export const CanvasProvider = ({
   const [fontId, setFontId] = useState<string>(DEFAULT_FONT);
   const [deviceType, setDeviceType] = useState<DeviceType>(initialDeviceType);
   const customDimensions = initialDimensions ?? undefined;
+  const wireframeKind = initialWireframeKind ?? null;
 
   const [frames, setFrames] = useState<FrameType[]>(initialFrames);
   const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null);
@@ -92,11 +98,13 @@ export const CanvasProvider = ({
     setFrames(initialFrames);
     setThemeId(initialThemeId || THEME_LIST[0].id);
     setSelectedFrameId(null);
-    setDeviceType(initialDeviceType); // Reset device type when project changes
+    setDeviceType(initialDeviceType);
   }
 
   const theme = THEME_LIST.find((t) => t.id === themeId);
-  const font = POPULAR_FONTS.find((f) => f.id === fontId) || POPULAR_FONTS.find((f) => f.id === DEFAULT_FONT);
+  const font =
+    POPULAR_FONTS.find((f) => f.id === fontId) ||
+    POPULAR_FONTS.find((f) => f.id === DEFAULT_FONT);
   const selectedFrame =
     selectedFrameId && frames.length !== 0
       ? frames.find((f) => f.id === selectedFrameId) || null
@@ -212,6 +220,7 @@ export const CanvasProvider = ({
         setLoadingStatus,
         deviceType,
         customDimensions,
+        wireframeKind,
       }}
     >
       {children}

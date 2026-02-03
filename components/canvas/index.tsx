@@ -35,7 +35,22 @@ const Canvas = ({
     setLoadingStatus,
     deviceType,
     customDimensions,
+    wireframeKind,
   } = useCanvas();
+
+  // Web wireframe: one responsive frame shown at 3 viewport sizes (same HTML, different container widths)
+  const isWireframeWebResponsive =
+    deviceType === "wireframe" &&
+    wireframeKind === "web" &&
+    frames?.length === 1;
+  const wireframeWebViewports = [
+    { id: "web", title: "Web", width: 1440, minHeight: 800 },
+    { id: "tablet", title: "Tablet", width: 768, minHeight: 1024 },
+    { id: "mobile", title: "Mobile", width: 430, minHeight: 932 },
+  ];
+  const GAP = 80;
+  const wireframeWidths = [1440, 768, 430];
+  const wireframeMinHeights = [800, 1024, 932];
 
   const {
     mode,
@@ -270,50 +285,85 @@ const Canvas = ({
                     }}
                   >
                     {/* Device Frames */}
-                    {frames?.map((frame, index: number) => {
-                      const GAP = 80;
-                      const isWireframe = deviceType === "wireframe";
-                      const wireframeWidths = [1440, 768, 430];
-                      const wireframeMinHeights = [800, 1024, 932];
-                      const frameWidth = isWireframe ? (wireframeWidths[index] ?? 430) : undefined;
-                      const frameMinHeight = isWireframe ? (wireframeMinHeights[index] ?? 932) : undefined;
+                    {isWireframeWebResponsive
+                      ? wireframeWebViewports.map((vp, index) => {
+                          const frame = frames[0];
+                          const baseX =
+                            100 +
+                            wireframeWebViewports
+                              .slice(0, index)
+                              .reduce((acc, w) => acc + w.width + GAP, 0);
+                          const y = 100;
+                          return (
+                            <DeviceFrame
+                              key={`${frame.id}-${vp.id}`}
+                              frameId={frame.id}
+                              projectId={projectId}
+                              title={vp.title}
+                              html={frame.htmlContent}
+                              isLoading={frame.isLoading}
+                              scale={currentScale}
+                              initialPosition={{ x: baseX, y }}
+                              toolMode={toolMode}
+                              theme_style={theme?.style}
+                              onOpenHtmlDialog={onOpenHtmlDialog}
+                              overrideWidth={vp.width}
+                              overrideMinHeight={vp.minHeight}
+                              heightMessageId={`${frame.id}-${vp.id}`}
+                            />
+                          );
+                        })
+                      : (frames ?? []).map((frame, index: number) => {
+                          const isWireframe = deviceType === "wireframe";
+                          // Mobile wireframe: single frame at 430px. Legacy: 3 frames at 1440, 768, 430.
+                          const wireframeIndex =
+                            isWireframe &&
+                            wireframeKind === "mobile" &&
+                            (frames?.length ?? 0) === 1
+                              ? 2
+                              : index;
+                          const frameWidth = isWireframe
+                            ? wireframeWidths[wireframeIndex] ?? 430
+                            : undefined;
+                          const frameMinHeight = isWireframe
+                            ? wireframeMinHeights[wireframeIndex] ?? 932
+                            : undefined;
 
-                      let baseX: number;
-                      if (isWireframe && frameWidth != null) {
-                        baseX = 100 + wireframeWidths
-                          .slice(0, index)
-                          .reduce((acc, w) => acc + w + GAP, 0);
-                      } else {
-                        const frameSpacing = customDimensions?.width
-                          ? customDimensions.width + GAP
-                          : deviceType === "web"
-                            ? 1500
-                            : 480;
-                        baseX = 100 + index * frameSpacing;
-                      }
-                      const y = 100;
+                          let baseX: number;
+                          if (isWireframe && frameWidth != null) {
+                            baseX =
+                              100 +
+                              wireframeWidths
+                                .slice(0, index)
+                                .reduce((acc, w) => acc + w + GAP, 0);
+                          } else {
+                            const frameSpacing = customDimensions?.width
+                              ? customDimensions.width + GAP
+                              : deviceType === "web"
+                              ? 1500
+                              : 480;
+                            baseX = 100 + index * frameSpacing;
+                          }
+                          const y = 100;
 
-                      return (
-                        <DeviceFrame
-                          key={frame.id}
-                          frameId={frame.id}
-                          projectId={projectId}
-                          title={frame.title}
-                          html={frame.htmlContent}
-                          isLoading={frame.isLoading}
-                          scale={currentScale}
-                          initialPosition={{
-                            x: baseX,
-                            y,
-                          }}
-                          toolMode={toolMode}
-                          theme_style={theme?.style}
-                          onOpenHtmlDialog={onOpenHtmlDialog}
-                          overrideWidth={frameWidth}
-                          overrideMinHeight={frameMinHeight}
-                        />
-                      );
-                    })}
+                          return (
+                            <DeviceFrame
+                              key={frame.id}
+                              frameId={frame.id}
+                              projectId={projectId}
+                              title={frame.title}
+                              html={frame.htmlContent}
+                              isLoading={frame.isLoading}
+                              scale={currentScale}
+                              initialPosition={{ x: baseX, y }}
+                              toolMode={toolMode}
+                              theme_style={theme?.style}
+                              onOpenHtmlDialog={onOpenHtmlDialog}
+                              overrideWidth={frameWidth}
+                              overrideMinHeight={frameMinHeight}
+                            />
+                          );
+                        })}
 
                     {/* Prototype connector arrows layer - rendered on top */}
                     <PrototypeConnectors canvasScale={currentScale} />

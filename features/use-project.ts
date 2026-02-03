@@ -10,6 +10,8 @@ export interface CreateProjectData {
   prompt: string;
   model?: string;
   deviceType?: DeviceType;
+  /** When deviceType is "wireframe": "web" (responsive) or "mobile". Default "web". */
+  wireframeKind?: "web" | "mobile";
   dimensions?: {
     width: number;
     height: number;
@@ -24,8 +26,13 @@ export const useCreateProject = () => {
       await axios
         .post("/api/project", {
           prompt: data.prompt,
-          model: getGenerationModel(data.model) || "google/gemini-3-pro-preview",
+          model:
+            getGenerationModel(data.model) || "google/gemini-3-pro-preview",
           deviceType: data.deviceType || "mobile",
+          wireframeKind:
+            data.deviceType === "wireframe"
+              ? data.wireframeKind ?? "web"
+              : undefined,
           dimensions: data.dimensions,
         })
         .then((res) => res.data),

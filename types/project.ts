@@ -3,6 +3,7 @@ export type ProjectType = {
   name: string;
   theme: string;
   deviceType?: "mobile" | "web" | "inspirations" | "wireframe";
+  wireframeKind?: "web" | "mobile" | null;
   width?: number;
   height?: number;
   thumbnail?: string;

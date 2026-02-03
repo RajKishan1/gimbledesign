@@ -36,6 +36,8 @@ type PropsType = {
   /** Override dimensions (e.g. wireframe: web 1440, tablet 768, mobile 430) */
   overrideWidth?: number;
   overrideMinHeight?: number;
+  /** When the same frame is shown in multiple viewports (e.g. responsive wireframe), pass a unique id so this instance only applies its own iframe height (avoids all viewports stretching to the same height) */
+  heightMessageId?: string;
 };
 const DeviceFrame = ({
   html,
@@ -52,9 +54,15 @@ const DeviceFrame = ({
   onOpenHtmlDialog,
   overrideWidth,
   overrideMinHeight,
+  heightMessageId,
 }: PropsType) => {
-  const { selectedFrameId, setSelectedFrameId, updateFrame, deviceType, customDimensions } =
-    useCanvas();
+  const {
+    selectedFrameId,
+    setSelectedFrameId,
+    updateFrame,
+    deviceType,
+    customDimensions,
+  } = useCanvas();
   const {
     mode,
     updateScreenPosition,
@@ -113,7 +121,10 @@ const DeviceFrame = ({
   const { font } = useCanvas();
   const isSelected = selectedFrameId === frameId;
   const isPrototypeMode = mode === "prototype";
-  const fullHtml = getHTMLWrapper(html, title, theme_style, frameId, { font });
+  const fullHtml = getHTMLWrapper(html, title, theme_style, frameId, {
+    font,
+    ...(heightMessageId != null && { heightMessageId }),
+  });
 
   // Update screen position for connector drawing
   useEffect(() => {
@@ -132,11 +143,13 @@ const DeviceFrame = ({
   ]);
 
   // Listen for iframe content height changes (for both web and mobile designs with flexible height)
+  // When heightMessageId is set (e.g. responsive wireframe), only accept height for this viewport so others don't stretch
+  const heightId = heightMessageId ?? frameId;
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (
         event.data.type === "FRAME_HEIGHT" &&
-        event.data.frameId === frameId
+        event.data.frameId === heightId
       ) {
         const newHeight = Math.max(event.data.height, DEVICE_MIN_HEIGHT);
         setContentHeight(newHeight);
@@ -144,7 +157,7 @@ const DeviceFrame = ({
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [frameId, DEVICE_MIN_HEIGHT]);
+  }, [heightId, DEVICE_MIN_HEIGHT]);
 
   // Track frame rect for element overlay
   useEffect(() => {
@@ -187,7 +200,7 @@ const DeviceFrame = ({
         {
           responseType: "blob",
           validateStatus: (s) => (s >= 200 && s < 300) || s === 304,
-        },
+        }
       );
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement("a");
@@ -216,10 +229,10 @@ const DeviceFrame = ({
           onError: () => {
             updateFrame(frameId, { isLoading: false });
           },
-        },
+        }
       );
     },
-    [frameId, regenerateMutation, updateFrame],
+    [frameId, regenerateMutation, updateFrame]
   );
 
   const handleDeleteFrame = useCallback(() => {
@@ -234,7 +247,7 @@ const DeviceFrame = ({
       const body = iframeDoc?.body;
       if (!body) {
         toast.error(
-          "Design not ready. Wait for the frame to load, then try again.",
+          "Design not ready. Wait for the frame to load, then try again."
         );
         return;
       }
@@ -267,7 +280,7 @@ const DeviceFrame = ({
           : undefined,
       });
       toast.success(
-        "Design copied as SVG! Paste in Figma (Ctrl+V or Cmd+V) for vector layers—no plugin needed.",
+        "Design copied as SVG! Paste in Figma (Ctrl+V or Cmd+V) for vector layers—no plugin needed."
       );
     } catch (error) {
       console.error(error);
@@ -289,7 +302,7 @@ const DeviceFrame = ({
         finishLinking(frameId);
       }
     },
-    [isPrototypeMode, linkingState, frameId, finishLinking],
+    [isPrototypeMode, linkingState, frameId, finishLinking]
   );
 
   return (
@@ -362,8 +375,8 @@ const DeviceFrame = ({
         toolMode === TOOL_MODE_ENUM.HAND
           ? "cursor-grab! active:cursor-grabbing!"
           : isPrototypeMode
-            ? "cursor-default"
-            : "cursor-move",
+          ? "cursor-default"
+          : "cursor-move"
       )}
     >
       <div className="w-full h-full" ref={containerRef}>
@@ -409,14 +422,14 @@ const DeviceFrame = ({
               !isPrototypeMode &&
               "rounded-none",
             isPrototypeMode &&
-              (deviceType === "mobile" ? "rounded-2xl" : "rounded-lg"),
+              (deviceType === "mobile" ? "rounded-2xl" : "rounded-lg")
           )}
           onClick={handlePrototypeClick}
         >
           <div
             className={cn(
               "relative bg-white dark:bg-background",
-              "overflow-visible",
+              "overflow-visible"
             )}
           >
             {isLoading ? (

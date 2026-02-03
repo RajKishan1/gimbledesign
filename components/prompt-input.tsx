@@ -31,6 +31,8 @@ import { useState, useRef } from "react";
 
 export type DeviceType = "mobile" | "web" | "inspirations" | "wireframe";
 
+export type WireframeKind = "web" | "mobile";
+
 const DESIGN_TYPES: {
   value: DeviceType;
   label: string;
@@ -62,6 +64,12 @@ interface PropsType {
   onModelChange?: (modelId: string) => void;
   deviceType?: DeviceType;
   onDeviceTypeChange?: (type: DeviceType) => void;
+  /** When deviceType is "wireframe": "web" = one responsive screen (shown at 3 sizes), "mobile" = one mobile screen. Default "web". */
+  wireframeKind?: WireframeKind;
+  onWireframeKindChange?: (kind: WireframeKind) => void;
+  /** When deviceType is "inspirations": "web" or "mobile" to generate designs for that device. Default "web". */
+  inspirationKind?: WireframeKind;
+  onInspirationKindChange?: (kind: WireframeKind) => void;
   /** Reference image/file for the design (e.g. attached screenshot). */
   referenceFile?: File | null;
   onReferenceChange?: (file: File | null) => void;
@@ -79,6 +87,10 @@ const PromptInput = ({
   onModelChange,
   deviceType = "mobile",
   onDeviceTypeChange,
+  wireframeKind = "web",
+  onWireframeKindChange,
+  inspirationKind = "web",
+  onInspirationKindChange,
   referenceFile,
   onReferenceChange,
 }: PropsType) => {
@@ -98,11 +110,19 @@ const PromptInput = ({
     onDeviceTypeChange?.(type);
   };
 
+  const handleWireframeKindSelect = (kind: WireframeKind) => {
+    onWireframeKindChange?.(kind);
+  };
+
+  const handleInspirationKindSelect = (kind: WireframeKind) => {
+    onInspirationKindChange?.(kind);
+  };
+
   const selectedModelName = getModelName(selectedModel);
   const selectedTypeLabel =
     DESIGN_TYPES.find((t) => t.value === deviceType)?.label ?? "Mobile";
   const selectedTypeIcon = DESIGN_TYPES.find(
-    (t) => t.value === deviceType,
+    (t) => t.value === deviceType
   )?.icon;
 
   const handleAttachClick = () => {
@@ -133,7 +153,7 @@ const PromptInput = ({
       <InputGroup
         className={cn(
           "min-h-39 bg-[#ffffff] rounded-2xl dark:bg-zinc-950 p-2.5 ",
-          className && className,
+          className && className
         )}
       >
         <InputGroupTextarea
@@ -217,7 +237,7 @@ const PromptInput = ({
                           "w-full flex items-center gap-2 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                           deviceType === type.value
                             ? "bg-accent text-accent-foreground"
-                            : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground",
+                            : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
                         )}
                       >
                         {type.icon}
@@ -228,6 +248,86 @@ const PromptInput = ({
                       </button>
                     ))}
                   </div>
+                  {deviceType === "wireframe" && (
+                    <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        Wireframe
+                      </p>
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleWireframeKindSelect("web")}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
+                            wireframeKind === "web"
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                          )}
+                        >
+                          <Globe className="size-4" />
+                          Web
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleWireframeKindSelect("mobile")}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
+                            wireframeKind === "mobile"
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                          )}
+                        >
+                          <Smartphone className="size-4" />
+                          Mobile
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        {wireframeKind === "web"
+                          ? "One responsive design shown at 3 sizes"
+                          : "One mobile-only screen"}
+                      </p>
+                    </div>
+                  )}
+                  {deviceType === "inspirations" && (
+                    <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        Inspiration
+                      </p>
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleInspirationKindSelect("web")}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
+                            inspirationKind === "web"
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                          )}
+                        >
+                          <Globe className="size-4" />
+                          Web
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleInspirationKindSelect("mobile")}
+                          className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
+                            inspirationKind === "mobile"
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                          )}
+                        >
+                          <Smartphone className="size-4" />
+                          Mobile
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        {inspirationKind === "web"
+                          ? "Four variations at web size (1440×900)"
+                          : "Four variations at mobile size (430×932)"}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="p-3">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -245,7 +345,7 @@ const PromptInput = ({
                             "w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md transition-colors",
                             selectedModel === model.id
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
                           )}
                         >
                           <div className="flex items-center gap-2 w-full">
@@ -266,7 +366,7 @@ const PromptInput = ({
                     ) : (
                       <>
                         {SELECTABLE_MODELS.filter(
-                          (m) => m.id === AUTO_MODEL_ID,
+                          (m) => m.id === AUTO_MODEL_ID
                         ).map((model) => (
                           <button
                             key={model.id}
@@ -307,7 +407,7 @@ const PromptInput = ({
               variant="default"
               className={cn(
                 "rounded-full relative bg-[#6248ff] overflow-hidden py-1",
-                isLoading && "min-w-28",
+                isLoading && "min-w-28"
               )}
               size="sm"
               disabled={(!promptText?.trim() && !referenceFile) || isLoading}

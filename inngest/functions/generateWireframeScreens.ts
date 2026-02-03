@@ -8,9 +8,7 @@ import prisma from "@/lib/prisma";
 const WireframeConceptSchema = z.object({
   appName: z
     .string()
-    .describe(
-      "A short name for the app/product based on the user's request."
-    ),
+    .describe("A short name for the app/product based on the user's request."),
   layoutDescription: z
     .string()
     .describe(
@@ -51,6 +49,15 @@ STRICT RULES:
 
 Example style: simple bordered boxes, placeholder text inside, clear hierarchy. Like a pen-and-paper wireframe translated to HTML.`;
 
+const WIREFRAME_RESPONSIVE_SYSTEM_PROMPT = `You generate a single LOW-FIDELITY RESPONSIVE WIREFRAME HTML. One layout that adapts from mobile (430px) to desktop (1440px) using Tailwind responsive classes.
+
+STRICT RULES:
+1. Output ONE <div> that represents one screen. Use Tailwind LAYOUT and RESPONSIVE utilities: w-full, max-w-7xl, mx-auto, flex, flex-col md:flex-row, grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3, hidden md:block, etc.
+2. Do NOT set a fixed width on the root. Use w-full so the design fills the viewport at any size. Use max-width and responsive breakpoints (sm:, md:, lg:, xl:) so the layout adapts: e.g. sidebar hidden on mobile (hidden md:block), single column on mobile and multi-column on desktop.
+3. STYLING: Grayscale only. bg-gray-100, bg-white, border border-gray-300, text-gray-700. No colors, no images. Placeholder text: "Header", "Nav", "Content", "Footer".
+4. STRUCTURE: Clear blocks (header, nav, main, footer). Layout should look good at 430px (stacked), 768px (condensed), and 1440px (full desktop with sidebar if appropriate).
+5. Output ONLY raw HTML starting with <div>. No markdown, no \`\`\`, no <html>/<body>/<head>.`;
+
 const FAST_MODEL = "google/gemini-3-flash-preview";
 const QUALITY_MODEL = "google/gemini-3-pro-preview";
 
@@ -65,11 +72,14 @@ export const generateWireframeScreens = inngest.createFunction(
       model,
       frames,
       theme: existingTheme,
+      wireframeKind = "web", // "web" = one responsive screen (shown at 3 sizes), "mobile" = one mobile screen
     } = event.data;
     const CHANNEL = `user:${userId}`;
     const isExistingGeneration = Array.isArray(frames) && frames.length > 0;
     const analysisModel = FAST_MODEL;
     const generationModel = model || QUALITY_MODEL;
+    const totalScreens =
+      wireframeKind === "mobile" ? 1 : wireframeKind === "web" ? 1 : 3; // legacy 3 when not specified
 
     await publish({
       channel: CHANNEL,
@@ -119,7 +129,7 @@ export const generateWireframeScreens = inngest.createFunction(
         data: {
           status: "generating",
           theme: themeToUse,
-          totalScreens: 3,
+          totalScreens,
           projectId,
         },
       });
@@ -127,22 +137,23 @@ export const generateWireframeScreens = inngest.createFunction(
       return { ...object, themeToUse };
     });
 
-    const generatedFrames: typeof frames = isExistingGeneration ? [...frames] : [];
+    const generatedFrames: typeof frames = isExistingGeneration
+      ? [...frames]
+      : [];
 
-    // PHASE 2: Generate exactly 3 screens – Web (1440px), Tablet (768px), Mobile (430px)
-    for (let i = 0; i < WIREFRAME_VIEWPORTS.length; i++) {
-      const viewport = WIREFRAME_VIEWPORTS[i];
-
-      await step.run(`generate-wireframe-${viewport.id}`, async () => {
+    // PHASE 2: Generate screen(s) based on wireframeKind
+    if (wireframeKind === "web") {
+      // One responsive layout – single HTML with Tailwind responsive classes, shown at 3 viewport sizes in the UI
+      await step.run("generate-wireframe-responsive", async () => {
         const result = await generateText({
           model: openrouter.chat(generationModel),
-          system: WIREFRAME_GENERATION_SYSTEM_PROMPT,
+          system: WIREFRAME_RESPONSIVE_SYSTEM_PROMPT,
           prompt: `
-          Wireframe viewport ${i + 1}/3: ${viewport.name} (${viewport.width}px width)
+          RESPONSIVE wireframe (one layout for all viewport sizes)
           - Purpose: ${analysis.purpose}
           - LAYOUT (structure only): ${analysis.layoutDescription}
 
-          Generate LOW-FIDELITY wireframe HTML for this viewport. Use a root <div> with width ${viewport.width}px (e.g. w-[${viewport.width}px] or style="width:${viewport.width}px") so the layout is correct at ${viewport.width}px. Adapt the layout for this viewport: ${viewport.id === "web" ? "desktop (e.g. sidebar, wide content)" : viewport.id === "tablet" ? "tablet (e.g. condensed nav, flexible grid)" : "mobile (e.g. single column, stacked blocks)"}. Grayscale, placeholder text, clear blocks. No colors, no images.
+          Generate ONE responsive wireframe HTML. Use w-full and Tailwind responsive classes (md:, lg:, etc.) so the same HTML looks correct at 430px (mobile), 768px (tablet), and 1440px (desktop). No fixed width on root. Grayscale, placeholder text, clear blocks.
           `.trim(),
         });
 
@@ -154,7 +165,7 @@ export const generateWireframeScreens = inngest.createFunction(
         const frame = await prisma.frame.create({
           data: {
             projectId,
-            title: viewport.name,
+            title: "Responsive",
             htmlContent: finalHtml,
           },
         });
@@ -166,7 +177,7 @@ export const generateWireframeScreens = inngest.createFunction(
           topic: "frame.created",
           data: {
             frame: { ...frame, isLoading: false },
-            screenId: viewport.id,
+            screenId: "responsive",
             frameId: frame.id,
             projectId,
           },
@@ -174,6 +185,111 @@ export const generateWireframeScreens = inngest.createFunction(
 
         return { success: true, frame };
       });
+    } else if (wireframeKind === "mobile") {
+      // One mobile-only screen (430px)
+      const viewport = WIREFRAME_VIEWPORTS[2]; // mobile
+      await step.run("generate-wireframe-mobile", async () => {
+        const result = await generateText({
+          model: openrouter.chat(generationModel),
+          system: WIREFRAME_GENERATION_SYSTEM_PROMPT,
+          prompt: `
+          Wireframe: Mobile only (${viewport.width}px width)
+          - Purpose: ${analysis.purpose}
+          - LAYOUT (structure only): ${analysis.layoutDescription}
+
+          Generate LOW-FIDELITY wireframe HTML for mobile. Use a root <div> with width ${viewport.width}px (e.g. w-[${viewport.width}px] or style="width:${viewport.width}px"). Single column, stacked blocks. Grayscale, placeholder text, clear blocks. No colors, no images.
+          `.trim(),
+        });
+
+        let finalHtml = result.text ?? "";
+        const match = finalHtml.match(/<div[\s\S]*<\/div>/);
+        finalHtml = match ? match[0] : finalHtml;
+        finalHtml = finalHtml.replace(/```/g, "");
+
+        const frame = await prisma.frame.create({
+          data: {
+            projectId,
+            title: "Mobile",
+            htmlContent: finalHtml,
+          },
+        });
+
+        generatedFrames.push(frame);
+
+        await publish({
+          channel: CHANNEL,
+          topic: "frame.created",
+          data: {
+            frame: { ...frame, isLoading: false },
+            screenId: "mobile",
+            frameId: frame.id,
+            projectId,
+          },
+        });
+
+        return { success: true, frame };
+      });
+    } else {
+      // Legacy: 3 separate viewports (web, tablet, mobile)
+      for (let i = 0; i < WIREFRAME_VIEWPORTS.length; i++) {
+        const viewport = WIREFRAME_VIEWPORTS[i];
+
+        await step.run(`generate-wireframe-${viewport.id}`, async () => {
+          const result = await generateText({
+            model: openrouter.chat(generationModel),
+            system: WIREFRAME_GENERATION_SYSTEM_PROMPT,
+            prompt: `
+          Wireframe viewport ${i + 1}/3: ${viewport.name} (${
+              viewport.width
+            }px width)
+          - Purpose: ${analysis.purpose}
+          - LAYOUT (structure only): ${analysis.layoutDescription}
+
+          Generate LOW-FIDELITY wireframe HTML for this viewport. Use a root <div> with width ${
+            viewport.width
+          }px (e.g. w-[${viewport.width}px] or style="width:${
+              viewport.width
+            }px") so the layout is correct at ${
+              viewport.width
+            }px. Adapt the layout for this viewport: ${
+              viewport.id === "web"
+                ? "desktop (e.g. sidebar, wide content)"
+                : viewport.id === "tablet"
+                ? "tablet (e.g. condensed nav, flexible grid)"
+                : "mobile (e.g. single column, stacked blocks)"
+            }. Grayscale, placeholder text, clear blocks. No colors, no images.
+          `.trim(),
+          });
+
+          let finalHtml = result.text ?? "";
+          const match = finalHtml.match(/<div[\s\S]*<\/div>/);
+          finalHtml = match ? match[0] : finalHtml;
+          finalHtml = finalHtml.replace(/```/g, "");
+
+          const frame = await prisma.frame.create({
+            data: {
+              projectId,
+              title: viewport.name,
+              htmlContent: finalHtml,
+            },
+          });
+
+          generatedFrames.push(frame);
+
+          await publish({
+            channel: CHANNEL,
+            topic: "frame.created",
+            data: {
+              frame: { ...frame, isLoading: false },
+              screenId: viewport.id,
+              frameId: frame.id,
+              projectId,
+            },
+          });
+
+          return { success: true, frame };
+        });
+      }
     }
 
     await publish({

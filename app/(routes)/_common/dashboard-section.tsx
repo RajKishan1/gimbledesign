@@ -21,7 +21,7 @@ type LoadingState = "idle" | "enhancing" | "designing";
 
 const getLoadingText = (
   state: LoadingState,
-  deviceType: DeviceType,
+  deviceType: DeviceType
 ): string | undefined => {
   switch (state) {
     case "enhancing":
@@ -29,10 +29,10 @@ const getLoadingText = (
         deviceType === "web"
           ? "web app"
           : deviceType === "inspirations"
-            ? "inspirations"
-            : deviceType === "wireframe"
-              ? "wireframe"
-              : "mobile app";
+          ? "inspirations"
+          : deviceType === "wireframe"
+          ? "wireframe"
+          : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";
@@ -51,6 +51,10 @@ const DashboardSection = () => {
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
+  const [wireframeKind, setWireframeKind] = useState<"web" | "mobile">("web");
+  const [inspirationKind, setInspirationKind] = useState<"web" | "mobile">(
+    "web"
+  );
   const userId = user?.id;
 
   const {
@@ -93,6 +97,7 @@ const DashboardSection = () => {
         if (hasPrompt) formData.append("prompt", promptText.trim());
         if (hasImage && referenceFile) formData.append("image", referenceFile);
         formData.append("model", selectedModel);
+        formData.append("inspirationKind", inspirationKind);
         const res = await fetch("/api/inspiration-redesign", {
           method: "POST",
           body: formData,
@@ -133,6 +138,7 @@ const DashboardSection = () => {
         prompt: finalPrompt,
         model: getGenerationModel(selectedModel),
         deviceType,
+        wireframeKind: deviceType === "wireframe" ? wireframeKind : undefined,
       });
     } catch (error) {
       console.error("Error in design process:", error);
@@ -141,12 +147,15 @@ const DashboardSection = () => {
         prompt: promptText,
         model: getGenerationModel(selectedModel),
         deviceType,
+        wireframeKind: deviceType === "wireframe" ? wireframeKind : undefined,
       });
     }
   };
 
   return (
-    <div className={`w-full min-h-screen flex flex-col ${openSauceOne.className}`}>
+    <div
+      className={`w-full min-h-screen flex flex-col ${openSauceOne.className}`}
+    >
       <Header />
       <div className="flex flex-1 min-h-0">
         <DashboardSidebar />
@@ -167,6 +176,10 @@ const DashboardSection = () => {
                   onModelChange={handleModelChange}
                   deviceType={deviceType}
                   onDeviceTypeChange={setDeviceType}
+                  wireframeKind={wireframeKind}
+                  onWireframeKindChange={setWireframeKind}
+                  inspirationKind={inspirationKind}
+                  onInspirationKindChange={setInspirationKind}
                   referenceFile={referenceFile}
                   onReferenceChange={setReferenceFile}
                 />

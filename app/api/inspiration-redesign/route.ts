@@ -6,7 +6,7 @@ import { generateProjectName } from "@/app/action/action";
 import { inngest } from "@/inngest/client";
 import { describeImageFromBuffer } from "@/lib/describe-image-server";
 import { getImageDimensions } from "@/lib/get-image-dimensions";
-import { inferDesignDimensions } from "@/lib/infer-design-dimensions";
+import { PRESETS } from "@/lib/infer-design-dimensions";
 import { getGenerationModel } from "@/constant/models";
 
 const VALID_IMAGE_TYPES = [
@@ -31,7 +31,14 @@ export async function POST(request: Request) {
     const promptInput = formData.get("prompt") as string | null;
     const prompt = typeof promptInput === "string" ? promptInput.trim() : "";
     const modelInput = formData.get("model") as string | null;
-    const model = modelInput ? getGenerationModel(modelInput) : getGenerationModel("auto");
+    const model = modelInput
+      ? getGenerationModel(modelInput)
+      : getGenerationModel("auto");
+    const inspirationKindInput = formData.get("inspirationKind") as
+      | string
+      | null;
+    const inspirationKind =
+      inspirationKindInput === "mobile" ? "mobile" : "web";
 
     if (!imageFile && !prompt) {
       return NextResponse.json(
@@ -68,16 +75,15 @@ export async function POST(request: Request) {
       imageDescription = desc;
       imageDimensions = dims;
 
-      combinedPrompt = `Redesign this design for inspiration. Same type of content, four different visual styles.\n\nReference design (from image): ${imageDescription}.${prompt ? `\n\nAdditional context from user: ${prompt}` : ""}`;
+      combinedPrompt = `Redesign this design for inspiration. Same type of content, four different visual styles.\n\nReference design (from image): ${imageDescription}.${
+        prompt ? `\n\nAdditional context from user: ${prompt}` : ""
+      }`;
     } else {
       combinedPrompt = `Generate four design variations for inspiration. Same concept, four different visual styles (e.g. minimal, bold, classic, modern).\n\nUser request: ${prompt}`;
     }
 
-    const { width, height } = inferDesignDimensions(
-      prompt,
-      imageDescription,
-      imageDimensions
-    );
+    const { width, height } =
+      inspirationKind === "mobile" ? PRESETS.mobile : PRESETS.web;
 
     const creditCost = 1.0;
     let userRecord = await prisma.user.findUnique({
@@ -105,7 +111,12 @@ export async function POST(request: Request) {
 
     const projectName = await generateProjectName(combinedPrompt, model);
 
-    let project: { id: string; userId: string; name: string; deviceType: string };
+    let project: {
+      id: string;
+      userId: string;
+      name: string;
+      deviceType: string;
+    };
     try {
       project = await prisma.project.create({
         data: {

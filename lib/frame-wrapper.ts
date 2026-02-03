@@ -6,14 +6,20 @@ export function getHTMLWrapper(
   title = "Untitled",
   theme_style?: string,
   frameId?: string,
-  options?: { previewMode?: boolean; font?: FontOption }
+  options?: {
+    previewMode?: boolean;
+    font?: FontOption /** When same frame is shown in multiple viewports (e.g. responsive wireframe), use a unique id so each viewport's height is applied only to that instance */;
+    heightMessageId?: string;
+  }
 ) {
   const finalTheme = theme_style || OCEAN_BREEZE_THEME;
   const isPreview = options?.previewMode || false;
   const selectedFont = options?.font || getFontById(DEFAULT_FONT);
+  const heightId = options?.heightMessageId ?? frameId ?? "";
 
   // For preview mode, allow natural content flow and scrolling
-  const previewStyles = isPreview ? `
+  const previewStyles = isPreview
+    ? `
     html, body { 
       margin: 0 !important;
       padding: 0 !important;
@@ -27,7 +33,8 @@ export function getHTMLWrapper(
       width: 100% !important;
       min-height: 100% !important;
     }
-  ` : '';
+  `
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -39,7 +46,11 @@ export function getHTMLWrapper(
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-${selectedFont ? `  <link href="${selectedFont.googleFontUrl}" rel="stylesheet">` : ''}
+${
+  selectedFont
+    ? `  <link href="${selectedFont.googleFontUrl}" rel="stylesheet">`
+    : ""
+}
   
   <!-- Keep existing fonts for backward compatibility -->
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -56,7 +67,9 @@ ${selectedFont ? `  <link href="${selectedFont.googleFontUrl}" rel="stylesheet">
     :root {${BASE_VARIABLES}${finalTheme}}
     *, *::before, *::after {margin:0;padding:0;box-sizing:border-box;}
     html, body {width:100%;min-height:100%;}
-    body {font-family:"${selectedFont?.family || 'Plus Jakarta Sans'}", sans-serif;background:var(--background);color:var(--foreground);-webkit-font-smoothing:antialiased;}
+    body {font-family:"${
+      selectedFont?.family || "Plus Jakarta Sans"
+    }", sans-serif;background:var(--background);color:var(--foreground);-webkit-font-smoothing:antialiased;}
     #root {width:100%;min-height:100vh;}
     * {scrollbar-width:none;-ms-overflow-style:none;}
     *::-webkit-scrollbar {display:none;}
@@ -70,7 +83,7 @@ ${selectedFont ? `  <link href="${selectedFont.googleFontUrl}" rel="stylesheet">
   </div>
   <script>
     (()=>{
-      const fid='${frameId}';
+      const fid='${heightId}';
       const isPreview = ${isPreview};
       const send=()=>{
         const r=document.getElementById('root')?.firstElementChild;

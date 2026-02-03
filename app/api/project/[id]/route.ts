@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
@@ -30,7 +30,7 @@ export async function GET(
         {
           error: "Project not found",
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -41,14 +41,14 @@ export async function GET(
       {
         error: "Fail to fetch project",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
@@ -60,13 +60,13 @@ export async function POST(
       if (!prompt || typeof prompt !== "string") {
         return NextResponse.json(
           { error: "Missing or invalid prompt" },
-          { status: 400 },
+          { status: 400 }
         );
       }
     } catch (error) {
       return NextResponse.json(
         { error: "Invalid request body" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -101,7 +101,7 @@ export async function POST(
           error:
             "Insufficient credits. You need at least 1 credit to generate designs.",
         },
-        { status: 402 },
+        { status: 402 }
       );
     }
 
@@ -131,8 +131,8 @@ export async function POST(
         project.deviceType === "web"
           ? "ui/generate.web-screens"
           : project.deviceType === "wireframe"
-            ? "ui/generate.wireframe-screens"
-            : "ui/generate.screens";
+          ? "ui/generate.wireframe-screens"
+          : "ui/generate.screens";
 
       await inngest.send({
         name: eventName,
@@ -142,11 +142,15 @@ export async function POST(
           prompt,
           frames: project.frames,
           theme: project.theme,
+          ...(project.deviceType === "wireframe" &&
+            project.wireframeKind != null && {
+              wireframeKind: project.wireframeKind,
+            }),
         },
       });
       console.log(
         `Inngest event ${eventName} sent successfully for project:`,
-        id,
+        id
       );
     } catch (inngestError) {
       console.error("Failed to send Inngest event:", inngestError);
@@ -160,7 +164,7 @@ export async function POST(
       // In development, check if Inngest dev server is running
       if (process.env.NODE_ENV === "development") {
         console.warn(
-          "⚠️  Inngest dev server may not be running. Start it with: npx inngest-cli dev",
+          "⚠️  Inngest dev server may not be running. Start it with: npx inngest-cli dev"
         );
       }
       // Continue anyway - don't fail the request
@@ -187,14 +191,14 @@ export async function POST(
               : String(error)
             : undefined,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
@@ -224,7 +228,7 @@ export async function PATCH(
       {
         error: "Failed to update project",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
