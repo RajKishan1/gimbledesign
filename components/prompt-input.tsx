@@ -19,12 +19,9 @@ import {
   ArrowUp,
   Layout,
 } from "lucide-react";
+import { HiOutlineSparkles } from "react-icons/hi2";
 import { Spinner } from "./ui/spinner";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "./ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import {
   SELECTABLE_MODELS,
   getModelName,
@@ -34,11 +31,23 @@ import { useState, useRef } from "react";
 
 export type DeviceType = "mobile" | "web" | "inspirations" | "wireframe";
 
-const DESIGN_TYPES: { value: DeviceType; label: string; icon: React.ReactNode }[] = [
+const DESIGN_TYPES: {
+  value: DeviceType;
+  label: string;
+  icon: React.ReactNode;
+}[] = [
   { value: "mobile", label: "Mobile", icon: <Smartphone className="size-4" /> },
   { value: "web", label: "Website", icon: <Globe className="size-4" /> },
-  { value: "inspirations", label: "Inspirations", icon: <Lightbulb className="size-4" /> },
-  { value: "wireframe", label: "Wireframe", icon: <Layout className="size-4" /> },
+  {
+    value: "inspirations",
+    label: "Inspirations",
+    icon: <Lightbulb className="size-4" />,
+  },
+  {
+    value: "wireframe",
+    label: "Wireframe",
+    icon: <Layout className="size-4" />,
+  },
 ];
 
 interface PropsType {
@@ -90,8 +99,11 @@ const PromptInput = ({
   };
 
   const selectedModelName = getModelName(selectedModel);
-  const selectedTypeLabel = DESIGN_TYPES.find((t) => t.value === deviceType)?.label ?? "Mobile";
-  const selectedTypeIcon = DESIGN_TYPES.find((t) => t.value === deviceType)?.icon;
+  const selectedTypeLabel =
+    DESIGN_TYPES.find((t) => t.value === deviceType)?.label ?? "Mobile";
+  const selectedTypeIcon = DESIGN_TYPES.find(
+    (t) => t.value === deviceType,
+  )?.icon;
 
   const handleAttachClick = () => {
     fileInputRef.current?.click();
@@ -120,7 +132,7 @@ const PromptInput = ({
       />
       <InputGroup
         className={cn(
-          "min-h-39 bg-[#ffffff] dark:bg-zinc-950 p-3 ",
+          "min-h-39 bg-[#ffffff] rounded-2xl dark:bg-zinc-950 p-2.5 ",
           className && className,
         )}
       >
@@ -142,12 +154,15 @@ const PromptInput = ({
             <button
               type="button"
               onClick={handleAttachClick}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-xl transition-colors"
             >
               <Paperclip className="size-4" />
               <span>Attach</span>
               {referenceFile && (
-                <span className="text-xs truncate max-w-24" title={referenceFile.name}>
+                <span
+                  className="text-xs truncate max-w-24"
+                  title={referenceFile.name}
+                >
                   ({referenceFile.name})
                 </span>
               )}
@@ -234,7 +249,9 @@ const PromptInput = ({
                           )}
                         >
                           <div className="flex items-center gap-2 w-full">
-                            <span className="font-medium text-sm">{model.name}</span>
+                            <span className="font-medium text-sm">
+                              {model.name}
+                            </span>
                             {selectedModel === model.id && (
                               <Check className="size-4 ml-auto text-primary shrink-0" />
                             )}
@@ -248,14 +265,18 @@ const PromptInput = ({
                       ))
                     ) : (
                       <>
-                        {SELECTABLE_MODELS.filter((m) => m.id === AUTO_MODEL_ID).map((model) => (
+                        {SELECTABLE_MODELS.filter(
+                          (m) => m.id === AUTO_MODEL_ID,
+                        ).map((model) => (
                           <button
                             key={model.id}
                             type="button"
                             className="w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md bg-accent text-accent-foreground"
                           >
                             <div className="flex items-center gap-2 w-full">
-                              <span className="font-medium text-sm">{model.name}</span>
+                              <span className="font-medium text-sm">
+                                {model.name}
+                              </span>
                               <Check className="size-4 ml-auto text-primary shrink-0" />
                             </div>
                             {model.description && (
@@ -285,14 +306,16 @@ const PromptInput = ({
             <InputGroupButton
               variant="default"
               className={cn(
-                "rounded-full relative bg-[#6248ff] overflow-hidden",
+                "rounded-full relative bg-[#6248ff] overflow-hidden py-1",
                 isLoading && "min-w-28",
               )}
               size="sm"
               disabled={(!promptText?.trim() && !referenceFile) || isLoading}
               onClick={() => onSubmit?.()}
             >
-              {isLoading && <span className="generate-btn-shimmer" aria-hidden />}
+              {isLoading && (
+                <span className="generate-btn-shimmer" aria-hidden />
+              )}
               {isLoading ? (
                 <>
                   <Spinner />
@@ -300,8 +323,8 @@ const PromptInput = ({
                 </>
               ) : (
                 <div className="px-1 flex gap-1.5 items-center">
-                  Generate
-                  <ArrowUp className="size-4" />
+                  Design
+                  <HiOutlineSparkles />
                 </div>
               )}
             </InputGroupButton>

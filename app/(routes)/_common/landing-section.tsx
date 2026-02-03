@@ -364,13 +364,17 @@ import HowItWorks from "@/components/landing/HowItWorks";
 import PricingPage from "@/components/landing/PricingPage";
 import FeaturesBento from "@/components/landing/FeaturesBento";
 import { Inter_Tight } from "next/font/google";
+import { Inter } from "next/font/google";
 import { motion, useInView, Variants } from "framer-motion";
 import { BlurFade } from "@/components/ui/blur-fade";
 import TrustedBy from "@/components/landing/atoms/TrustedBy";
 import FooterDemo from "@/components/landing/Footer";
 import ExploreTemplates from "@/components/landing/ExploreTemplates";
 import { PiStarFourFill } from "react-icons/pi";
-const inter = Inter_Tight({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 import { DeviceType } from "@/components/prompt-input";
 import WorkingWithGimble from "@/components/landing/WorkingWithGimble";
@@ -552,19 +556,21 @@ const LandingSection = () => {
          items-center justify-center gap-8  
         "
             >
-              <div className="flex flex-col items-center space-y-2">
+              <div className="flex flex-col items-center ">
                 <div
                   className="flex items-center gap-2
-                 mx-auto text-center"
+                 mx-auto text-center tracking-[-0.035em]"
                 >
-                  <span className="flex gap-1 ">
+                  <span className="flex gap-0.75 mr-1.5">
                     <PiStarFourFill color="#6248FF" size={10} />
                     <PiStarFourFill color="#6248FF" size={10} />
-                    <PiStarFourFill color="#6248FF" size={10} />  
+                    <PiStarFourFill color="#6248FF" size={10} />
                     <PiStarFourFill color="#6248FF" size={10} />
                     <PiStarFourFill color="#6248FF" size={10} />
                   </span>
-                  <p className="font-medium text-black/60 dark:text-zinc-200 text-sm leading-[1.55em]">
+                  <p
+                    className={`font-medium text-black/60 dark:text-zinc-200 text-sm leading-[1.55em] tracking-[-0.035em] ${inter.className}`}
+                  >
                     5.0 rating . 110+ reviews
                   </p>
                 </div>
@@ -576,8 +582,10 @@ const LandingSection = () => {
                   product with one prompt.
                   {/* <span className="text-primary">in minutes</span> */}
                 </h1>
-                <div className="mx-auto max-w-md ">
-                  <p className="text-center font-normal text-black/60 dark:text-zinc-200 text-[17px] leading-[1.55em] tracking-[-0.035em] sm:text-lg">
+                <div className="mx-auto max-w-md mt-3.75">
+                  <p
+                    className={`text-center font-normal text-black/65 dark:text-zinc-200 text-[15px] leading-[1.55em] tracking-[-0.035em] sm:text-lg ${inter.className}`}
+                  >
                     Generate complete screens, user flows, and layouts
                     automatically — from idea to polished UI.
                   </p>
@@ -585,10 +593,10 @@ const LandingSection = () => {
               </div>
 
               <div
-                className="flex w-full max-w-3xl flex-col
+                className="flex w-full flex-col
             item-center gap-8 relative "
               >
-                <div className="w-full mt-10">
+                <div className="w-full mt-6.5">
                   <PromptInput
                     className=""
                     promptText={promptText}
@@ -623,7 +631,7 @@ const LandingSection = () => {
             </div>
           </div>
         </BlurFade>
-        {/* <TrustedBy /> */}
+        <TrustedBy />
         {userId && (
           <div className="w-full py-10 border-x border-zinc-200">
             <div className="mx-auto max-w-3xl">
