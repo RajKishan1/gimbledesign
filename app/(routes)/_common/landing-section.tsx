@@ -543,7 +543,7 @@ const LandingSection = () => {
         <Header />
         <BlurFade>
           <div
-            className={`relative  overflow-hidden py-24 border border-zinc-50 dark:border-zinc-900
+            className={`relative  overflow-hidden py-20.75 border border-zinc-50 dark:border-zinc-900
            `}
           >
             <div className="absolute inset-0 z-[-1]"></div>
@@ -558,11 +558,11 @@ const LandingSection = () => {
                  mx-auto text-center"
                 >
                   <span className="flex gap-1 ">
-                    <PiStarFourFill color="#6248FF" size={12} />
-                    <PiStarFourFill color="#6248FF" size={12} />
-                    <PiStarFourFill color="#6248FF" size={12} />
-                    <PiStarFourFill color="#6248FF" size={12} />
-                    <PiStarFourFill color="#6248FF" size={12} />
+                    <PiStarFourFill color="#6248FF" size={10} />
+                    <PiStarFourFill color="#6248FF" size={10} />
+                    <PiStarFourFill color="#6248FF" size={10} />  
+                    <PiStarFourFill color="#6248FF" size={10} />
+                    <PiStarFourFill color="#6248FF" size={10} />
                   </span>
                   <p className="font-medium text-black/60 dark:text-zinc-200 text-sm leading-[1.55em]">
                     5.0 rating . 110+ reviews

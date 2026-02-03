@@ -27,14 +27,14 @@ const Header = () => {
   const profilePicture = profile?.profilePicture || user?.image || "";
   const displayName = profile?.name || user?.name || "";
   return (
-    <div className="sticky top-0 right-0 left-0 z-30  border-b border-black/5  dark:border-zinc-900">
-      <header className=" px-6  p-6 bg-white dark:bg-black">
+    <div className="max-h-20.5 sticky top-0 right-0 left-0 z-30  border-b border-black/5  dark:border-zinc-900 ">
+      <header className=" px-6  p-6 bg-[#f9f9f9] dark:bg-black">
         <div
           className="w-full max-w-6xl mx-auto
          flex items-center justify-between"
         >
           <Logo />
-          <nav className="flex gap-6 items-center text-black/80 font-medium text-sm leading-[1.55em]">
+          <nav className="flex gap-6 items-center text-black/80 font-medium tex   t-sm leading-[1.55em]">
             <Link
               href={user ? "/dashboard" : "/login"}
               className="text-sm font-medium text-foreground hover:opacity-80 transition-opacity"

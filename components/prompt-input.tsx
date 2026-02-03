@@ -285,7 +285,7 @@ const PromptInput = ({
             <InputGroupButton
               variant="default"
               className={cn(
-                "rounded-full relative overflow-hidden",
+                "rounded-full relative bg-[#6248ff] overflow-hidden",
                 isLoading && "min-w-28",
               )}
               size="sm"

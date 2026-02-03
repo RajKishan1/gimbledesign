@@ -1,6 +1,4 @@
 "use client";
-
-import Lines from "@/components/landing/atoms/Lines";
 import { usePathname } from "next/navigation";
 
 function AppLayout({
@@ -13,12 +11,10 @@ function AppLayout({
 
   return (
     <main className="w-full min-h-screen bg-[#f9f9f9] dark:bg-black">
-      <div className="flex flex-row min-h-screen">
-        {isLandingPage && <Lines />}
-        <div className={isLandingPage ? "max-w-7xl w-full" : "w-full"}>
+      <div className="flex flex-row min-h-screen justify-center">
+        <div className={isLandingPage ? "max-w-300 w-full" : "w-full"}>
           {children}
         </div>
-        {isLandingPage && <Lines />}
       </div>
     </main>
   );
