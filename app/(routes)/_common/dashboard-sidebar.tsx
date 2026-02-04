@@ -32,7 +32,7 @@ export default function DashboardSidebar() {
   const user = session?.user;
   const { data: profile } = useGetProfile();
   const { data: credits, isLoading: isLoadingCredits } = useGetCredits(
-    user?.id,
+    user?.id
   );
 
   const profilePicture = profile?.profilePicture || user?.image || "";
@@ -41,14 +41,14 @@ export default function DashboardSidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 transition-all duration-300 ease-in-out shrink-0",
-        isCollapsed ? "w-16" : "w-56",
+        "flex flex-col h-screen border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
+        isCollapsed ? "w-16" : "w-56"
       )}
     >
       <div
         className={cn(
           "flex items-center border-b border-zinc-200 dark:border-zinc-800",
-          isCollapsed ? "justify-center p-3" : "justify-between p-4",
+          isCollapsed ? "justify-center p-3" : "justify-between p-4"
         )}
       >
         {!isCollapsed && (
@@ -83,7 +83,7 @@ export default function DashboardSidebar() {
                 isActive
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-foreground",
-                isCollapsed && "justify-center px-2",
+                isCollapsed && "justify-center px-2"
               )}
             >
               <Icon className="size-5 shrink-0" />

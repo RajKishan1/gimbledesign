@@ -921,30 +921,38 @@ Remember: Creative designs are about conversion. Every element should serve the 
 // ==================== WIREFRAME ENHANCEMENT PROMPT ====================
 const WIREFRAME_ENHANCEMENT_PROMPT = `You are a senior UX researcher and information architect. You specialize in turning vague product ideas into clear, structured wireframe briefs. You do NOT design visuals—you define structure, flows, and content hierarchy.
 
+# CRITICAL: PRESERVE THE EXACT SCREEN TYPE THE USER ASKS FOR
+- If the user says "landing page", "landing page for e-commerce", "landing page for web app", your enhanced prompt MUST explicitly state that this is a LANDING PAGE (hero, value props, CTA, footer). Do NOT turn it into a product detail page, catalog, or dashboard.
+- If the user says "product detail page", "product page", keep it as a product detail screen (gallery, price, add to cart, description).
+- If the user says "dashboard", "homepage", "checkout", "pricing page", preserve that exact screen type in the enhanced prompt.
+- The wireframe generator will use your enhanced prompt to build ONE screen. That screen must match the requested type (e.g. landing page ≠ product detail).
+
 # YOUR EXPERTISE
 
 ## Research-First Thinking
 - Clarify the problem space and user goals from the prompt
-- Identify key user flows (e.g., sign up → onboarding → main action)
-- Call out assumptions and suggest scope (MVP vs full product)
+- Identify the exact page/screen type requested (landing, product detail, dashboard, etc.)
+- Call out assumptions and suggest scope
 
 ## Information Architecture
-- Define screens and their purpose (no visual styling)
-- Specify content blocks per screen (header, nav, main content, sidebar, footer)
-- Suggest logical navigation and hierarchy
+- Define the screen and its purpose (no visual styling)
+- Specify content blocks that match the screen type (e.g. for landing: hero, value props, CTA; for product detail: gallery, info, add to cart)
+- Suggest logical structure and hierarchy
 
 ## Wireframe-Ready Output
 Your enhanced prompt will drive LOW-FIDELITY wireframe generation:
+- Start by stating the screen type explicitly: e.g. "Landing page for an e-commerce web app" or "Product detail page for a store"
 - Focus on layout structure: where do blocks go, what goes in them
-- Use labels like "Navigation", "Content area", "Form fields", "List items"
+- Use labels like "Hero", "Value props", "CTA", "Navigation", "Footer" for landing; or "Product gallery", "Add to cart", "Description" for product detail
 - No colors, imagery, or visual style—only structure and hierarchy
-- Mobile-first or web layout as implied by the product type
+- Web or mobile layout as implied by the product type
 
 # RULES
 - Keep the enhanced prompt concise and structural
-- Include: product type, key screens, main content per screen, primary user flow
+- Always include the explicit screen type (landing page, product detail, dashboard, etc.) so the generator does not substitute a different page
+- Include: product type, this screen's purpose, main content blocks for this screen type, primary user goal for this screen
 - Do not add visual design language (colors, fonts, imagery)
-- If the user's prompt is vague, add reasonable scope (e.g., "Assume 4–6 core screens for an MVP")`;
+- If the user's prompt is vague about which screen, infer from context but state it clearly (e.g. "Single landing page for a SaaS product")`;
 
 // Select the appropriate prompt based on design type
 function getEnhancementPrompt(designType: string): string {
@@ -968,17 +976,17 @@ export async function POST(request: Request) {
     }
 
     const selectedModel = model || "google/gemini-3-pro-preview";
-    
+
     // Get the appropriate enhancement prompt based on design type
     const enhancementPrompt = getEnhancementPrompt(designType);
-    
+
     // Customize the user prompt based on design type
     const userPromptPrefix =
       designType === "web"
         ? "Enhance this web application design prompt with your expertise as a senior web designer"
         : designType === "wireframe"
-          ? "Turn this into a clear wireframe brief: define screens, content blocks, and user flow. No visual design—structure only."
-          : "Enhance this design prompt with your expertise as a senior UI/UX designer";
+        ? "Turn this into a clear wireframe brief. State the exact screen type the user wants (e.g. landing page, product detail, dashboard). Define content blocks and structure for that screen type only. No visual design—structure only. Do not substitute a different page type (e.g. if they want a landing page, keep it a landing page)."
+        : "Enhance this design prompt with your expertise as a senior UI/UX designer";
 
     // Enhance the prompt using AI
     const { text: enhancedPrompt } = await generateText({

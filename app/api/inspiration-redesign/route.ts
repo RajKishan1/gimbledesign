@@ -75,11 +75,24 @@ export async function POST(request: Request) {
       imageDescription = desc;
       imageDimensions = dims;
 
-      combinedPrompt = `Redesign this design for inspiration. Same type of content, four different visual styles.\n\nReference design (from image): ${imageDescription}.${
+      combinedPrompt = `Re-design this exact design for inspiration. Keep the SAME content and context—only change the visual style across four variations.
+
+Reference design (from image):
+${imageDescription}
+
+Rules: Generate ONLY what the reference shows (e.g. if it is a component like a calendar or a card grid, generate only that component, not a full app screen). Four variations = same type of content, four different layouts/visual treatments. Preserve the design's scope (component vs full screen) from the description.${
         prompt ? `\n\nAdditional context from user: ${prompt}` : ""
       }`;
     } else {
-      combinedPrompt = `Generate four design variations for inspiration. Same concept, four different visual styles (e.g. minimal, bold, classic, modern).\n\nUser request: ${prompt}`;
+      combinedPrompt = `Generate four design variations for inspiration. Same concept, four different visual styles.
+
+CRITICAL - Generate EXACTLY what the user asked for:
+- If the user asks for a "calendar", generate only a calendar component (not a full app with a calendar inside).
+- If the user asks for "pricing cards", generate only the pricing cards section.
+- If the user asks for a "dashboard", then a full screen is appropriate.
+Match the scope to the request: single component = output only that component; full page/screen = output full layout.
+
+User request: ${prompt}`;
     }
 
     const { width, height } =

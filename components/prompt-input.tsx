@@ -170,31 +170,35 @@ const PromptInput = ({
           className="flex items-center justify-between gap-2 flex-wrap"
         >
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Attach reference */}
-            <button
-              type="button"
-              onClick={handleAttachClick}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-xl transition-colors"
-            >
-              <Paperclip className="size-4" />
-              <span>Attach</span>
-              {referenceFile && (
-                <span
-                  className="text-xs truncate max-w-24"
-                  title={referenceFile.name}
+            {/* Attach reference — inspiration only */}
+            {deviceType === "inspirations" && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleAttachClick}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-xl transition-colors"
                 >
-                  ({referenceFile.name})
-                </span>
-              )}
-            </button>
-            {referenceFile && (
-              <button
-                type="button"
-                onClick={clearReference}
-                className="text-xs text-muted-foreground hover:text-destructive"
-              >
-                Clear
-              </button>
+                  <Paperclip className="size-4" />
+                  <span>Attach</span>
+                  {referenceFile && (
+                    <span
+                      className="text-xs truncate max-w-24"
+                      title={referenceFile.name}
+                    >
+                      ({referenceFile.name})
+                    </span>
+                  )}
+                </button>
+                {referenceFile && (
+                  <button
+                    type="button"
+                    onClick={clearReference}
+                    className="text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    Clear
+                  </button>
+                )}
+              </>
             )}
 
             {/* Type + Model popover (filter) */}

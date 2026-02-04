@@ -154,12 +154,12 @@ const DashboardSection = () => {
 
   return (
     <div
-      className={`w-full min-h-screen flex flex-col ${openSauceOne.className}`}
+      className={`w-full h-screen overflow-hidden flex ${openSauceOne.className}`}
     >
-      <Header />
-      <div className="flex flex-1 min-h-0">
-        <DashboardSidebar />
-        <main className="flex-1 min-w-0 overflow-auto">
+      <DashboardSidebar />
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+        <Header />
+        <main className="flex-1 min-h-0 overflow-y-auto">
           <div className="relative overflow-hidden py-12 border-b border-zinc-50 dark:border-zinc-900">
             <div className="w-full flex flex-col items-center justify-center gap-8 px-6">
               <h1 className="text-center font-bold text-3xl sm:text-4xl tracking-tight text-foreground">

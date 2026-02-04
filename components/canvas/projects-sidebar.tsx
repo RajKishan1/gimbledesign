@@ -29,10 +29,10 @@ const ProjectsSidebar = () => {
     isError: isProjectsError,
   } = useGetProjects(
     user?.id,
-    undefined, // No limit - fetch all projects
+    undefined // No limit - fetch all projects
   );
   const { data: credits, isLoading: isLoadingCredits } = useGetCredits(
-    user?.id,
+    user?.id
   );
 
   const profilePicture = profile?.profilePicture || user?.image || "";
@@ -47,7 +47,7 @@ const ProjectsSidebar = () => {
     <div
       className={cn(
         "relative flex flex-col bg-white dark:bg-[#191919] border-neutral-200 dark:border-[#212121] border-r transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-12" : "w-64",
+        isCollapsed ? "w-12" : "w-64"
       )}
     >
       <div
@@ -152,7 +152,7 @@ const ProjectsSidebar = () => {
                           "flex flex-col gap-0 m-0 px-2 py-1.5 rounded-none cursor-pointer transition-colors",
                           isActive
                             ? "bg-primary/10 border-primary"
-                            : "hover:bg-primary/20 border-border",
+                            : "hover:bg-primary/20 border-border"
                         )}
                       >
                         <h4 className="text-xs line-clamp-1 text-neutral-600 dark:text-neutral-400">
@@ -197,7 +197,7 @@ const ProjectsSidebar = () => {
               <Avatar className="h-10 w-10 shrink-0 rounded-full">
                 <AvatarImage
                   src={profilePicture}
-                  alt={displayName || user?.given_name || ""}
+                  alt={displayName || user?.name || ""}
                 />
                 <AvatarFallback className="rounded-full">
                   {displayName
@@ -206,17 +206,18 @@ const ProjectsSidebar = () => {
                         .map((n) => n.charAt(0))
                         .join("")
                         .slice(0, 2)
-                    : `${user?.given_name?.charAt(0) || ""}${
-                        user?.family_name?.charAt(0) || ""
-                      }`}
+                    : user?.name
+                    ? user.name
+                        .split(" ")
+                        .map((n) => n.charAt(0))
+                        .join("")
+                        .slice(0, 2)
+                    : ""}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0 flex-1">
                 <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
-                  {displayName ||
-                    `${user?.given_name || ""} ${
-                      user?.family_name || ""
-                    }`.trim()}
+                  {displayName || user?.name || ""}
                 </p>
                 <p className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
                   {displayEmail}

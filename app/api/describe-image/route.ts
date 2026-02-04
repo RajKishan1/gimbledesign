@@ -11,10 +11,7 @@ export async function POST(request: Request) {
     const file = formData.get("image") as File | null;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No image provided" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No image provided" }, { status: 400 });
     }
 
     const validTypes = [
@@ -26,7 +23,10 @@ export async function POST(request: Request) {
     ];
     if (!validTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "Invalid file type. Only images (JPEG, PNG, GIF, WebP) are allowed." },
+        {
+          error:
+            "Invalid file type. Only images (JPEG, PNG, GIF, WebP) are allowed.",
+        },
         { status: 400 }
       );
     }
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     const { text: description } = await generateText({
       model: openrouter.chat(GPT_VISION_MODEL),
-      maxTokens: 1024,
+      maxOutputTokens: 1024,
       messages: [
         {
           role: "user",
