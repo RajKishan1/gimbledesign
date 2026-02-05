@@ -781,42 +781,27 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
   return (
     <div
       role="button"
-      className="w-full flex flex-col border border-zinc-900 rounded-none cursor-pointer
-    hover:shadow-sm overflow-hidden
-    "
+      className="w-full flex flex-col bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl cursor-pointer overflow-hidden shadow-sm transition-transform hover:shadow-md hover:-translate-y-0.5"
       onClick={onRoute}
     >
-      <div
-        className="h-40 bg-[#eee] dark:bg-zinc-800 relative overflow-hidden
-        flex items-center justify-center
-        "
-      >
+      <div className="h-40 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden flex items-center justify-center">
         {thumbnail ? (
           <img
             src={thumbnail}
-            className="w-full h-full object-cover object-left
-           scale-110
-          "
+            className="w-full h-full object-cover object-left scale-110"
           />
         ) : (
-          <div
-            className="w-16 h-16 rounded-full
-              flex items-center justify-center text-primary
-            "
-          >
+          <div className="w-16 h-16 rounded-full flex items-center justify-center text-primary">
             <FolderOpenDotIcon className="text-white" size={36} />
           </div>
         )}
       </div>
 
-      <div className="p-4 flex flex-col">
-        <h3
-          className="font-medium
-         text-sm truncate w-full mb-1 line-clamp-1"
-        >
+      <div className="w-full border-t border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 flex flex-col">
+        <h3 className="font-semibold text-[15px] leading-[1.5em] tracking-[-0.035em] mb-1.5 line-clamp-1">
           {project.name}
         </h3>
-        <p className="text-xs text-muted-foreground">{timeAgo}</p>
+        <p className="text-xs text-black/60 dark:text-zinc-400">{timeAgo}</p>
       </div>
     </div>
   );

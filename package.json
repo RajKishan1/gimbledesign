@@ -10,6 +10,8 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@hugeicons/core-free-icons": "^3.1.1",
+    "@hugeicons/react": "^1.1.4",
     "@inngest/realtime": "^0.4.5",
     "@openrouter/ai-sdk-provider": "^1.5.4",
     "@prisma/client": "^6.19.0",

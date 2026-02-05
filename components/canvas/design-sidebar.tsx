@@ -63,26 +63,33 @@ function CompletedFrameCard({ title }: { title: string }) {
 }
 
 // Status Message Component
-function StatusMessage({ 
-  status, 
-  message 
-}: { 
-  status: string; 
+function StatusMessage({
+  status,
+  message,
+}: {
+  status: string;
   message: string;
 }) {
   const statusColors = {
-    analyzing: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    generating: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-    running: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    analyzing:
+      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    generating:
+      "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    running:
+      "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
   };
 
-  const colorClass = statusColors[status as keyof typeof statusColors] || statusColors.generating;
+  const colorClass =
+    statusColors[status as keyof typeof statusColors] ||
+    statusColors.generating;
 
   return (
-    <div className={cn(
-      "rounded-lg border p-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
-      colorClass
-    )}>
+    <div
+      className={cn(
+        "rounded-lg border p-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
+        colorClass
+      )}
+    >
       <div className="flex items-center gap-2">
         <Spinner className="w-4 h-4" />
         <span className="text-sm font-medium">{message}</span>
@@ -95,12 +102,14 @@ function StatusMessage({
 function ChatBubble({ message, role }: { message: string; role: string }) {
   const isUser = role === "user";
   return (
-    <div className={cn(
-      "rounded-lg p-3 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300",
-      isUser 
-        ? "bg-foreground text-background ml-auto max-w-[80%]" 
-        : "bg-muted text-foreground mr-auto max-w-[80%]"
-    )}>
+    <div
+      className={cn(
+        "rounded-lg p-3 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300",
+        isUser
+          ? "bg-foreground text-background ml-auto max-w-[80%]"
+          : "bg-muted text-foreground mr-auto max-w-[80%]"
+      )}
+    >
       {message}
     </div>
   );
@@ -127,27 +136,38 @@ function SelectedFrameCard({ title }: { title: string }) {
 }
 
 // Chat Messages Component
-function ChatMessages({ 
-  loadingStatus, 
+function ChatMessages({
+  loadingStatus,
   frames,
   projectId,
   selectedFrame,
-  chatMessages = []
-}: { 
+  chatMessages = [],
+}: {
   loadingStatus: string | null;
-  frames?: Array<{ id: string; title: string; isLoading?: boolean; htmlContent?: string }>;
+  frames?: Array<{
+    id: string;
+    title: string;
+    isLoading?: boolean;
+    htmlContent?: string;
+  }>;
   projectId: string;
   selectedFrame: { id: string; title: string } | null;
-  chatMessages?: Array<{ id: string; message: string; role: string; frameId?: string | null; createdAt: Date }>;
+  chatMessages?: Array<{
+    id: string;
+    message: string;
+    role: string;
+    frameId?: string | null;
+    createdAt: Date;
+  }>;
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const allFrames = frames || [];
-  
+
   // Get frames that are currently loading
   const loadingFrames = allFrames.filter((f) => f.isLoading);
   // Get the first loading frame (currently being generated)
   const currentlyGeneratingFrame = loadingFrames[0] || null;
-  
+
   // Get completed frames (have htmlContent and are not loading)
   const completedFrames = allFrames.filter(
     (f) => !f.isLoading && f.htmlContent && f.htmlContent.trim().length > 0
@@ -155,7 +175,13 @@ function ChatMessages({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [loadingStatus, currentlyGeneratingFrame, completedFrames.length, chatMessages.length, selectedFrame]);
+  }, [
+    loadingStatus,
+    currentlyGeneratingFrame,
+    completedFrames.length,
+    chatMessages.length,
+    selectedFrame,
+  ]);
 
   const getStatusMessage = () => {
     switch (loadingStatus) {
@@ -171,7 +197,12 @@ function ChatMessages({
   };
 
   const statusMessage = getStatusMessage();
-  const hasContent = loadingStatus || currentlyGeneratingFrame || completedFrames.length > 0 || chatMessages.length > 0 || selectedFrame;
+  const hasContent =
+    loadingStatus ||
+    currentlyGeneratingFrame ||
+    completedFrames.length > 0 ||
+    chatMessages.length > 0 ||
+    selectedFrame;
 
   if (!hasContent) {
     return (
@@ -190,18 +221,19 @@ function ChatMessages({
   return (
     <div className="space-y-3">
       {/* Show selected frame if one is selected */}
-      {selectedFrame && (
-        <SelectedFrameCard title={selectedFrame.title} />
-      )}
-      
+      {selectedFrame && <SelectedFrameCard title={selectedFrame.title} />}
+
       {/* Show chat messages */}
       {chatMessages.map((msg) => (
         <ChatBubble key={msg.id} message={msg.message} role={msg.role} />
       ))}
-      
+
       {/* Only show status message for analyzing/running, not for generating */}
       {statusMessage && loadingStatus !== "generating" && (
-        <StatusMessage status={loadingStatus || "generating"} message={statusMessage} />
+        <StatusMessage
+          status={loadingStatus || "generating"}
+          message={statusMessage}
+        />
       )}
       {/* Show completed frames first */}
       {completedFrames.map((frame) => (
@@ -209,14 +241,21 @@ function ChatMessages({
       ))}
       {/* Show shimmer only for the currently generating frame */}
       {currentlyGeneratingFrame && (
-        <ShimmerCard key={currentlyGeneratingFrame.id} title={currentlyGeneratingFrame.title} />
+        <ShimmerCard
+          key={currentlyGeneratingFrame.id}
+          title={currentlyGeneratingFrame.title}
+        />
       )}
       <div ref={messagesEndRef} />
     </div>
   );
 }
 
-const DesignSidebar = ({ projectId, onGenerate, isPending }: DesignSidebarProps) => {
+const DesignSidebar = ({
+  projectId,
+  onGenerate,
+  isPending,
+}: DesignSidebarProps) => {
   const {
     mode,
     links,
@@ -256,7 +295,15 @@ const DesignSidebar = ({ projectId, onGenerate, isPending }: DesignSidebarProps)
 
   // Mutation to save chat message
   const saveMessageMutation = useMutation({
-    mutationFn: async ({ message, frameId, role = "user" }: { message: string; frameId?: string | null; role?: string }) => {
+    mutationFn: async ({
+      message,
+      frameId,
+      role = "user",
+    }: {
+      message: string;
+      frameId?: string | null;
+      role?: string;
+    }) => {
       const res = await axios.post(`/api/project/${projectId}/chat`, {
         message,
         frameId: frameId || null,
@@ -271,7 +318,7 @@ const DesignSidebar = ({ projectId, onGenerate, isPending }: DesignSidebarProps)
 
   const handleGenerate = async () => {
     if (!promptText.trim()) return;
-    let text = promptText.trim();
+    const text = promptText.trim();
     setPromptText("");
 
     // If a frame is selected, edit it; otherwise generate new designs
@@ -279,7 +326,7 @@ const DesignSidebar = ({ projectId, onGenerate, isPending }: DesignSidebarProps)
       // Format message with @ScreenName if not already present
       const screenName = `@${selectedFrame.title}`;
       const messageText = text.startsWith("@") ? text : `${screenName} ${text}`;
-      
+
       // Save user message to chat
       await saveMessageMutation.mutateAsync({
         message: messageText,
@@ -419,7 +466,7 @@ const DesignSidebar = ({ projectId, onGenerate, isPending }: DesignSidebarProps)
           {activeTab === "chat" && (
             <div className="flex flex-col h-full p-4">
               <div className="flex-1 overflow-y-auto mb-4 space-y-3">
-                <ChatMessages 
+                <ChatMessages
                   loadingStatus={loadingStatus}
                   frames={frames}
                   projectId={projectId}
@@ -431,7 +478,11 @@ const DesignSidebar = ({ projectId, onGenerate, isPending }: DesignSidebarProps)
               <div className="flex flex-col gap-0 bg-[#F4F4F5] dark:bg-[#242424] rounded-none border-none shadow-sm">
                 <div className="p-3 pb-2">
                   <Textarea
-                    placeholder={selectedFrame ? `@${selectedFrame.title} What changes do you want?` : "What changes do you want to make ?"}
+                    placeholder={
+                      selectedFrame
+                        ? `@${selectedFrame.title} What changes do you want?`
+                        : "What changes do you want to make ?"
+                    }
                     value={promptText}
                     onChange={(e) => setPromptText(e.target.value)}
                     onKeyDown={(e) => {
@@ -464,12 +515,23 @@ const DesignSidebar = ({ projectId, onGenerate, isPending }: DesignSidebarProps)
                     </Button>
 
                     <Button
-                      disabled={(isPending || regenerateFrame.isPending || saveMessageMutation.isPending) || !promptText.trim()}
+                      disabled={
+                        isPending ||
+                        regenerateFrame.isPending ||
+                        saveMessageMutation.isPending ||
+                        !promptText.trim()
+                      }
                       className="h-8 px-4 bg-foreground text-background hover:bg-foreground/90 rounded-none"
                       onClick={handleGenerate}
                       type="button"
                     >
-                      {(isPending || regenerateFrame.isPending || saveMessageMutation.isPending) ? <Spinner className="size-4" /> : "Submit"}
+                      {isPending ||
+                      regenerateFrame.isPending ||
+                      saveMessageMutation.isPending ? (
+                        <Spinner className="size-4" />
+                      ) : (
+                        "Submit"
+                      )}
                     </Button>
                   </div>
                 </div>

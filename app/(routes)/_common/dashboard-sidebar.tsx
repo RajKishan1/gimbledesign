@@ -4,25 +4,26 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Home,
-  User,
-  Compass,
-  CreditCard,
-  ChevronLeft,
-  ChevronRight,
-  Coins,
-} from "lucide-react";
+  Home01Icon,
+  UserIcon,
+  CompassIcon,
+  CreditCardIcon,
+  Coins01Icon,
+  Brain01Icon,
+} from "@hugeicons/core-free-icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGetProfile } from "@/features/use-profile";
 import { useGetCredits } from "@/features/use-credits";
 import { authClient } from "@/lib/auth-client";
 
 const navItems = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/profile", label: "Profile", icon: User },
-  { href: "/", label: "Explore", icon: Compass },
-  { href: "/Pricing", label: "Pricing", icon: CreditCard },
+  { href: "/dashboard", label: "Home", icon: Home01Icon },
+  { href: "/profile", label: "Profile", icon: UserIcon },
+  { href: "/", label: "Explore", icon: CompassIcon },
+  { href: "/Pricing", label: "Pricing", icon: CreditCardIcon },
 ];
 
 export default function DashboardSidebar() {
@@ -52,7 +53,19 @@ export default function DashboardSidebar() {
         )}
       >
         {!isCollapsed && (
-          <span className="font-semibold text-foreground text-sm">Menu</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary">
+              <HugeiconsIcon
+                icon={Brain01Icon}
+                size={18}
+                color="currentColor"
+                strokeWidth={1.75}
+              />
+            </div>
+            <span className="font-medium text-foreground text-xl tracking-tight">
+              gimble
+            </span>
+          </div>
         )}
         <button
           type="button"
@@ -70,10 +83,12 @@ export default function DashboardSidebar() {
 
       <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-hidden">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const isActive =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            item.href === "/"
+              ? pathname === "/"
+              : item.href === "/dashboard"
+              ? pathname === "/dashboard" || pathname.startsWith("/dashboard/")
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.label}
@@ -86,7 +101,14 @@ export default function DashboardSidebar() {
                 isCollapsed && "justify-center px-2"
               )}
             >
-              <Icon className="size-5 shrink-0" />
+              <span className="shrink-0">
+                <HugeiconsIcon
+                  icon={item.icon}
+                  size={20}
+                  color="currentColor"
+                  strokeWidth={1.75}
+                />
+              </span>
               {!isCollapsed && <span className="truncate">{item.label}</span>}
             </Link>
           );
@@ -96,8 +118,15 @@ export default function DashboardSidebar() {
       {!isCollapsed && (
         <>
           <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50">
-              <Coins className="size-4 text-primary shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 text-primary">
+              <span className="shrink-0">
+                <HugeiconsIcon
+                  icon={Coins01Icon}
+                  size={16}
+                  color="currentColor"
+                  strokeWidth={1.75}
+                />
+              </span>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
                   {isLoadingCredits
