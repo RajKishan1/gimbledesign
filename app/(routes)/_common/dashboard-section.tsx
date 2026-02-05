@@ -5,17 +5,44 @@ import { formatDistanceToNow } from "date-fns";
 import PromptInput from "@/components/prompt-input";
 import Header from "./header";
 import DashboardSidebar from "./dashboard-sidebar";
-import { useCreateProject, useGetProjects } from "@/features/use-project";
+import {
+  useCreateProject,
+  useGetProjects,
+  useRenameProject,
+  useDeleteProject,
+  useDuplicateProject,
+} from "@/features/use-project";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
-import { FolderOpenDotIcon } from "lucide-react";
+import {
+  FolderOpenDotIcon,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Copy,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useInView, Variants } from "framer-motion";
 import { DeviceType } from "@/components/prompt-input";
 import { openSauceOne } from "@/app/fonts";
 import { getGenerationModel } from "@/constant/models";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type LoadingState = "idle" | "enhancing" | "designing";
 
@@ -275,36 +302,178 @@ const ProjectsGrid = ({ projects }: { projects: ProjectType[] }) => {
 
 const ProjectCard = memo(({ project }: { project: ProjectType }) => {
   const router = useRouter();
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState(project.name);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const { mutate: renameProject, isPending: isRenaming } = useRenameProject();
+  const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
+  const { mutate: duplicateProject, isPending: isDuplicating } =
+    useDuplicateProject();
+
   const timeAgo = formatDistanceToNow(new Date(project.createdAt), {
     addSuffix: true,
   });
   const thumbnail = project.thumbnail || null;
 
+  const handleRenameSubmit = () => {
+    const name = renameValue.trim();
+    if (!name) return;
+    renameProject(
+      { projectId: project.id, name },
+      { onSuccess: () => setRenameOpen(false) }
+    );
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteProject(project.id, { onSuccess: () => setDeleteOpen(false) });
+  };
+
+  const handleDuplicate = () => {
+    duplicateProject(project.id);
+  };
+
   return (
-    <div
-      role="button"
-      className="w-full flex flex-col bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl cursor-pointer overflow-hidden shadow-sm transition-transform hover:shadow-md hover:-translate-y-0.5"
-      onClick={() => router.push(`/project/${project.id}`)}
-    >
-      <div className="h-40 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden flex items-center justify-center">
-        {thumbnail ? (
-          <img
-            src={thumbnail}
-            alt=""
-            className="w-full h-full object-cover object-left scale-110"
-          />
-        ) : (
-          <FolderOpenDotIcon className="text-muted-foreground" size={36} />
-        )}
+    <>
+      <div
+        role="button"
+        className="w-full flex flex-col bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl cursor-pointer overflow-hidden shadow-sm transition-transform hover:shadow-md hover:-translate-y-0.5 relative"
+        onClick={() => router.push(`/project/${project.id}`)}
+      >
+        <div className="h-40 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden flex items-center justify-center">
+          {thumbnail ? (
+            <img
+              src={thumbnail}
+              alt=""
+              className="w-full h-full object-cover object-left scale-110"
+            />
+          ) : (
+            <FolderOpenDotIcon className="text-muted-foreground" size={36} />
+          )}
+          <div
+            className="absolute top-2 right-2 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-background/80 hover:bg-background shadow-sm border-0"
+                  aria-label="Project options"
+                >
+                  <MoreVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setRenameValue(project.name);
+                    setRenameOpen(true);
+                  }}
+                >
+                  <Pencil className="size-4" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDuplicate();
+                  }}
+                  disabled={isDuplicating}
+                >
+                  <Copy className="size-4" />
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setDeleteOpen(true);
+                  }}
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <div className="w-full border-t border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 flex flex-col">
+          <h3 className="font-semibold text-[15px] leading-[1.5em] tracking-[-0.035em] mb-1.5 line-clamp-1">
+            {project.name}
+          </h3>
+          <p className="text-xs text-black/60 dark:text-zinc-400">{timeAgo}</p>
+        </div>
       </div>
 
-      <div className="w-full border-t border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 flex flex-col">
-        <h3 className="font-semibold text-[15px] leading-[1.5em] tracking-[-0.035em] mb-1.5 line-clamp-1">
-          {project.name}
-        </h3>
-        <p className="text-xs text-black/60 dark:text-zinc-400">{timeAgo}</p>
-      </div>
-    </div>
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent
+          className="sm:max-w-md"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDownOutside={(e) => e.stopPropagation()}
+        >
+          <DialogHeader>
+            <DialogTitle>Rename project</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Label htmlFor="rename-input">Project name</Label>
+            <Input
+              id="rename-input"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleRenameSubmit()}
+              placeholder="Project name"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRenameOpen(false)}
+              disabled={isRenaming}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleRenameSubmit} disabled={isRenaming || !renameValue.trim()}>
+              {isRenaming ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent
+          className="sm:max-w-md"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDownOutside={(e) => e.stopPropagation()}
+        >
+          <DialogHeader>
+            <DialogTitle>Delete project</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete &quot;{project.name}&quot;? This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 });
 ProjectCard.displayName = "ProjectCard";

@@ -202,20 +202,26 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const { themeId } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const { themeId, name } = body;
     const session = await getSession(await headers());
     const user = session?.user;
 
     if (!user) throw new Error("Unauthorized");
-    if (!themeId) throw new Error("Missing Theme");
+    if (!themeId && name === undefined)
+      return NextResponse.json(
+        { error: "Missing themeId or name" },
+        { status: 400 }
+      );
 
     const userId = user.id;
+    const data: { theme?: string; name?: string } = {};
+    if (themeId != null) data.theme = themeId;
+    if (typeof name === "string" && name.trim()) data.name = name.trim();
 
     const project = await prisma.project.update({
       where: { id, userId },
-      data: {
-        theme: themeId,
-      },
+      data,
     });
 
     return NextResponse.json({
@@ -228,6 +234,43 @@ export async function PATCH(
       {
         error: "Failed to update project",
       },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const session = await getSession(await headers());
+    const user = session?.user;
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = user.id;
+
+    const project = await prisma.project.findFirst({
+      where: { id, userId },
+    });
+
+    if (!project) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    await prisma.chatMessage.deleteMany({ where: { projectId: id } });
+    await prisma.frame.deleteMany({ where: { projectId: id } });
+    await prisma.project.delete({ where: { id, userId } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /project/[id] Error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete project" },
       { status: 500 }
     );
   }

@@ -63,3 +63,65 @@ export const useGetProjects = (userId?: string, limit?: number) => {
     retry: 1,
   });
 };
+
+export const useRenameProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      name,
+    }: {
+      projectId: string;
+      name: string;
+    }) => {
+      const res = await axios.patch(`/api/project/${projectId}`, { name });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project renamed");
+    },
+    onError: () => {
+      toast.error("Failed to rename project");
+    },
+  });
+};
+
+export const useDeleteProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const res = await axios.delete(`/api/project/${projectId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete project");
+    },
+  });
+};
+
+export const useDuplicateProject = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const res = await axios.post(`/api/project/${projectId}/duplicate`);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project duplicated");
+      const newId = data?.data?.id;
+      if (newId) router.push(`/project/${newId}`);
+    },
+    onError: (error: any) => {
+      const msg =
+        error?.response?.data?.error || "Failed to duplicate project";
+      toast.error(msg);
+    },
+  });
+};
