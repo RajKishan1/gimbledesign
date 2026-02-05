@@ -41,7 +41,7 @@ const TemplateData = [
 export const TemplateCards = ({ imgUrl, title, text }: Props) => {
   return (
     <div className="flex flex-col min-w-96 min-h-129 bg-zinc-50">
-      <img src={imgUrl} alt="" className="min-h-90"/>
+      <img src={imgUrl} alt="" className="min-h-96"/>
       <span className=" w-full border p-6">
         {" "}
         <h2 className="font-semibold text-[22px] leading-[1.5em] tracking-[-0.035em] mb-2">{title}</h2>
@@ -54,8 +54,8 @@ export const TemplateCards = ({ imgUrl, title, text }: Props) => {
 const ExploreTemplates = () => {
   return (
     <section>
-      <div className="flex flex-col mx-auto  items-center">
-        <h1 className="text-[40px] font-semibold tracking-[-0.045] text-black dark:text-white my-3">
+      <div className="flex flex-col mx-auto  items-center mt-18.75">
+        <h1 className="text-[40px] font-semibold tracking-[-0.045] text-black dark:text-white mb-3">
           Explore Templates
         </h1>
         <p className="text-center mb-13 text-[17px] leading-[1.55em] tracking-[-0.035em]">
