@@ -27,7 +27,7 @@ The Design Tree is a structured representation of a UI screen. Each node has a t
 {
   "type": "frame",
   "name": "Container Name",
-  "width": 430,
+  "width": 393,
   "height": 100,
   "layout": {
     "mode": "vertical" | "horizontal" | "none",
@@ -211,8 +211,8 @@ Your output must follow this structure:
 {
   "id": "screen-id",
   "name": "Screen Name",
-  "width": 430,
-  "height": 932,
+  "width": 393,
+  "height": 852,
   "backgroundColor": "var(--background)",
   "root": {
     "id": "root-frame",
@@ -222,8 +222,8 @@ Your output must follow this structure:
     "locked": false,
     "x": 0,
     "y": 0,
-    "width": 430,
-    "height": 932,
+    "width": 393,
+    "height": 852,
     "opacity": 1,
     "fills": [{ "type": "solid", "color": "var(--background)" }],
     "layout": {
@@ -273,7 +273,7 @@ Your output must follow this structure:
   "id": "header",
   "type": "frame",
   "name": "Header",
-  "width": 430,
+  "width": 393,
   "height": 60,
   "layout": {
     "mode": "horizontal",

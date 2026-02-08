@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     // Set default dimensions based on design type
     const dimensions = object.designType === "web" 
       ? { width: 1440, height: 900 }
-      : { width: 430, height: 932 };
+      : { width: 393, height: 852 };
 
     return NextResponse.json({
       success: true,
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       success: false,
       designType: "mobile",
       projectName: "New Project",
-      dimensions: { width: 430, height: 932 },
+      dimensions: { width: 393, height: 852 },
       confidence: 0,
       reasoning: "Failed to analyze, defaulting to mobile",
       error: "Failed to analyze prompt",

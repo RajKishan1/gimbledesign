@@ -143,8 +143,8 @@ function normalizeDesignTree(tree: any): DesignTree {
   return {
     id: tree.id || generateNodeId(),
     name: tree.name || 'Screen',
-    width: tree.width || 430,
-    height: tree.height || 932,
+    width: tree.width || 393,
+    height: tree.height || 852,
     backgroundColor: tree.backgroundColor,
     root: normalizeNode(tree.root || {
       type: 'frame',
@@ -364,8 +364,8 @@ export const generateDesignTree = inngest.createFunction(
 
             Generate the complete Design Tree JSON for this screen.
             The root frame should have:
-            - width: 430
-            - height: 932 (or taller for scrollable content)
+            - width: 393
+            - height: 852 (or taller for scrollable content)
             
             Output ONLY valid JSON, starting with { and ending with }.
           `.trim(),
@@ -386,13 +386,13 @@ export const generateDesignTree = inngest.createFunction(
           designTreeJson = {
             id: screenPlan.id,
             name: screenPlan.name,
-            width: 430,
-            height: 932,
+            width: 393,
+            height: 852,
             root: {
               type: 'frame',
               name: 'Root',
-              width: 430,
-              height: 932,
+              width: 393,
+              height: 852,
               layout: { mode: 'vertical', padding: { top: 0, right: 0, bottom: 0, left: 0 }, gap: 0 },
               fills: [{ type: 'solid', color: 'var(--background)' }],
               children: [

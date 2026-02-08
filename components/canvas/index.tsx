@@ -44,13 +44,13 @@ const Canvas = ({
     wireframeKind === "web" &&
     frames?.length === 1;
   const wireframeWebViewports = [
-    { id: "web", title: "Web", width: 1440, minHeight: 800 },
-    { id: "tablet", title: "Tablet", width: 768, minHeight: 1024 },
-    { id: "mobile", title: "Mobile", width: 430, minHeight: 932 },
+    { id: "web", title: "Web", width: 1440, minHeight: 300 },
+    { id: "tablet", title: "Tablet", width: 768, minHeight: 300 },
+    { id: "mobile", title: "Mobile", width: 393, minHeight: 300 },
   ];
   const GAP = 80;
-  const wireframeWidths = [1440, 768, 430];
-  const wireframeMinHeights = [800, 1024, 932];
+  const wireframeWidths = [1440, 768, 393];
+  const wireframeMinHeights = [300, 300, 300];
 
   const {
     mode,
@@ -315,7 +315,7 @@ const Canvas = ({
                         })
                       : (frames ?? []).map((frame, index: number) => {
                           const isWireframe = deviceType === "wireframe";
-                          // Mobile wireframe: single frame at 430px. Legacy: 3 frames at 1440, 768, 430.
+                          // Mobile wireframe: single frame at 393px (iPhone 16). Legacy: 3 frames at 1440, 768, 393.
                           const wireframeIndex =
                             isWireframe &&
                             wireframeKind === "mobile" &&
@@ -323,10 +323,10 @@ const Canvas = ({
                               ? 2
                               : index;
                           const frameWidth = isWireframe
-                            ? wireframeWidths[wireframeIndex] ?? 430
+                            ? wireframeWidths[wireframeIndex] ?? 393
                             : undefined;
                           const frameMinHeight = isWireframe
-                            ? wireframeMinHeights[wireframeIndex] ?? 932
+                            ? wireframeMinHeights[wireframeIndex] ?? 852
                             : undefined;
 
                           let baseX: number;
@@ -341,7 +341,7 @@ const Canvas = ({
                               ? customDimensions.width + GAP
                               : deviceType === "web"
                               ? 1500
-                              : 480;
+                              : 393 + GAP;
                             baseX = 100 + index * frameSpacing;
                           }
                           const y = 100;

@@ -24,10 +24,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRegenerateFrame } from "@/features/use-frame";
 
+export type SetupStatus = "reading" | "enhancing" | "generating" | null;
+
 interface DesignSidebarProps {
   projectId: string;
   onGenerate: (promptText: string) => void;
   isPending: boolean;
+  /** User's original prompt, shown at top of chat when present */
+  initialPrompt?: string | null;
+  /** When project page is running setup pipeline (read image → enhance → generate), show in chat */
+  setupStatus?: SetupStatus;
 }
 
 type DesignTab = "chat" | "theme" | "fonts";
@@ -77,6 +83,10 @@ function StatusMessage({
       "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
     running:
       "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    reading:
+      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    enhancing:
+      "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
   };
 
   const colorClass =
@@ -87,7 +97,7 @@ function StatusMessage({
     <div
       className={cn(
         "rounded-lg border p-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
-        colorClass
+        colorClass,
       )}
     >
       <div className="flex items-center gap-2">
@@ -107,7 +117,7 @@ function ChatBubble({ message, role }: { message: string; role: string }) {
         "rounded-lg p-3 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300",
         isUser
           ? "bg-foreground text-background ml-auto max-w-[80%]"
-          : "bg-muted text-foreground mr-auto max-w-[80%]"
+          : "bg-muted text-foreground mr-auto max-w-[80%]",
       )}
     >
       {message}
@@ -142,6 +152,8 @@ function ChatMessages({
   projectId,
   selectedFrame,
   chatMessages = [],
+  initialPrompt,
+  setupStatus,
 }: {
   loadingStatus: string | null;
   frames?: Array<{
@@ -159,6 +171,8 @@ function ChatMessages({
     frameId?: string | null;
     createdAt: Date;
   }>;
+  initialPrompt?: string | null;
+  setupStatus?: SetupStatus;
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const allFrames = frames || [];
@@ -170,7 +184,7 @@ function ChatMessages({
 
   // Get completed frames (have htmlContent and are not loading)
   const completedFrames = allFrames.filter(
-    (f) => !f.isLoading && f.htmlContent && f.htmlContent.trim().length > 0
+    (f) => !f.isLoading && f.htmlContent && f.htmlContent.trim().length > 0,
   );
 
   useEffect(() => {
@@ -181,9 +195,27 @@ function ChatMessages({
     completedFrames.length,
     chatMessages.length,
     selectedFrame,
+    initialPrompt,
+    setupStatus,
   ]);
 
+  const getSetupStatusMessage = () => {
+    if (!setupStatus) return null;
+    switch (setupStatus) {
+      case "reading":
+        return "Reading image...";
+      case "enhancing":
+        return "Enhancing prompt...";
+      case "generating":
+        return "Generating design...";
+      default:
+        return null;
+    }
+  };
+
   const getStatusMessage = () => {
+    const setupMsg = getSetupStatusMessage();
+    if (setupMsg) return setupMsg;
     switch (loadingStatus) {
       case "analyzing":
         return "Analyzing your prompt...";
@@ -199,10 +231,12 @@ function ChatMessages({
   const statusMessage = getStatusMessage();
   const hasContent =
     loadingStatus ||
+    setupStatus ||
     currentlyGeneratingFrame ||
     completedFrames.length > 0 ||
     chatMessages.length > 0 ||
-    selectedFrame;
+    selectedFrame ||
+    (initialPrompt && initialPrompt.trim());
 
   if (!hasContent) {
     return (
@@ -223,15 +257,20 @@ function ChatMessages({
       {/* Show selected frame if one is selected */}
       {selectedFrame && <SelectedFrameCard title={selectedFrame.title} />}
 
+      {/* Show original prompt at top when present (before any chat messages) */}
+      {initialPrompt && initialPrompt.trim() && chatMessages.length === 0 && (
+        <ChatBubble message={initialPrompt.trim()} role="user" />
+      )}
+
       {/* Show chat messages */}
       {chatMessages.map((msg) => (
         <ChatBubble key={msg.id} message={msg.message} role={msg.role} />
       ))}
 
-      {/* Only show status message for analyzing/running, not for generating */}
-      {statusMessage && loadingStatus !== "generating" && (
+      {/* Show status message (setup: reading/enhancing, or analyzing/running; hide for "generating" only when not setup) */}
+      {statusMessage && (setupStatus || loadingStatus !== "generating") && (
         <StatusMessage
-          status={loadingStatus || "generating"}
+          status={setupStatus ?? loadingStatus ?? "generating"}
           message={statusMessage}
         />
       )}
@@ -255,6 +294,8 @@ const DesignSidebar = ({
   projectId,
   onGenerate,
   isPending,
+  initialPrompt,
+  setupStatus = null,
 }: DesignSidebarProps) => {
   const {
     mode,
@@ -346,7 +387,7 @@ const DesignSidebar = ({
               role: "assistant",
             });
           },
-        }
+        },
       );
     } else {
       // Save user message to chat
@@ -364,7 +405,7 @@ const DesignSidebar = ({
     <div
       className={cn(
         "relative flex flex-col bg-white dark:bg-[#191919] border-l border-neutral-200 dark:border-[#212121] transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-12" : "w-72"
+        isCollapsed ? "w-12" : "w-72",
       )}
     >
       <div className="absolute left-4 top-4 z-10">
@@ -434,7 +475,7 @@ const DesignSidebar = ({
                 "flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
                 activeTab === "chat"
                   ? "text-foreground border-b-2 border-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               Chat
@@ -445,7 +486,7 @@ const DesignSidebar = ({
                 "flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
                 activeTab === "theme"
                   ? "text-foreground border-b-2 border-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               Theme
@@ -456,7 +497,7 @@ const DesignSidebar = ({
                 "flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors",
                 activeTab === "fonts"
                   ? "text-foreground border-b-2 border-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Type className="size-4" />
@@ -472,6 +513,8 @@ const DesignSidebar = ({
                   projectId={projectId}
                   selectedFrame={selectedFrame}
                   chatMessages={chatMessages}
+                  initialPrompt={initialPrompt}
+                  setupStatus={setupStatus}
                 />
               </div>
 
@@ -519,15 +562,27 @@ const DesignSidebar = ({
                         isPending ||
                         regenerateFrame.isPending ||
                         saveMessageMutation.isPending ||
+                        !!setupStatus ||
                         !promptText.trim()
                       }
                       className="h-8 px-4 bg-foreground text-background hover:bg-foreground/90 rounded-none"
                       onClick={handleGenerate}
                       type="button"
                     >
-                      {isPending ||
-                      regenerateFrame.isPending ||
-                      saveMessageMutation.isPending ? (
+                      {setupStatus ? (
+                        <>
+                          <Spinner className="size-4" />
+                          <span className="ml-1.5">
+                            {setupStatus === "reading" && "Reading image..."}
+                            {setupStatus === "enhancing" &&
+                              "Enhancing prompt..."}
+                            {setupStatus === "generating" &&
+                              "Generating design..."}
+                          </span>
+                        </>
+                      ) : isPending ||
+                        regenerateFrame.isPending ||
+                        saveMessageMutation.isPending ? (
                         <Spinner className="size-4" />
                       ) : (
                         "Submit"
@@ -609,7 +664,7 @@ const DesignSidebar = ({
               <div className="space-y-2">
                 {links.map((link) => {
                   const fromScreen = frames.find(
-                    (f) => f.id === link.fromScreenId
+                    (f) => f.id === link.fromScreenId,
                   );
                   const toScreen = frames.find((f) => f.id === link.toScreenId);
                   const isSelected = selectedLinkId === link.id;
@@ -621,7 +676,7 @@ const DesignSidebar = ({
                         "group p-2 rounded-lg border transition-all cursor-pointer",
                         isSelected
                           ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700"
-                          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-indigo-300"
+                          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-indigo-300",
                       )}
                       onClick={() =>
                         setSelectedLinkId(isSelected ? null : link.id)
@@ -687,7 +742,7 @@ function ThemeItem({
         px-2 py-1.5 rounded-none border gap-3 dark:bg-[#2c2c2c]
         bg-gray-100
         `,
-        isSelected ? "border-1" : "border-none"
+        isSelected ? "border-1" : "border-none",
       )}
       style={{
         borderColor: isSelected ? color.primary : "",
@@ -735,7 +790,7 @@ function FontItem({
         `,
         isSelected
           ? "border-2 border-foreground bg-foreground/5 dark:bg-foreground/10"
-          : "border-none hover:bg-gray-200 dark:hover:bg-[#353535]"
+          : "border-none hover:bg-gray-200 dark:hover:bg-[#353535]",
       )}
     >
       <div className="flex flex-col items-start flex-1 min-w-0">

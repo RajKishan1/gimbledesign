@@ -20,9 +20,9 @@ import { FrameType } from "@/types/project";
 // Storage key for prototype links (shared with main editor)
 const getLinksStorageKey = (projectId: string) => `prototype-links-${projectId}`;
 
-// Portrait mode dimensions (iPhone-like aspect ratio)
-const DEVICE_WIDTH = 320;
-const MIN_DEVICE_HEIGHT = 568;
+// Width matches canvas (iPhone 16); height is content-driven, no fixed height (small floor only).
+const DEVICE_WIDTH = 393;
+const MIN_DEVICE_HEIGHT = 300;
 
 const PreviewPage = () => {
   const params = useParams();

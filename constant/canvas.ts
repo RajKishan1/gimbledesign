@@ -21,20 +21,27 @@ export const DEVICE_TYPE_ENUM = {
 
 export type DeviceType = (typeof DEVICE_TYPE_ENUM)[keyof typeof DEVICE_TYPE_ENUM];
 
-// Device dimensions
-// Note: Both Web and Mobile have flexible height (minHeight only)
+// iPhone 16 width (CSS pixels) — used for mobile frame width; height is content-driven, no fixed height.
+export const IPHONE_16_VIEWPORT = {
+  width: 393,
+  height: 852, // used for loading skeleton / shimmer so placeholder matches iPhone proportions
+} as const;
+
+// Device dimensions — width fixed per device type; height is content-driven. Skeleton uses iPhone height for placeholder.
 export const DEVICE_DIMENSIONS = {
   MOBILE: {
-    width: 430,
-    height: null, // Flexible - determined by content
-    minHeight: 932,
+    width: IPHONE_16_VIEWPORT.width,
+    height: null,
+    minHeight: 300, // floor so frame is visible before content loads
+    skeletonHeight: IPHONE_16_VIEWPORT.height, // shimmer/skeleton matches iPhone proportions
     flexibleHeight: true,
-    label: "iPhone 17 Pro Max",
+    label: "iPhone 16",
   },
   WEB: {
     width: 1440,
-    height: null, // Flexible - determined by content
-    minHeight: 800,
+    height: null,
+    minHeight: 300,
+    skeletonHeight: 800,
     flexibleHeight: true,
     label: "Desktop (1440px)",
   },

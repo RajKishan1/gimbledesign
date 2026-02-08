@@ -91,8 +91,8 @@ export const generateInspirationVariations = inngest.createFunction(
   async ({ event, step, publish }) => {
     const { userId, projectId, prompt, model, dimensions } = event.data;
     const CHANNEL = `user:${userId}`;
-    const width = dimensions?.width ?? 430;
-    const height = dimensions?.height ?? 932;
+    const width = dimensions?.width ?? 393;
+    const height = dimensions?.height ?? 852;
     const generationModel = model || QUALITY_MODEL;
 
     await publish({

@@ -1,7 +1,7 @@
 import sizeOf from "image-size";
 
-const DEFAULT_WIDTH = 430;
-const DEFAULT_HEIGHT = 932;
+const DEFAULT_WIDTH = 393;
+const DEFAULT_HEIGHT = 852;
 const MAX_DIMENSION = 2000;
 
 export interface ImageDimensions {

@@ -170,35 +170,31 @@ const PromptInput = ({
           className="flex items-center justify-between gap-2 flex-wrap"
         >
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Attach reference — inspiration only */}
-            {deviceType === "inspirations" && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleAttachClick}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-xl transition-colors"
+            {/* Attach reference image — available for all design types */}
+            <button
+              type="button"
+              onClick={handleAttachClick}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-xl transition-colors"
+            >
+              <Paperclip className="size-4" />
+              <span>Attach</span>
+              {referenceFile && (
+                <span
+                  className="text-xs truncate max-w-24"
+                  title={referenceFile.name}
                 >
-                  <Paperclip className="size-4" />
-                  <span>Attach</span>
-                  {referenceFile && (
-                    <span
-                      className="text-xs truncate max-w-24"
-                      title={referenceFile.name}
-                    >
-                      ({referenceFile.name})
-                    </span>
-                  )}
-                </button>
-                {referenceFile && (
-                  <button
-                    type="button"
-                    onClick={clearReference}
-                    className="text-xs text-muted-foreground hover:text-destructive"
-                  >
-                    Clear
-                  </button>
-                )}
-              </>
+                  ({referenceFile.name})
+                </span>
+              )}
+            </button>
+            {referenceFile && (
+              <button
+                type="button"
+                onClick={clearReference}
+                className="text-xs text-muted-foreground hover:text-destructive"
+              >
+                Clear
+              </button>
             )}
 
             {/* Type + Model popover (filter) */}
@@ -328,7 +324,7 @@ const PromptInput = ({
                       <p className="text-xs text-muted-foreground mt-1.5">
                         {inspirationKind === "web"
                           ? "Four variations at web size (1440×900)"
-                          : "Four variations at mobile size (430×932)"}
+                          : "Four variations at mobile size (393×852)"}
                       </p>
                     </div>
                   )}

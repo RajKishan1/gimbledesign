@@ -16,12 +16,17 @@ export const useGetProjectById = (projectId: string) => {
 export const useGenerateDesignById = (projectId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (prompt: string) =>
-      await axios
-        .post(`/api/project/${projectId}`, {
-          prompt,
-        })
-        .then((res) => res.data),
+    mutationFn: async (
+      payload: string | { prompt: string; model?: string }
+    ) => {
+      const prompt =
+        typeof payload === "string" ? payload : payload.prompt;
+      const model =
+        typeof payload === "string" ? undefined : payload.model;
+      return axios
+        .post(`/api/project/${projectId}`, { prompt, ...(model && { model }) })
+        .then((res) => res.data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["credits"] });
       toast.success("Generation Started");

@@ -33,7 +33,7 @@ type PropsType = {
   isLoading?: boolean;
   projectId: string;
   onOpenHtmlDialog: () => void;
-  /** Override dimensions (e.g. wireframe: web 1440, tablet 768, mobile 430) */
+  /** Override dimensions (e.g. wireframe: web 1440, tablet 768, mobile 393) */
   overrideWidth?: number;
   overrideMinHeight?: number;
   /** When the same frame is shown in multiple viewports (e.g. responsive wireframe), pass a unique id so this instance only applies its own iframe height (avoids all viewports stretching to the same height) */
@@ -42,8 +42,8 @@ type PropsType = {
 const DeviceFrame = ({
   html,
   title = "Untitled",
-  width = 430, // iPhone 17 Pro Max width
-  minHeight = 932, // iPhone 17 Pro Max height
+  width,
+  minHeight,
   initialPosition = { x: 0, y: 0 },
   frameId,
   scale = 1,
@@ -71,13 +71,13 @@ const DeviceFrame = ({
     cancelLinking,
   } = usePrototype();
 
-  // Device dimensions: per-frame override (wireframe), custom (inspirations), or deviceType
+  // Device dimensions: per-frame override (wireframe), custom (inspirations), or deviceType. No fixed height — height follows content.
   const getDeviceDimensions = () => {
     if (overrideWidth != null) {
       return {
         width: overrideWidth,
         height: null as number | null,
-        minHeight: overrideMinHeight ?? 800,
+        minHeight: overrideMinHeight ?? 300,
       };
     }
     if (customDimensions?.width != null && customDimensions?.height != null) {
@@ -88,23 +88,18 @@ const DeviceFrame = ({
       };
     }
     if (deviceType === "web") {
-      return { width: 1440, height: null, minHeight: 800 };
+      return { width: 1440, height: null, minHeight: 300 };
     }
-    return { width: 430, height: null, minHeight: 932 };
+    return { width: 393, height: null, minHeight: 300 };
   };
   const {
     width: DEVICE_WIDTH,
     height: DEVICE_HEIGHT,
     minHeight: DEVICE_MIN_HEIGHT,
   } = getDeviceDimensions();
-  const isFlexibleHeight = true; // Both web and mobile have flexible height
+  const isFlexibleHeight = true;
 
-  const [frameSize, setFrameSize] = useState({
-    width: DEVICE_WIDTH,
-    height: DEVICE_HEIGHT || DEVICE_MIN_HEIGHT,
-  });
-
-  // Track actual content height for both web and mobile designs
+  // Height is content-driven only; no fixed height. Iframe reports content height and we use it.
   const [contentHeight, setContentHeight] = useState<number>(DEVICE_MIN_HEIGHT);
   const [framePosition, setFramePosition] = useState(initialPosition);
   const [frameRect, setFrameRect] = useState<DOMRect | null>(null);
@@ -142,8 +137,7 @@ const DeviceFrame = ({
     contentHeight,
   ]);
 
-  // Listen for iframe content height changes (for both web and mobile designs with flexible height)
-  // When heightMessageId is set (e.g. responsive wireframe), only accept height for this viewport so others don't stretch
+  // Iframe reports content height; we use it for frame height (no fixed height).
   const heightId = heightMessageId ?? frameId;
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -177,10 +171,7 @@ const DeviceFrame = ({
     };
   }, [framePosition]);
 
-  // Note: Dynamic height updates are now enabled for both mobile and web
-  // The height listener is implemented above (lines 101-116) using contentHeight state
-
-  // Calculate the actual height to use (must be defined before callbacks that use it)
+  // Height is content-driven; no fixed height constraints.
   const actualHeight = contentHeight;
 
   const handleDownloadPng = useCallback(async () => {
@@ -200,7 +191,7 @@ const DeviceFrame = ({
         {
           responseType: "blob",
           validateStatus: (s) => (s >= 200 && s < 300) || s === 304,
-        }
+        },
       );
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement("a");
@@ -229,10 +220,10 @@ const DeviceFrame = ({
           onError: () => {
             updateFrame(frameId, { isLoading: false });
           },
-        }
+        },
       );
     },
-    [frameId, regenerateMutation, updateFrame]
+    [frameId, regenerateMutation, updateFrame],
   );
 
   const handleDeleteFrame = useCallback(() => {
@@ -247,7 +238,7 @@ const DeviceFrame = ({
       const body = iframeDoc?.body;
       if (!body) {
         toast.error(
-          "Design not ready. Wait for the frame to load, then try again."
+          "Design not ready. Wait for the frame to load, then try again.",
         );
         return;
       }
@@ -280,7 +271,7 @@ const DeviceFrame = ({
           : undefined,
       });
       toast.success(
-        "Design copied as SVG! Paste in Figma (Ctrl+V or Cmd+V) for vector layers—no plugin needed."
+        "Design copied as SVG! Paste in Figma (Ctrl+V or Cmd+V) for vector layers—no plugin needed.",
       );
     } catch (error) {
       console.error(error);
@@ -302,7 +293,7 @@ const DeviceFrame = ({
         finishLinking(frameId);
       }
     },
-    [isPrototypeMode, linkingState, frameId, finishLinking]
+    [isPrototypeMode, linkingState, frameId, finishLinking],
   );
 
   return (
@@ -343,25 +334,6 @@ const DeviceFrame = ({
           setSelectedFrameId(frameId);
         }
       }}
-      resizeHandleComponent={{
-        topLeft: isSelected && !isPrototypeMode ? <Handle /> : undefined,
-        topRight: isSelected && !isPrototypeMode ? <Handle /> : undefined,
-        bottomLeft: isSelected && !isPrototypeMode ? <Handle /> : undefined,
-        bottomRight: isSelected && !isPrototypeMode ? <Handle /> : undefined,
-      }}
-      resizeHandleStyles={{
-        top: { cursor: "ns-resize" },
-        bottom: { cursor: "ns-resize" },
-        left: { cursor: "ew-resize" },
-        right: { cursor: "ew-resize" },
-      }}
-      onResize={(e, direction, ref) => {
-        // Prevent resizing - keep fixed iPhone dimensions
-        // setFrameSize({
-        //   width: parseInt(ref.style.width),
-        //   height: parseInt(ref.style.height),
-        // });
-      }}
       className={cn(
         "relative z-10",
         isSelected &&
@@ -375,8 +347,8 @@ const DeviceFrame = ({
         toolMode === TOOL_MODE_ENUM.HAND
           ? "cursor-grab! active:cursor-grabbing!"
           : isPrototypeMode
-          ? "cursor-default"
-          : "cursor-move"
+            ? "cursor-default"
+            : "cursor-move",
       )}
     >
       <div className="w-full h-full" ref={containerRef}>
@@ -422,14 +394,14 @@ const DeviceFrame = ({
               !isPrototypeMode &&
               "rounded-none",
             isPrototypeMode &&
-              (deviceType === "mobile" ? "rounded-2xl" : "rounded-lg")
+              (deviceType === "mobile" ? "rounded-2xl" : "rounded-lg"),
           )}
           onClick={handlePrototypeClick}
         >
           <div
             className={cn(
               "relative bg-white dark:bg-background",
-              "overflow-visible"
+              "overflow-visible",
             )}
           >
             {isLoading ? (
@@ -491,12 +463,5 @@ const DeviceFrame = ({
     </Rnd>
   );
 };
-
-const Handle = () => (
-  <div
-    className="z-30 h-4 w-4
-     bg-white border-2 border-blue-500"
-  />
-);
 
 export default DeviceFrame;

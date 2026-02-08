@@ -72,6 +72,8 @@ export async function POST(request: Request) {
       deviceType = "mobile",
       wireframeKind,
       dimensions,
+      createOnly,
+      initialPrompt,
     } = await request.json();
     const session = await getSession(await headers());
     const user = session?.user;
@@ -118,6 +120,8 @@ export async function POST(request: Request) {
     });
 
     const projectName = await generateProjectName(prompt, selectedModel);
+    const userPromptForSidebar =
+      typeof initialPrompt === "string" ? initialPrompt.trim() : prompt;
 
     // Store the device type (mobile or web) and wireframe kind when applicable
     const project = await prisma.project.create({
@@ -128,34 +132,35 @@ export async function POST(request: Request) {
         ...(deviceType === "wireframe" && {
           wireframeKind: wireframeKind === "mobile" ? "mobile" : "web",
         }),
+        ...(userPromptForSidebar && { initialPrompt: userPromptForSidebar }),
       },
     });
 
-    // Trigger the appropriate Inngest function based on device type
-    try {
-      const eventName =
-        deviceType === "web"
-          ? "ui/generate.web-screens"
-          : deviceType === "wireframe"
-          ? "ui/generate.wireframe-screens"
-          : "ui/generate.screens";
+    // When createOnly, skip Inngest — project page will run setup (read image → enhance → generate) then trigger
+    if (!createOnly) {
+      try {
+        const eventName =
+          deviceType === "web"
+            ? "ui/generate.web-screens"
+            : deviceType === "wireframe"
+            ? "ui/generate.wireframe-screens"
+            : "ui/generate.screens";
 
-      await inngest.send({
-        name: eventName,
-        data: {
-          userId,
-          projectId: project.id,
-          prompt,
-          model: selectedModel,
-          ...(deviceType === "wireframe" && {
-            wireframeKind: wireframeKind === "mobile" ? "mobile" : "web",
-          }),
-        },
-      });
-    } catch (error) {
-      console.error("Failed to send Inngest event:", error);
-      // Don't fail the request if Inngest is down - log it but return success
-      // The user can retry later
+        await inngest.send({
+          name: eventName,
+          data: {
+            userId,
+            projectId: project.id,
+            prompt,
+            model: selectedModel,
+            ...(deviceType === "wireframe" && {
+              wireframeKind: wireframeKind === "mobile" ? "mobile" : "web",
+            }),
+          },
+        });
+      } catch (error) {
+        console.error("Failed to send Inngest event:", error);
+      }
     }
 
     return NextResponse.json({

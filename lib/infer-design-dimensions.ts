@@ -1,6 +1,6 @@
 /**
  * Infer design dimensions from prompt and optional image description.
- * Supports web (1440), mobile (430), and component/small (from image or default).
+ * Supports web (1440), mobile (393 iPhone 16), and component/small (from image or default).
  */
 const WEB_KEYWORDS = [
   "web",
@@ -14,12 +14,12 @@ const WEB_KEYWORDS = [
   "web app",
   "webapp",
 ];
-const MOBILE_KEYWORDS = ["mobile", "app", "iphone", "android", "phone", "430"];
+const MOBILE_KEYWORDS = ["mobile", "app", "iphone", "android", "phone", "393"];
 const COMPONENT_KEYWORDS = ["component", "card", "widget", "block", "small"];
 
 export const PRESETS = {
   web: { width: 1440, height: 900 },
-  mobile: { width: 430, height: 932 },
+  mobile: { width: 393, height: 852 },
   component: { width: 400, height: 500 },
 } as const;
 

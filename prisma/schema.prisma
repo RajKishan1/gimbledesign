@@ -17,17 +17,18 @@ datasource db {
 }
 
 model Project {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String
-  name       String
-  theme      String?
-  thumbnail  String?
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String
+  name          String
+  theme         String?
+  thumbnail     String?
   deviceType    String   @default("mobile") // "mobile", "web", "inspirations", or "wireframe"
   wireframeKind String?  // When deviceType is "wireframe": "web" (responsive, 1 screen) or "mobile" (1 mobile screen). Default "web".
   width         Int?     // Custom width for inspirations / variable-size designs
   height        Int?     // Custom height for inspirations / variable-size designs
-  frames     Frame[]
-  chatMessages ChatMessage[]
+  initialPrompt String?  // User's original prompt, shown in design sidebar
+  frames        Frame[]
+  chatMessages  ChatMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

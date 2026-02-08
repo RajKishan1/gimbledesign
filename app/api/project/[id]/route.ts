@@ -54,9 +54,11 @@ export async function POST(
     const { id } = await params;
 
     let prompt: string;
+    let model: string | undefined;
     try {
       const body = await request.json();
       prompt = body.prompt;
+      model = body.model;
       if (!prompt || typeof prompt !== "string") {
         return NextResponse.json(
           { error: "Missing or invalid prompt" },
@@ -140,6 +142,7 @@ export async function POST(
           userId,
           projectId: id,
           prompt,
+          ...(model && { model }),
           frames: project.frames,
           theme: project.theme,
           ...(project.deviceType === "wireframe" &&

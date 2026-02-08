@@ -6,6 +6,8 @@ import { getGenerationModel } from "@/constant/models";
 
 export type DeviceType = "mobile" | "web" | "inspirations" | "wireframe";
 
+const PENDING_SETUP_KEY = "gimbledesign_pending_setup";
+
 export interface CreateProjectData {
   prompt: string;
   model?: string;
@@ -16,7 +18,17 @@ export interface CreateProjectData {
     width: number;
     height: number;
   };
+  /** Create project only and redirect; project page will run read image → enhance → generate. */
+  createOnly?: boolean;
+  /** User's original prompt to show in sidebar (and for setup pipeline). */
+  initialPrompt?: string;
+  /** Base64 image data for project-page describe step (when createOnly). */
+  imageBase64?: string | null;
+  /** Mime type of image when imageBase64 is set (e.g. image/png). */
+  imageMimeType?: string;
 }
+
+export { PENDING_SETUP_KEY };
 
 export const useCreateProject = () => {
   const router = useRouter();
@@ -34,10 +46,28 @@ export const useCreateProject = () => {
               ? data.wireframeKind ?? "web"
               : undefined,
           dimensions: data.dimensions,
+          createOnly: data.createOnly ?? false,
+          initialPrompt: data.initialPrompt ?? data.prompt,
         })
         .then((res) => res.data),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["credits"] });
+      if (variables.createOnly && data?.data?.id) {
+        try {
+          sessionStorage.setItem(
+            PENDING_SETUP_KEY,
+            JSON.stringify({
+              projectId: data.data.id,
+              prompt: variables.initialPrompt ?? variables.prompt,
+              imageBase64: variables.imageBase64 ?? null,
+              mimeType: variables.imageMimeType ?? undefined,
+              model: variables.model,
+              deviceType: variables.deviceType ?? "mobile",
+              wireframeKind: variables.wireframeKind,
+            })
+          );
+        } catch (_) {}
+      }
       router.push(`/project/${data.data.id}`);
     },
     onError: (error: any) => {

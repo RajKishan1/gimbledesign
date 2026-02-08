@@ -20,6 +20,7 @@ import {
   generateFullScreenContext,
   detectDesignSystem,
 } from "@/lib/component-registry";
+import { parseScreenCountFromPrompt } from "@/lib/parse-screen-count";
 
 // Schema for individual screen
 const ScreenSchema = z.object({
@@ -89,7 +90,8 @@ export const generateWebScreens = inngest.createFunction(
     } = event.data;
     const CHANNEL = `user:${userId}`;
     const isExistingGeneration = Array.isArray(frames) && frames.length > 0;
-    
+    const requestedScreenCount = parseScreenCountFromPrompt(prompt);
+
     // Use fast model for analysis, user-selected or quality model for generation
     const analysisModel = FAST_MODEL;
     const generationModel = model || QUALITY_MODEL;
@@ -162,6 +164,11 @@ export const generateWebScreens = inngest.createFunction(
           - Don't force a structure that doesn't fit the request
           
           Set totalScreenCount based on the user's actual request, not a predetermined formula.
+          ${requestedScreenCount != null ? `
+          ═══════════════════════════════════════════════════════════════
+          MANDATORY: The user explicitly asked for exactly ${requestedScreenCount} screen(s). You MUST set totalScreenCount to ${requestedScreenCount} and output exactly ${requestedScreenCount} items in the screens array. Do NOT output more than ${requestedScreenCount} screens.
+          ═══════════════════════════════════════════════════════════════
+          ` : ""}
         `.trim();
 
       const { object } = await generateObject({
@@ -201,16 +208,26 @@ export const generateWebScreens = inngest.createFunction(
       return { ...object, themeToUse };
     });
 
+    // Enforce user-requested screen limit (e.g. "5 screens" -> only generate 5)
+    const analysisToUse =
+      requestedScreenCount != null && analysis.screens.length > requestedScreenCount
+        ? {
+            ...analysis,
+            screens: analysis.screens.slice(0, requestedScreenCount),
+            totalScreenCount: requestedScreenCount,
+          }
+        : analysis;
+
     // PHASE 2: Sequential Generation with ENHANCED CONTEXT FIDELITY
     // Uses Component Registry (immutable) + Design DNA + Recent Screen approach
     const generatedFrames: typeof frames = isExistingGeneration ? [...frames] : [];
-    const selectedTheme = THEME_LIST.find((t) => t.id === analysis.themeToUse);
+    const selectedTheme = THEME_LIST.find((t) => t.id === analysisToUse.themeToUse);
     const fullThemeCSS = `${BASE_VARIABLES}\n${selectedTheme?.style || ""}`;
 
     // Design Context - built from first screens, maintained throughout
     let designContext: DesignContext = isExistingGeneration
-      ? buildDesignContext(frames, analysis.themeToUse)
-      : buildDesignContext([], analysis.themeToUse);
+      ? buildDesignContext(frames, analysisToUse.themeToUse)
+      : buildDesignContext([], analysisToUse.themeToUse);
 
     // Component Registry - stores exact HTML components for perfect consistency
     // Built after first screen, used for ALL subsequent screens
@@ -234,8 +251,8 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 `
       : '';
 
-    for (let i = 0; i < analysis.screens.length; i++) {
-      const screenPlan = analysis.screens[i];
+    for (let i = 0; i < analysisToUse.screens.length; i++) {
+      const screenPlan = analysisToUse.screens[i];
 
       await step.run(`generate-screen-${i}`, async () => {
         // After generating first screen, build Component Registry
@@ -250,7 +267,7 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 
         // After generating first 2-3 screens, rebuild design context
         if (generatedFrames.length >= 2 && generatedFrames.length <= 3) {
-          designContext = buildDesignContext(generatedFrames, analysis.themeToUse);
+          designContext = buildDesignContext(generatedFrames, analysisToUse.themeToUse);
         }
 
         // Generate context string based on whether we have a Component Registry
@@ -267,7 +284,7 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
             recentFrame,
             i,
             screenPlan.name,
-            analysis.screens.length
+            analysisToUse.screens.length
           );
           
           // Also include Design DNA for additional patterns
@@ -276,7 +293,7 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
             screenPlan,
             [], // Don't include recent frames again
             i,
-            analysis.screens.length
+            analysisToUse.screens.length
           );
         } else if (designContext.isInitialized) {
           // Fallback to Design DNA approach
@@ -286,7 +303,7 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
             screenPlan,
             recentFrames,
             i,
-            analysis.screens.length
+            analysisToUse.screens.length
           );
         } else {
           contextString = `No previous screens - this is the first screen. Establish the Design DNA that ALL subsequent screens will follow.`;
@@ -305,7 +322,7 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
           },
           stopWhen: stepCountIs(5),
           prompt: `
-          - Screen ${i + 1}/${analysis.screens.length}
+          - Screen ${i + 1}/${analysisToUse.screens.length}
           - Screen ID: ${screenPlan.id}
           - Screen Name: ${screenPlan.name}
           - Screen Purpose: ${screenPlan.purpose}
@@ -335,7 +352,7 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
           Make deliberate, professional choices that will scale across all screens.
           The sidebar items and icons you choose here are LOCKED for the entire app.
           ` : `
-          **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${analysis.screens.length}):**
+          **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${analysisToUse.screens.length}):**
           This screen MUST be indistinguishable in style from previous screens.
           
           MANDATORY REQUIREMENTS:

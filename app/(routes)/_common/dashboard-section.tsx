@@ -28,6 +28,7 @@ import { motion, useInView, Variants } from "framer-motion";
 import { DeviceType } from "@/components/prompt-input";
 import { openSauceOne } from "@/app/fonts";
 import { getGenerationModel } from "@/constant/models";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -146,36 +147,37 @@ const DashboardSection = () => {
       return;
     }
 
-    if (!hasPrompt) return;
+    // For mobile, web, wireframe: prompt is required; image is optional
+    if (!hasPrompt) {
+      toast.error("Prompt is required. Describe what you want to design.");
+      return;
+    }
     try {
-      setLoadingState("enhancing");
-      const enhanceResponse = await fetch("/api/enhance-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: promptText,
-          model: getGenerationModel(selectedModel),
-          designType: deviceType,
-        }),
-      });
-      const enhanceData = await enhanceResponse.json();
-      const finalPrompt = enhanceData.enhancedPrompt || promptText;
       setLoadingState("designing");
+      let imageBase64: string | null = null;
+      let imageMimeType: string | undefined;
+      if (hasImage && referenceFile) {
+        const buffer = await referenceFile.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        imageBase64 = typeof btoa !== "undefined" ? btoa(binary) : Buffer.from(buffer).toString("base64");
+        imageMimeType = referenceFile.type || "image/png";
+      }
       mutate({
-        prompt: finalPrompt,
-        model: getGenerationModel(selectedModel),
+        prompt: promptText.trim(),
+        initialPrompt: promptText.trim(),
+        model: selectedModel,
         deviceType,
         wireframeKind: deviceType === "wireframe" ? wireframeKind : undefined,
+        createOnly: true,
+        imageBase64: imageBase64 ?? undefined,
+        imageMimeType,
       });
     } catch (error) {
-      console.error("Error in design process:", error);
-      setLoadingState("designing");
-      mutate({
-        prompt: promptText,
-        model: getGenerationModel(selectedModel),
-        deviceType,
-        wireframeKind: deviceType === "wireframe" ? wireframeKind : undefined,
-      });
+      console.error("Error creating project:", error);
+      setLoadingState("idle");
+      toast.error("Failed to create project");
     }
   };
 

@@ -618,7 +618,11 @@ function parseFills(styles: CSSStyleDeclaration): Fill[] | undefined {
   // Only add solid fill when there's no gradient (so gradient + blur exports correctly)
   if (!hasGradient) {
     const bgColor = styles.backgroundColor;
-    if (bgColor && bgColor !== "rgba(0, 0, 0, 0)" && bgColor !== "transparent") {
+    if (
+      bgColor &&
+      bgColor !== "rgba(0, 0, 0, 0)" &&
+      bgColor !== "transparent"
+    ) {
       fills.push({
         type: "solid",
         color: bgColor,
@@ -920,7 +924,7 @@ function getTextWithVisualLineBreaks(element: Element, win: Window): string {
   const styles = win.getComputedStyle(element);
   const fontSize = parseFloat(styles.fontSize) || 16;
   const containerWidth = element.getBoundingClientRect().width;
-  
+
   // Dynamic line threshold based on font size (half the line height)
   const lineHeight = parseFloat(styles.lineHeight) || fontSize * 1.2;
   const lineThreshold = Math.max(fontSize * 0.4, 6);
@@ -934,22 +938,37 @@ function getTextWithVisualLineBreaks(element: Element, win: Window): string {
     });
     const result = temp.textContent?.trim() || text;
     // Still need to check for additional wrapping within lines
-    return result.split("\n").map(line => 
-      detectLineWrapping(element, line.trim(), win, fontSize, lineThreshold, containerWidth)
-    ).join("\n");
+    return result
+      .split("\n")
+      .map((line) =>
+        detectLineWrapping(
+          element,
+          line.trim(),
+          win,
+          fontSize,
+          lineThreshold,
+          containerWidth,
+        ),
+      )
+      .join("\n");
   }
 
   // Strategy 2: Estimate number of lines from element height
   const elementHeight = element.getBoundingClientRect().height;
   const estimatedLines = Math.max(1, Math.round(elementHeight / lineHeight));
-  
+
   // If element height suggests single line and text is short, skip detection
   if (estimatedLines <= 1 && text.length < 50) {
     return text;
   }
 
   // Strategy 3: Word-by-word detection using Range API
-  const detectedText = detectLineBreaksByWordRects(element, text, win, lineThreshold);
+  const detectedText = detectLineBreaksByWordRects(
+    element,
+    text,
+    win,
+    lineThreshold,
+  );
   if (detectedText !== text) {
     return detectedText;
   }
@@ -966,15 +985,15 @@ function getTextWithVisualLineBreaks(element: Element, win: Window): string {
  * Detect line wrapping within a single text segment
  */
 function detectLineWrapping(
-  element: Element, 
-  text: string, 
-  win: Window, 
+  element: Element,
+  text: string,
+  win: Window,
   fontSize: number,
   lineThreshold: number,
-  containerWidth: number
+  containerWidth: number,
 ): string {
   if (!text || text.length < 20) return text;
-  
+
   const styles = win.getComputedStyle(element);
   return calculateLineBreaks(text, containerWidth, styles, win);
 }
@@ -983,27 +1002,31 @@ function detectLineWrapping(
  * Word-by-word line break detection using Range API and getClientRects
  */
 function detectLineBreaksByWordRects(
-  element: Element, 
-  text: string, 
+  element: Element,
+  text: string,
   win: Window,
-  lineThreshold: number
+  lineThreshold: number,
 ): string {
   try {
     const range = win.document.createRange();
-    
+
     // Collect all text nodes with their positions
     const textNodes: Array<{ node: Text; start: number; end: number }> = [];
-    const walker = win.document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+    const walker = win.document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      null,
+    );
     let totalOffset = 0;
     let node: Text | null;
-    
+
     while ((node = walker.nextNode() as Text | null)) {
       const content = node.textContent || "";
       if (content.length > 0) {
         textNodes.push({
           node,
           start: totalOffset,
-          end: totalOffset + content.length
+          end: totalOffset + content.length,
         });
         totalOffset += content.length;
       }
@@ -1020,7 +1043,7 @@ function detectLineBreaksByWordRects(
 
     for (const word of words) {
       if (!word) continue;
-      
+
       // Find which text node contains this word
       const wordStart = globalOffset;
       const wordEnd = wordStart + word.length;
@@ -1034,21 +1057,24 @@ function detectLineBreaksByWordRects(
 
       // Find the text node and offset for this word
       let wordY: number | null = null;
-      
+
       for (const textNodeInfo of textNodes) {
         if (wordStart >= textNodeInfo.start && wordStart < textNodeInfo.end) {
           const localStart = wordStart - textNodeInfo.start;
-          const localEnd = Math.min(wordEnd - textNodeInfo.start, textNodeInfo.node.textContent?.length || 0);
-          
+          const localEnd = Math.min(
+            wordEnd - textNodeInfo.start,
+            textNodeInfo.node.textContent?.length || 0,
+          );
+
           try {
             range.setStart(textNodeInfo.node, localStart);
             range.setEnd(textNodeInfo.node, localEnd);
-            
+
             const rects = range.getClientRects();
             if (rects.length > 0) {
               // Use the first rect's top position
               wordY = rects[0].top;
-              
+
               // If word spans multiple rects (wrapped mid-word), handle it
               if (rects.length > 1) {
                 const firstY = rects[0].top;
@@ -1101,24 +1127,24 @@ function calculateLineBreaks(
   text: string,
   containerWidth: number,
   styles: CSSStyleDeclaration,
-  win: Window
+  win: Window,
 ): string {
   if (containerWidth <= 0) return text;
 
   const fontSize = parseFloat(styles.fontSize) || 16;
   const fontFamily = styles.fontFamily || "Inter";
-  
+
   // Create a canvas to measure text width
   const canvas = win.document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) return text;
 
   ctx.font = `${styles.fontWeight || "400"} ${fontSize}px ${fontFamily}`;
-  
+
   const words = text.split(/\s+/);
   const lines: string[] = [];
   let currentLine = "";
-  
+
   // Account for padding
   const paddingLeft = parseFloat(styles.paddingLeft) || 0;
   const paddingRight = parseFloat(styles.paddingRight) || 0;
@@ -1127,7 +1153,7 @@ function calculateLineBreaks(
   for (const word of words) {
     const testLine = currentLine ? `${currentLine} ${word}` : word;
     const testWidth = ctx.measureText(testLine).width;
-    
+
     if (testWidth > availableWidth && currentLine) {
       // Line would be too long, start a new line
       lines.push(currentLine);
@@ -1136,7 +1162,7 @@ function calculateLineBreaks(
       currentLine = testLine;
     }
   }
-  
+
   // Add the last line
   if (currentLine) {
     lines.push(currentLine);

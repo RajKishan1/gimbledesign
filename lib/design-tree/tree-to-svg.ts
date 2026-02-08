@@ -164,7 +164,10 @@ function collectDefs(
   }
 
   // Collect blur filters
-  const nodeWithBlur = node as DesignNode & { blur?: number; backdropBlur?: number };
+  const nodeWithBlur = node as DesignNode & {
+    blur?: number;
+    backdropBlur?: number;
+  };
   if (nodeWithBlur.blur && nodeWithBlur.blur > 0) {
     defs.push(createBlurFilter(nodeWithBlur.blur, node.id, scale));
   }
@@ -344,6 +347,7 @@ function createImagePatternDef(
  *
  * NOTE: node.x and node.y are ABSOLUTE coordinates (relative to root)
  * We don't add parent offsets - just use them directly with scaling
+ * parentNode: when set, used to center text/icon inside buttons for pixel-perfect alignment
  */
 function renderNodeToSvg(
   node: DesignNode,
@@ -353,6 +357,7 @@ function renderNodeToSvg(
   scale: number,
   options: SvgExportOptions,
   includeComments: boolean,
+  parentNode?: DesignNode,
 ): void {
   if (node.visible === false) return;
   if (node.opacity === 0) return;
@@ -388,7 +393,15 @@ function renderNodeToSvg(
       );
       break;
     case "text":
-      renderText(node as TextNode, elements, x, y, w, h, scale);
+      // When text is inside a button, center it in the parent's bounds for pixel-perfect alignment
+      const parentBounds =
+        parentNode && parentNode.type === "button"
+          ? {
+              y: parentNode.y * scale,
+              h: parentNode.height * scale,
+            }
+          : undefined;
+      renderText(node as TextNode, elements, x, y, w, h, scale, parentBounds);
       break;
     case "image":
       renderImage(node as ImageNode, elements, x, y, w, h, scale, options);
@@ -443,12 +456,15 @@ function renderFrame(
   options: SvgExportOptions,
   includeComments: boolean,
 ): void {
+  // Buttons: export as pure vector (no filters) so Figma keeps them editable vector layers
+  const isButton = (node as DesignNode).type === "button";
+
   // Use the node's actual name without any prefix
   // SVG export creates groups in Figma, not frames - this is a Figma limitation
   const groupId = sanitizeId(node.name || node.id);
   const opacity = node.opacity !== 1 ? ` opacity="${node.opacity}"` : "";
 
-  // Start group
+  // Start group (Figma preserves <g> as groups with vector children)
   elements.push(`  <g id="${groupId}"${opacity}>`);
 
   // Render background rectangle if has fills or strokes
@@ -462,16 +478,17 @@ function renderFrame(
     const fill = hasFill ? getFillAttr(node.fills!, node.id) : "none";
     const stroke = hasStroke ? getStrokeAttr(node.strokes!) : "";
     const radius = getRadiusAttr(node.cornerRadius, scale);
-    
-    // Combine filters if both shadow and blur are present
+
+    // Skip filters on buttons so they stay 100% vector in Figma (filters can rasterize)
     let filterAttr = "";
-    if (hasShadow && hasBlur) {
-      // When both shadow and blur, apply blur (shadow is less common with blur effect)
-      filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;
-    } else if (hasShadow) {
-      filterAttr = ` filter="url(#shadow-${sanitizeId(node.id)})"`;
-    } else if (hasBlur) {
-      filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;
+    if (!isButton) {
+      if (hasShadow && hasBlur) {
+        filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;
+      } else if (hasShadow) {
+        filterAttr = ` filter="url(#shadow-${sanitizeId(node.id)})"`;
+      } else if (hasBlur) {
+        filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;
+      }
     }
 
     elements.push(
@@ -479,11 +496,19 @@ function renderFrame(
     );
   }
 
-  // Render children (they have their own absolute positions)
+  // Render children (they have their own absolute positions); pass this node as parent for alignment
   if (node.children && node.children.length > 0) {
     for (const child of node.children) {
-      // Pass 0,0 for parent position since children have absolute coordinates
-      renderNodeToSvg(child, elements, 0, 0, scale, options, includeComments);
+      renderNodeToSvg(
+        child,
+        elements,
+        0,
+        0,
+        scale,
+        options,
+        includeComments,
+        node,
+      );
     }
   }
 
@@ -499,6 +524,7 @@ function renderText(
   w: number,
   h: number,
   scale: number,
+  parentBounds?: { y: number; h: number },
 ): void {
   const { textStyle, content } = node;
 
@@ -535,7 +561,7 @@ function renderText(
   };
   const anchor = anchorMap[textStyle.textAlign] || "start";
 
-  // Calculate X position based on horizontal alignment
+  // Calculate X position based on horizontal alignment (always use text node's bounds)
   let textX = x;
   if (textStyle.textAlign === "center") {
     textX = x + w / 2;
@@ -543,17 +569,16 @@ function renderText(
     textX = x + w;
   }
 
-  // Calculate Y position - match flexbox align-items: center (icon + text in buttons)
-  // With dominant-baseline="middle", the text's vertical center is placed at the y coordinate.
-  // For single line: center of text = center of box => textY = y + h/2
-  // For multi-line: first line's center is offset upward so entire block is centered
-  // Block height = (lineCount - 1) * lineHeightPx (distance from first to last line center)
-  // 
-  // Visual correction: fonts have descenders (g,j,p,q,y) below baseline, making the
-  // mathematical center higher than the visual center. Add a small downward offset
-  // (5% of fontSize) to align text visually with icons in buttons.
-  const visualCorrectionOffset = fontSize * 0.05;
-  const textY = y + h / 2 - ((lineCount - 1) * lineHeightPx) / 2 + visualCorrectionOffset;
+  // Vertical position: when text is inside a button, center in the parent's bounds
+  // so alignment is pixel-perfect regardless of parsed text node bounds (avoids clipping).
+  // Otherwise center in this text node's bounds.
+  const boxCenterY = parentBounds
+    ? parentBounds.y + parentBounds.h / 2
+    : y + h / 2;
+  // Small downward offset so cap height aligns visually with icon center (fonts have ascenders above em middle)
+  const visualCorrectionOffset = fontSize * 0.04;
+  const textY =
+    boxCenterY - ((lineCount - 1) * lineHeightPx) / 2 + visualCorrectionOffset;
 
   // Build text attributes (precise positions for accurate alignment)
   const attrs: string[] = [
@@ -785,11 +810,11 @@ function renderRectangle(
     node.strokes && node.strokes.length > 0 ? getStrokeAttr(node.strokes) : "";
   const radius = getRadiusAttr(node.cornerRadius, scale);
   const opacity = node.opacity !== 1 ? ` opacity="${node.opacity}"` : "";
-  
+
   const hasShadow = node.shadows && node.shadows.length > 0;
   const nodeWithBlur = node as RectangleNode & { blur?: number };
   const hasBlur = nodeWithBlur.blur && nodeWithBlur.blur > 0;
-  
+
   let filterAttr = "";
   if (hasShadow && hasBlur) {
     filterAttr = ` filter="url(#blur-${sanitizeId(node.id)})"`;

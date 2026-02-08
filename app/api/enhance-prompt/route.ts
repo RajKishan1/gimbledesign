@@ -919,40 +919,40 @@ Each screenshot should make users think 'I need this app' - show transformation,
 Remember: Creative designs are about conversion. Every element should serve the goal of making someone take action. Beauty with purpose.`;
 
 // ==================== WIREFRAME ENHANCEMENT PROMPT ====================
-const WIREFRAME_ENHANCEMENT_PROMPT = `You are a senior UX researcher and information architect. You specialize in turning vague product ideas into clear, structured wireframe briefs. You do NOT design visuals—you define structure, flows, and content hierarchy.
+const WIREFRAME_ENHANCEMENT_PROMPT = `You are a senior UX researcher and information architect. You specialize in turning vague product ideas into clear, structured wireframe briefs that lead to comprehensive, multi-section wireframes. You do NOT design visuals—you define structure, flows, and content hierarchy. The generator will do detailed research and produce 8-14 sections; your brief should set that expectation.
 
 # CRITICAL: PRESERVE THE EXACT SCREEN TYPE THE USER ASKS FOR
-- If the user says "landing page", "landing page for e-commerce", "landing page for web app", your enhanced prompt MUST explicitly state that this is a LANDING PAGE (hero, value props, CTA, footer). Do NOT turn it into a product detail page, catalog, or dashboard.
-- If the user says "product detail page", "product page", keep it as a product detail screen (gallery, price, add to cart, description).
-- If the user says "dashboard", "homepage", "checkout", "pricing page", preserve that exact screen type in the enhanced prompt.
-- The wireframe generator will use your enhanced prompt to build ONE screen. That screen must match the requested type (e.g. landing page ≠ product detail).
+- If the user says "landing page", "landing page for e-commerce", "landing page for web app", your enhanced prompt MUST explicitly state that this is a LANDING PAGE and list many sections: hero, nav, value props, features, social proof, pricing/use cases, FAQ, CTA, footer.
+- If the user says "product detail page", "product page", keep it as a product detail screen and hint at sections: header, breadcrumb, gallery, info, add to cart, description, specs, reviews, related products, footer.
+- If the user says "dashboard", "homepage", "checkout", "pricing page", preserve that exact screen type and suggest a full set of sections appropriate to that type.
+- The wireframe generator will research and build ONE screen with many sections. That screen must match the requested type (e.g. landing page ≠ product detail).
 
 # YOUR EXPERTISE
 
 ## Research-First Thinking
-- Clarify the problem space and user goals from the prompt
+- Clarify the problem space, user goals, and target users from the prompt
 - Identify the exact page/screen type requested (landing, product detail, dashboard, etc.)
-- Call out assumptions and suggest scope
+- Call out what "good" looks like for this screen type (conversion, clarity, trust)
 
-## Information Architecture
+## Information Architecture — Comprehensive Sections
 - Define the screen and its purpose (no visual styling)
-- Specify content blocks that match the screen type (e.g. for landing: hero, value props, CTA; for product detail: gallery, info, add to cart)
-- Suggest logical structure and hierarchy
+- Specify a FULL set of content sections (not minimal). For landing: Hero, Navigation, Value propositions, Features/Benefits, Social proof/Testimonials, Pricing or use cases, FAQ or objections, Final CTA, Footer. For product detail: Header, Breadcrumb, Gallery, Product info + CTA, Description, Specs, Reviews, Related products, Footer.
+- Suggest 8-14 sections so the wireframe is comprehensive and follows UI/UX best practices
 
 ## Wireframe-Ready Output
-Your enhanced prompt will drive LOW-FIDELITY wireframe generation:
-- Start by stating the screen type explicitly: e.g. "Landing page for an e-commerce web app" or "Product detail page for a store"
-- Focus on layout structure: where do blocks go, what goes in them
-- Use labels like "Hero", "Value props", "CTA", "Navigation", "Footer" for landing; or "Product gallery", "Add to cart", "Description" for product detail
+Your enhanced prompt will drive research and wireframe generation:
+- Start by stating the screen type explicitly and the product context
+- List or imply many sections (8-14) so the generator produces a full page, not a minimal one
+- Use section labels: "Hero", "Value props", "Features", "Testimonials", "Pricing", "FAQ", "CTA", "Footer" for landing; "Gallery", "Add to cart", "Description", "Reviews", "Related" for product detail
 - No colors, imagery, or visual style—only structure and hierarchy
 - Web or mobile layout as implied by the product type
 
 # RULES
-- Keep the enhanced prompt concise and structural
-- Always include the explicit screen type (landing page, product detail, dashboard, etc.) so the generator does not substitute a different page
-- Include: product type, this screen's purpose, main content blocks for this screen type, primary user goal for this screen
+- Keep the enhanced prompt concise and structural but suggest a comprehensive screen (many sections)
+- Always include the explicit screen type and hint at 8+ sections so the generator does not produce a minimal layout
+- Include: product type, this screen's purpose, primary user goal, and a full set of content sections for this screen type
 - Do not add visual design language (colors, fonts, imagery)
-- If the user's prompt is vague about which screen, infer from context but state it clearly (e.g. "Single landing page for a SaaS product")`;
+- If the user's prompt is vague about which screen, infer from context but state it clearly (e.g. "Single landing page for a SaaS product with hero, value props, features, testimonials, pricing, FAQ, CTA, footer")`;
 
 // Select the appropriate prompt based on design type
 function getEnhancementPrompt(designType: string): string {
@@ -965,15 +965,26 @@ export async function POST(request: Request) {
   let originalPrompt = "";
 
   try {
-    const { prompt, model, designType = "mobile" } = await request.json();
-    originalPrompt = prompt || "";
+    const { prompt, model, designType = "mobile", imageContext } =
+      await request.json();
+    const userText = typeof prompt === "string" ? prompt.trim() : "";
+    const refFromImage =
+      typeof imageContext === "string" ? imageContext.trim() : "";
 
-    if (!prompt || typeof prompt !== "string") {
+    if (!userText && !refFromImage) {
       return NextResponse.json(
-        { error: "Prompt is required and must be a string" },
+        { error: "Provide at least a prompt or imageContext (from an uploaded image)." },
         { status: 400 }
       );
     }
+
+    // Combine image context with user text for enhancement
+    const combinedInput = refFromImage
+      ? `Reference from uploaded image:\n\n${refFromImage}${
+          userText ? `\n\nUser request:\n${userText}` : ""
+        }`
+      : userText;
+    originalPrompt = combinedInput;
 
     const selectedModel = model || "google/gemini-3-pro-preview";
 
@@ -988,18 +999,18 @@ export async function POST(request: Request) {
         ? "Turn this into a clear wireframe brief. State the exact screen type the user wants (e.g. landing page, product detail, dashboard). Define content blocks and structure for that screen type only. No visual design—structure only. Do not substitute a different page type (e.g. if they want a landing page, keep it a landing page)."
         : "Enhance this design prompt with your expertise as a senior UI/UX designer";
 
-    // Enhance the prompt using AI
+    // Enhance the prompt using AI (includes image context when provided)
     const { text: enhancedPrompt } = await generateText({
       model: openrouter.chat(selectedModel),
       system: enhancementPrompt,
-      prompt: `${userPromptPrefix}:\n\n${prompt}`,
+      prompt: `${userPromptPrefix}:\n\n${combinedInput}`,
       temperature: 0.7, // Some creativity but still focused
     });
 
     return NextResponse.json({
       success: true,
-      enhancedPrompt: enhancedPrompt?.trim() || prompt, // Fallback to original if enhancement fails
-      originalPrompt: prompt,
+      enhancedPrompt: enhancedPrompt?.trim() || combinedInput, // Fallback to original if enhancement fails
+      originalPrompt: combinedInput,
       designType: designType,
     });
   } catch (error) {
