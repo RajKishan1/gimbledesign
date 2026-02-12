@@ -559,21 +559,34 @@ function parseFills(styles: CSSStyleDeclaration): Fill[] | undefined {
   if (bgImage && bgImage !== "none") {
     // Parse linear gradient
     if (bgImage.includes("linear-gradient")) {
-      const gradientMatch = bgImage.match(/linear-gradient\(([^)]+)\)/);
-      if (gradientMatch) {
+      // IMPORTANT: Can't use simple regex like /linear-gradient\(([^)]+)\)/
+      // because computed CSS colors use rgb()/rgba() which contain nested
+      // parentheses. We must count parens to find the matching close.
+      const gradientContent = extractBalancedParenContent(
+        bgImage,
+        "linear-gradient",
+      );
+      if (gradientContent) {
         fills.push({
           type: "gradient",
-          color: bgImage, // Store full gradient string
-          gradientStops: parseGradientStops(gradientMatch[1]),
+          color: bgImage, // Store full gradient string for angle parsing
+          gradientStops: parseGradientStops(gradientContent),
         });
         hasGradient = true;
       }
     }
     // Parse radial gradient
     else if (bgImage.includes("radial-gradient")) {
+      const gradientContent = extractBalancedParenContent(
+        bgImage,
+        "radial-gradient",
+      );
       fills.push({
         type: "gradient",
         color: bgImage,
+        gradientStops: gradientContent
+          ? parseGradientStops(gradientContent)
+          : undefined,
       });
       hasGradient = true;
     }
@@ -634,28 +647,104 @@ function parseFills(styles: CSSStyleDeclaration): Fill[] | undefined {
   return fills.length > 0 ? fills : undefined;
 }
 
+/**
+ * Extract the content inside a CSS function with balanced parentheses.
+ *
+ * Simple regex like /linear-gradient\(([^)]+)\)/ fails because computed CSS
+ * colors use rgb()/rgba() which contain nested parentheses. This function
+ * counts open/close parens to find the true matching close paren.
+ *
+ * Example: "linear-gradient(135deg, rgba(255, 0, 0, 1) 0%, rgba(0, 0, 255, 1) 100%)"
+ *   → "135deg, rgba(255, 0, 0, 1) 0%, rgba(0, 0, 255, 1) 100%"
+ */
+function extractBalancedParenContent(
+  str: string,
+  funcName: string,
+): string | null {
+  const start = str.indexOf(funcName + "(");
+  if (start === -1) return null;
+
+  let depth = 0;
+  const openIdx = start + funcName.length; // index of the '('
+  for (let i = openIdx; i < str.length; i++) {
+    if (str[i] === "(") depth++;
+    else if (str[i] === ")") {
+      depth--;
+      if (depth === 0) {
+        return str.substring(openIdx + 1, i);
+      }
+    }
+  }
+
+  return null; // unbalanced
+}
+
+/**
+ * Split a string by commas, but ignore commas that are inside parentheses.
+ *
+ * Needed because gradient color stops use rgb()/rgba() which contain commas:
+ *   "135deg, rgba(255, 120, 0, 1) 0%, rgba(0, 0, 255, 1) 100%"
+ * Naive split(",") would break rgba values into fragments.
+ */
+function splitOutsideParens(str: string): string[] {
+  const parts: string[] = [];
+  let current = "";
+  let depth = 0;
+
+  for (const char of str) {
+    if (char === "(") {
+      depth++;
+      current += char;
+    } else if (char === ")") {
+      depth--;
+      current += char;
+    } else if (char === "," && depth === 0) {
+      parts.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  if (current.trim()) parts.push(current.trim());
+  return parts;
+}
+
 function parseGradientStops(
   gradientContent: string,
 ): { color: string; position: number }[] {
   const stops: { color: string; position: number }[] = [];
 
-  // Extract color stops from gradient string
+  // Extract color stops from gradient string.
   // Format: "direction, color1 position1, color2 position2, ..."
-  const parts = gradientContent.split(",").map((s) => s.trim());
+  //
+  // IMPORTANT: must split on commas *outside* parentheses because computed
+  // CSS colors use rgb()/rgba() which contain commas:
+  //   "135deg, rgba(255, 0, 0, 1) 0%, rgba(0, 0, 255, 1) 100%"
+  // A naive .split(",") fragments the rgba values.
+  const parts = splitOutsideParens(gradientContent);
 
-  // Skip the direction part
-  const colorParts = parts.slice(1);
+  // Detect whether the first part is a direction or a color stop.
+  // Computed styles normalize direction to "Xdeg" (e.g. "180deg", "135deg").
+  // Also handle keyword directions like "to right", "to bottom left".
+  const firstPart = parts[0] || "";
+  const isDirection =
+    /deg\s*$/.test(firstPart) ||
+    firstPart.startsWith("to ") ||
+    /^\d+(\.\d+)?turn\s*$/.test(firstPart);
+
+  const colorParts = isDirection ? parts.slice(1) : parts;
 
   colorParts.forEach((part, index) => {
-    // Extract color and position
-    const colorMatch = part.match(/(rgba?\([^)]+\)|#[0-9a-fA-F]+|[a-z]+)/i);
-    const positionMatch = part.match(/(\d+)%/);
+    // Extract color — supports rgb(), rgba(), hex, and named colors
+    const colorMatch = part.match(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}|[a-z]+)/i);
+    const positionMatch = part.match(/([\d.]+)%/);
 
     if (colorMatch) {
       stops.push({
         color: colorMatch[1],
         position: positionMatch
-          ? parseInt(positionMatch[1]) / 100
+          ? parseFloat(positionMatch[1]) / 100
           : index / Math.max(colorParts.length - 1, 1),
       });
     }
@@ -1010,7 +1099,7 @@ function detectLineBreaksByWordRects(
   try {
     const range = win.document.createRange();
 
-    // Collect all text nodes with their positions
+    // Collect all text nodes with their positions (raw/untrimmed offsets)
     const textNodes: Array<{ node: Text; start: number; end: number }> = [];
     const walker = win.document.createTreeWalker(
       element,
@@ -1034,12 +1123,21 @@ function detectLineBreaksByWordRects(
 
     if (textNodes.length === 0) return text;
 
+    // CRITICAL: `text` is element.textContent.trim(), but textNode offsets
+    // are based on the raw (untrimmed) textContent. Without accounting for
+    // the leading whitespace that was trimmed, word positions map to wrong
+    // offsets in the text nodes, causing the Range API to measure y-positions
+    // at incorrect locations — scrambling multi-line text order.
+    const rawText = element.textContent || "";
+    const firstNonWS = rawText.search(/\S/);
+    const leadingTrimmed = firstNonWS >= 0 ? firstNonWS : 0;
+
     // Split into words and track their positions
     const words = text.split(/(\s+)/); // Keep whitespace
     const lines: string[] = [];
     let currentLine = "";
     let lastY: number | null = null;
-    let globalOffset = 0;
+    let globalOffset = 0; // position within the trimmed text
 
     for (const word of words) {
       if (!word) continue;
@@ -1055,14 +1153,21 @@ function detectLineBreaksByWordRects(
         continue;
       }
 
+      // Map trimmed-text positions → raw-text positions for correct text-node lookup
+      const rawWordStart = wordStart + leadingTrimmed;
+      const rawWordEnd = wordEnd + leadingTrimmed;
+
       // Find the text node and offset for this word
       let wordY: number | null = null;
 
       for (const textNodeInfo of textNodes) {
-        if (wordStart >= textNodeInfo.start && wordStart < textNodeInfo.end) {
-          const localStart = wordStart - textNodeInfo.start;
+        if (
+          rawWordStart >= textNodeInfo.start &&
+          rawWordStart < textNodeInfo.end
+        ) {
+          const localStart = rawWordStart - textNodeInfo.start;
           const localEnd = Math.min(
-            wordEnd - textNodeInfo.start,
+            rawWordEnd - textNodeInfo.start,
             textNodeInfo.node.textContent?.length || 0,
           );
 
@@ -1078,8 +1183,8 @@ function detectLineBreaksByWordRects(
               // If word spans multiple rects (wrapped mid-word), handle it
               if (rects.length > 1) {
                 const firstY = rects[0].top;
-                const lastY = rects[rects.length - 1].top;
-                if (Math.abs(lastY - firstY) > lineThreshold) {
+                const lastRectY = rects[rects.length - 1].top;
+                if (Math.abs(lastRectY - firstY) > lineThreshold) {
                   // Word is split across lines - this is complex, use first part's Y
                   wordY = firstY;
                 }
@@ -1345,7 +1450,12 @@ function buildImageNode(
 }
 
 /**
- * Build a node for SVG elements - preserve SVG content for vector export
+ * Build a node for SVG elements - preserve SVG content for vector export.
+ *
+ * We capture the SVG root element's presentation attributes (fill, stroke, etc.)
+ * so they are preserved when rendered as a <g> instead of a nested <svg>.
+ * Figma doesn't handle nested <svg> elements well — children lose inherited
+ * styles and render as wireframes.
  */
 function buildSvgNode(
   element: Element,
@@ -1353,7 +1463,36 @@ function buildSvgNode(
   baseProps: BaseNodeProps,
 ): SvgNode {
   const viewBox = element.getAttribute("viewBox") || undefined;
-  const svgContent = element.innerHTML.trim();
+  let svgContent = element.innerHTML.trim();
+
+  // Capture SVG root element's presentation attributes so child elements
+  // retain correct inherited styles when we render as <g> (not nested <svg>)
+  const presentationAttrs = [
+    "fill",
+    "stroke",
+    "stroke-width",
+    "stroke-linecap",
+    "stroke-linejoin",
+    "fill-rule",
+    "clip-rule",
+    "color",
+    "fill-opacity",
+    "stroke-opacity",
+  ];
+  const attrs: string[] = [];
+  for (const attr of presentationAttrs) {
+    const value = element.getAttribute(attr);
+    if (value !== null) {
+      attrs.push(`${attr}="${value}"`);
+    }
+  }
+
+  // Wrap content in a <g> with the root's presentation attributes
+  // so child paths/shapes inherit fill="none", stroke="currentColor", etc.
+  if (attrs.length > 0) {
+    svgContent = `<g ${attrs.join(" ")}>${svgContent}</g>`;
+  }
+
   return {
     ...baseProps,
     type: "svg",
@@ -1399,34 +1538,42 @@ function buildIconNode(
     color = styles.color;
   }
 
-  // Get explicit width/height attributes if set
+  // Determine icon size — prefer the actual CSS layout size from getBoundingClientRect()
+  // because it reflects the real space the icon occupies in the flex layout (including gap).
+  // Only fall back to element attributes / font-size / hard-coded 24 when the rect
+  // doesn't give a usable dimension (< 8px, e.g. iconify-icon before render).
   let width = baseProps.width;
   let height = baseProps.height;
+  const rectHasValidWidth = width >= 8;
+  const rectHasValidHeight = height >= 8;
 
-  const widthAttr = element.getAttribute("width");
-  const heightAttr = element.getAttribute("height");
+  if (!rectHasValidWidth || !rectHasValidHeight) {
+    // Rect dimensions are too small — try explicit attributes as first fallback
+    const widthAttr = element.getAttribute("width");
+    const heightAttr = element.getAttribute("height");
 
-  if (widthAttr && !widthAttr.includes("%")) {
-    const parsed = parseInt(widthAttr);
-    if (!isNaN(parsed) && parsed > 0) width = parsed;
-  }
-  if (heightAttr && !heightAttr.includes("%")) {
-    const parsed = parseInt(heightAttr);
-    if (!isNaN(parsed) && parsed > 0) height = parsed;
-  }
-
-  // Try to get size from font-size (icons often match text size)
-  if ((width < 8 || height < 8) && styles.fontSize) {
-    const fontSize = parseFloat(styles.fontSize);
-    if (fontSize > 8) {
-      width = Math.max(width, fontSize);
-      height = Math.max(height, fontSize);
+    if (!rectHasValidWidth && widthAttr && !widthAttr.includes("%")) {
+      const parsed = parseInt(widthAttr);
+      if (!isNaN(parsed) && parsed > 0) width = parsed;
     }
-  }
+    if (!rectHasValidHeight && heightAttr && !heightAttr.includes("%")) {
+      const parsed = parseInt(heightAttr);
+      if (!isNaN(parsed) && parsed > 0) height = parsed;
+    }
 
-  // Ensure minimum size for icons (some might have 0 computed dimensions)
-  if (width < 8) width = 24;
-  if (height < 8) height = 24;
+    // Second fallback: derive from font-size (icons often match text size)
+    if ((width < 8 || height < 8) && styles.fontSize) {
+      const fontSize = parseFloat(styles.fontSize);
+      if (fontSize > 8) {
+        width = Math.max(width, fontSize);
+        height = Math.max(height, fontSize);
+      }
+    }
+
+    // Last resort: use 24 as a sensible default icon size
+    if (width < 8) width = 24;
+    if (height < 8) height = 24;
+  }
 
   // Make sure we have a valid color (not empty or just black if it should be different)
   if (!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") {

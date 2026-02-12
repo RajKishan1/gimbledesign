@@ -149,6 +149,54 @@ ${elements.join("\n")}
 }
 
 // ============================================================================
+// SVG CONTENT HELPERS (defs extraction, ID prefixing)
+// ============================================================================
+
+/**
+ * Extract <defs> sections from inline SVG content, prefix all IDs to avoid
+ * conflicts when multiple SVG nodes are flattened into a single SVG document.
+ *
+ * Returns the extracted defs (to be added to the main <defs> section) and
+ * the remaining content (to be rendered in a <g> group).
+ */
+function extractAndPrefixSvgDefs(
+  svgContent: string,
+  prefix: string,
+): { defs: string; content: string } {
+  let defsContent = "";
+  let remainingContent = svgContent;
+
+  // Extract all <defs>...</defs> blocks
+  const defsRegex = /<defs[^>]*>([\s\S]*?)<\/defs>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = defsRegex.exec(svgContent)) !== null) {
+    defsContent += match[1];
+    remainingContent = remainingContent.replace(match[0], "");
+  }
+
+  // Prefix all IDs to avoid conflicts between different SVG nodes
+  const prefixIds = (content: string): string => {
+    // Prefix id="xxx" attributes
+    content = content.replace(/\bid="([^"]+)"/g, `id="${prefix}$1"`);
+    // Prefix url(#xxx) references
+    content = content.replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`);
+    // Prefix xlink:href="#xxx" references
+    content = content.replace(
+      /xlink:href="#([^"]+)"/g,
+      `xlink:href="#${prefix}$1"`,
+    );
+    // Prefix href="#xxx" references (modern SVG)
+    content = content.replace(/\bhref="#([^"]+)"/g, `href="#${prefix}$1"`);
+    return content;
+  };
+
+  defsContent = prefixIds(defsContent);
+  remainingContent = prefixIds(remainingContent);
+
+  return { defs: defsContent.trim(), content: remainingContent.trim() };
+}
+
+// ============================================================================
 // DEFS COLLECTION (gradients, filters, clip paths)
 // ============================================================================
 
@@ -185,9 +233,44 @@ function collectDefs(
     }
   }
 
-  // Collect clip paths for rounded corners
+  // Collect clip paths for rounded corners on images
   if (node.cornerRadius && (node.type === "image" || hasRoundedClip(node))) {
     defs.push(createClipPath(node, scale));
+  }
+
+  // Collect clip paths for frames/buttons with clipContent (overflow: hidden)
+  // This prevents children from visually overflowing the container bounds.
+  if (
+    (node.type === "frame" || node.type === "button") &&
+    (node as FrameNode).clipContent
+  ) {
+    const x = node.x * scale;
+    const y = node.y * scale;
+    const w = node.width * scale;
+    const h = node.height * scale;
+    const r =
+      typeof node.cornerRadius === "number" ? node.cornerRadius * scale : 0;
+    defs.push(
+      `<clipPath id="clip-frame-${sanitizeId(node.id)}">
+      <rect x="${n2(x)}" y="${n2(y)}" width="${n2(w)}" height="${n2(h)}" rx="${n2(r)}" ry="${n2(r)}"/>
+    </clipPath>`,
+    );
+  }
+
+  // Collect defs from inline SVG content (gradients, patterns, masks inside SVG nodes).
+  // These are extracted and re-scoped with a prefix to avoid ID collisions.
+  if (node.type === "svg") {
+    const svgNode = node as SvgNode;
+    if (svgNode.svgContent) {
+      const prefix = `svg-${sanitizeId(node.id)}-`;
+      const { defs: svgDefs } = extractAndPrefixSvgDefs(
+        svgNode.svgContent,
+        prefix,
+      );
+      if (svgDefs) {
+        defs.push(svgDefs);
+      }
+    }
   }
 
   // Recurse into children
@@ -407,7 +490,25 @@ function renderNodeToSvg(
       renderImage(node as ImageNode, elements, x, y, w, h, scale, options);
       break;
     case "icon":
-      renderIcon(node as IconNode, elements, x, y, w, h, scale);
+      // When icon is inside a button, center it vertically in the parent's bounds
+      // so it aligns with the text (which also uses parentBounds for centering)
+      const iconParentBounds =
+        parentNode && parentNode.type === "button"
+          ? {
+              y: parentNode.y * scale,
+              h: parentNode.height * scale,
+            }
+          : undefined;
+      renderIcon(
+        node as IconNode,
+        elements,
+        x,
+        y,
+        w,
+        h,
+        scale,
+        iconParentBounds,
+      );
       break;
     case "button":
       renderFrame(
@@ -496,8 +597,18 @@ function renderFrame(
     );
   }
 
-  // Render children (they have their own absolute positions); pass this node as parent for alignment
+  // Render children (they have their own absolute positions); pass this node as parent for alignment.
+  // When clipContent is true (HTML overflow:hidden), wrap children in a clip-path group
+  // so they don't visually overflow the container bounds — matching browser rendering.
+  // The clip is applied only to children (not the background rect) so box-shadows aren't clipped.
   if (node.children && node.children.length > 0) {
+    const hasClip = node.clipContent;
+    if (hasClip) {
+      elements.push(
+        `    <g clip-path="url(#clip-frame-${sanitizeId(node.id)})">`,
+      );
+    }
+
     for (const child of node.children) {
       renderNodeToSvg(
         child,
@@ -509,6 +620,10 @@ function renderFrame(
         includeComments,
         node,
       );
+    }
+
+    if (hasClip) {
+      elements.push(`    </g>`);
     }
   }
 
@@ -569,16 +684,38 @@ function renderText(
     textX = x + w;
   }
 
-  // Vertical position: when text is inside a button, center in the parent's bounds
-  // so alignment is pixel-perfect regardless of parsed text node bounds (avoids clipping).
-  // Otherwise center in this text node's bounds.
-  const boxCenterY = parentBounds
-    ? parentBounds.y + parentBounds.h / 2
-    : y + h / 2;
-  // Small downward offset so cap height aligns visually with icon center (fonts have ascenders above em middle)
-  const visualCorrectionOffset = fontSize * 0.04;
-  const textY =
-    boxCenterY - ((lineCount - 1) * lineHeightPx) / 2 + visualCorrectionOffset;
+  // Vertical position: two strategies depending on context.
+  //
+  // 1. Inside a button: center vertically in the parent's bounds so alignment
+  //    is pixel-perfect regardless of parsed text node bounds.
+  // 2. Standalone text: use top-alignment to match CSS text rendering. In HTML,
+  //    text flows from the top of its content box. The first line's baseline is
+  //    at: top + half-leading + font ascent. Centering standalone text in its
+  //    bounding box shifts it down when the box has extra height (padding, etc.),
+  //    causing overlaps with adjacent elements.
+  //
+  // We intentionally do NOT use dominant-baseline="middle" because Figma's SVG
+  // import does not reliably support it — when ignored, y is treated as the
+  // alphabetic baseline and text appears shifted upward.
+
+  let textY: number;
+
+  if (parentBounds) {
+    // Inside a button: center vertically in parent bounds
+    const BASELINE_CENTER_OFFSET = 0.35;
+    const boxCenterY = parentBounds.y + parentBounds.h / 2;
+    textY =
+      boxCenterY -
+      ((lineCount - 1) * lineHeightPx) / 2 +
+      fontSize * BASELINE_CENTER_OFFSET;
+  } else {
+    // Standalone text: top-align to match CSS rendering.
+    // half-leading = extra space from line-height distributed above the first line.
+    // ASCENDER_RATIO ≈ 0.76 for Inter / common sans-serif fonts.
+    const halfLeading = Math.max(0, (lineHeightPx - fontSize) / 2);
+    const ASCENDER_RATIO = 0.76;
+    textY = y + halfLeading + fontSize * ASCENDER_RATIO;
+  }
 
   // Build text attributes (precise positions for accurate alignment)
   const attrs: string[] = [
@@ -589,7 +726,6 @@ function renderText(
     `font-size="${n2(fontSize)}"`,
     `font-weight="${fontWeight}"`,
     `text-anchor="${anchor}"`,
-    `dominant-baseline="middle"`,
   ];
 
   if (letterSpacing !== 0) {
@@ -715,14 +851,23 @@ function renderIcon(
   w: number,
   h: number,
   scale: number,
+  parentBounds?: { y: number; h: number },
 ): void {
   const opacity = node.opacity !== 1 ? ` opacity="${node.opacity}"` : "";
   const color = node.color ? parseColor(node.color).hex : "#666666";
   const groupId = `icon-${sanitizeId(node.id || node.iconName)}`;
 
+  // When inside a button, center the icon vertically in the parent's bounds
+  // so it aligns precisely with the text (which also centers in parentBounds).
+  let iconY = y;
+  if (parentBounds) {
+    const parentCenterY = parentBounds.y + parentBounds.h / 2;
+    iconY = parentCenterY - h / 2;
+  }
+
   if (node.svgPathData && node.svgPathData.length > 0) {
     elements.push(
-      `    <g id="${groupId}" transform="translate(${n2(x)}, ${n2(y)})"${opacity}>`,
+      `    <g id="${groupId}" transform="translate(${n2(x)}, ${n2(iconY)})"${opacity}>`,
     );
     // Stroke-only icons (no fill) - match outline icon style in Figma
     const strokeWidth = 1.5;
@@ -749,10 +894,10 @@ function renderIcon(
   const iconUrl = `https://api.iconify.design/${prefix}/${name}.svg?color=%23${colorForUrl}`;
   elements.push(`    <g id="${groupId}"${opacity}>`);
   elements.push(
-    `      <rect x="${n2(x)}" y="${n2(y)}" width="${n2(w)}" height="${n2(h)}" fill="${color}" fill-opacity="0.1" rx="4"/>`,
+    `      <rect x="${n2(x)}" y="${n2(iconY)}" width="${n2(w)}" height="${n2(h)}" fill="${color}" fill-opacity="0.1" rx="4"/>`,
   );
   elements.push(
-    `      <image x="${n2(x)}" y="${n2(y)}" width="${n2(w)}" height="${n2(h)}" href="${escapeXml(iconUrl)}" preserveAspectRatio="xMidYMid meet">`,
+    `      <image x="${n2(x)}" y="${n2(iconY)}" width="${n2(w)}" height="${n2(h)}" href="${escapeXml(iconUrl)}" preserveAspectRatio="xMidYMid meet">`,
   );
   elements.push(`        <title>${prefix}:${name}</title>`);
   elements.push(`      </image>`);
@@ -841,12 +986,42 @@ function renderSvg(
   const opacity = node.opacity !== 1 ? ` opacity="${node.opacity}"` : "";
   const viewBox = node.viewBox || `0 0 ${n2(w)} ${n2(h)}`;
 
-  elements.push(`    <g transform="translate(${n2(x)}, ${n2(y)})"${opacity}>`);
-  elements.push(
-    `      <svg width="${n2(w)}" height="${n2(h)}" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet">`,
-  );
-  elements.push(`        ${node.svgContent}`);
-  elements.push(`      </svg>`);
+  // Parse viewBox to compute the transform that maps viewBox → target size.
+  // Using <g> with transform instead of nested <svg> because Figma's SVG
+  // importer doesn't properly handle nested <svg> elements — child paths
+  // lose inherited styles (fills/strokes) and render as wireframes.
+  const vbParts = viewBox.split(/[\s,]+/).map(Number);
+  const vbX = vbParts[0] || 0;
+  const vbY = vbParts[1] || 0;
+  const vbW = vbParts[2] || w;
+  const vbH = vbParts[3] || h;
+
+  const scaleX = vbW > 0 ? w / vbW : 1;
+  const scaleY = vbH > 0 ? h / vbH : 1;
+
+  // Build transform: translate to position, scale from viewBox to target
+  // size, then offset for viewBox origin if non-zero.
+  let transform: string;
+  if (
+    n2(scaleX) === 1 &&
+    n2(scaleY) === 1 &&
+    n2(vbX) === 0 &&
+    n2(vbY) === 0
+  ) {
+    transform = `translate(${n2(x)}, ${n2(y)})`;
+  } else if (n2(vbX) === 0 && n2(vbY) === 0) {
+    transform = `translate(${n2(x)}, ${n2(y)}) scale(${n2(scaleX)}, ${n2(scaleY)})`;
+  } else {
+    transform = `translate(${n2(x)}, ${n2(y)}) scale(${n2(scaleX)}, ${n2(scaleY)}) translate(${n2(-vbX)}, ${n2(-vbY)})`;
+  }
+
+  // Extract defs from content and prefix IDs (same prefix as collectDefs)
+  // so the remaining content references the correct (prefixed) defs.
+  const prefix = `svg-${sanitizeId(node.id)}-`;
+  const { content } = extractAndPrefixSvgDefs(node.svgContent, prefix);
+
+  elements.push(`    <g transform="${transform}"${opacity}>`);
+  elements.push(`      ${content}`);
   elements.push(`    </g>`);
 }
 
