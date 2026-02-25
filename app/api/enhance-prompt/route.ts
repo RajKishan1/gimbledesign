@@ -965,16 +965,23 @@ export async function POST(request: Request) {
   let originalPrompt = "";
 
   try {
-    const { prompt, model, designType = "mobile", imageContext } =
-      await request.json();
+    const {
+      prompt,
+      model,
+      designType = "mobile",
+      imageContext,
+    } = await request.json();
     const userText = typeof prompt === "string" ? prompt.trim() : "";
     const refFromImage =
       typeof imageContext === "string" ? imageContext.trim() : "";
 
     if (!userText && !refFromImage) {
       return NextResponse.json(
-        { error: "Provide at least a prompt or imageContext (from an uploaded image)." },
-        { status: 400 }
+        {
+          error:
+            "Provide at least a prompt or imageContext (from an uploaded image).",
+        },
+        { status: 400 },
       );
     }
 
@@ -986,7 +993,7 @@ export async function POST(request: Request) {
       : userText;
     originalPrompt = combinedInput;
 
-    const selectedModel = model || "google/gemini-3-pro-preview";
+    const selectedModel = model || "google/gemini-3.1-pro-preview";
 
     // Get the appropriate enhancement prompt based on design type
     const enhancementPrompt = getEnhancementPrompt(designType);
@@ -996,8 +1003,8 @@ export async function POST(request: Request) {
       designType === "web"
         ? "Enhance this web application design prompt with your expertise as a senior web designer"
         : designType === "wireframe"
-        ? "Turn this into a clear wireframe brief. State the exact screen type the user wants (e.g. landing page, product detail, dashboard). Define content blocks and structure for that screen type only. No visual design—structure only. Do not substitute a different page type (e.g. if they want a landing page, keep it a landing page)."
-        : "Enhance this design prompt with your expertise as a senior UI/UX designer";
+          ? "Turn this into a clear wireframe brief. State the exact screen type the user wants (e.g. landing page, product detail, dashboard). Define content blocks and structure for that screen type only. No visual design—structure only. Do not substitute a different page type (e.g. if they want a landing page, keep it a landing page)."
+          : "Enhance this design prompt with your expertise as a senior UI/UX designer";
 
     // Enhance the prompt using AI (includes image context when provided)
     const { text: enhancedPrompt } = await generateText({
@@ -1023,7 +1030,7 @@ export async function POST(request: Request) {
         enhancedPrompt: originalPrompt, // Fallback to original
         originalPrompt: originalPrompt,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

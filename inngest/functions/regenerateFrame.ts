@@ -26,7 +26,7 @@ export const regenerateFrame = inngest.createFunction(
       allFrames, // Optional: all frames in the project for context
     } = event.data;
     const CHANNEL = `user:${userId}`;
-    const selectedModel = model || "google/gemini-3-pro-preview";
+    const selectedModel = model || "google/gemini-3.1-pro-preview";
 
     await publish({
       channel: CHANNEL,
@@ -146,5 +146,5 @@ Any changes should seamlessly blend with the app's established visual style.
         projectId: projectId,
       },
     });
-  }
+  },
 );

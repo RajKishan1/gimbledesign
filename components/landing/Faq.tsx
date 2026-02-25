@@ -52,10 +52,10 @@ const Faq = () => {
     <section
       className={` bg-[#f9f9f9]  dark:bg-black transition-colors duration-300 ${inter.className} px-6`}
     >
-      <div className=" flex justify-between items-center  mx-auto  pt-12 border border-b-0 border-zinc-200 dark:border-zinc-900">
+      <div className=" flex justify-between items-center  mx-auto  pt-12 border border-b-0 border-gray-200 dark:border-gray-900">
         <div className="flex justify-center ">
           {/* Title Section */}
-          <div className="w-1/2 lg:col-span-4 p-6 border-y px-12 dark:border-zinc-900 ">
+          <div className="w-1/2 lg:col-span-4 p-6 border-y px-12 dark:border-gray-900 ">
             <p className="bg-white rounded-full px-3.75 py-1 text-sm">
               Common questions
             </p>
@@ -71,19 +71,19 @@ const Faq = () => {
           </div>
 
           {/* FAQ Items */}
-          <div className="lg:col-span-8 space-y-4 w-1/2 border-x border-gray-200 dark:border-zinc-900 ">
+          <div className="lg:col-span-8 space-y-4 w-1/2 border-x border-gray-200 dark:border-gray-900 ">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className={`border-t border-gray-200 dark:border-zinc-800 px-8 py-2 my-auto ${
+                className={`border-t border-gray-200 dark:border-gray-800 px-8 py-2 my-auto ${
                   index === faqs.length - 1
-                    ? "border-b border-gray-200 dark:border-zinc-800"
+                    ? "border-b border-gray-200 dark:border-gray-800"
                     : ""
                 }`}
               >
                 <button
                   onClick={() => toggleFAQ(index)}
-                  className="w-full py-6 flex items-center justify-between text-left transition-colors duration-200 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="w-full py-6 flex items-center justify-between text-left transition-colors duration-200 hover:text-neutral-600 dark:hover:text-neutral-300"
                   aria-expanded={openIndex === index}
                 >
                   <span className="text-lg font-normal pr-8 text-black dark:text-white">
@@ -104,7 +104,7 @@ const Faq = () => {
                       : "max-h-0 opacity-0"
                   }`}
                 >
-                  <div className="pb-6 pr-12 leading-relaxed text-gray-600 dark:text-gray-400">
+                  <div className="pb-6 pr-12 leading-relaxed text-neutral-600 dark:text-neutral-400">
                     {faq.answer}
                   </div>
                 </div>

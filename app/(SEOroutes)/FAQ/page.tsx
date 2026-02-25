@@ -33,10 +33,10 @@ const Faq = () => {
     <section>
       <Header />
       <div className={`bg-white dark:bg-black ${inter.className}`}>
-        <div className="max-w-6xl mx-auto py-16 border border-zinc-900">
+        <div className="max-w-6xl mx-auto py-16 border border-gray-900">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             {/* Title */}
-            <div className="lg:col-span-4 p-6 border border-zinc-900">
+            <div className="lg:col-span-4 p-6 border border-gray-900">
               <h1 className="text-3xl font-medium text-black dark:text-white">
                 Frequently Asked
                 <br />
@@ -45,13 +45,13 @@ const Faq = () => {
             </div>
 
             {/* FAQ List */}
-            <div className="lg:col-span-8 border-l border-r border-gray-200 dark:border-zinc-900">
+            <div className="lg:col-span-8 border-l border-r border-gray-200 dark:border-gray-900">
               {faqs.map((faq, index) => (
                 <div
                   key={index}
-                  className={`px-8 py-6 border-t border-gray-200 dark:border-zinc-800 ${
+                  className={`px-8 py-6 border-t border-gray-200 dark:border-gray-800 ${
                     index === faqs.length - 1
-                      ? "border-b border-gray-200 dark:border-zinc-800"
+                      ? "border-b border-gray-200 dark:border-gray-800"
                       : ""
                   }`}
                 >
@@ -65,7 +65,7 @@ const Faq = () => {
                     />
                   </div>
 
-                  <p className="pr-12 leading-relaxed text-gray-600 dark:text-gray-400">
+                  <p className="pr-12 leading-relaxed text-neutral-600 dark:text-neutral-400">
                     {faq.answer}
                   </p>
                 </div>

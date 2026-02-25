@@ -16,10 +16,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, style }) => (
     className="bg-gray-900 border border-gray-700 p-6 rounded-lg shadow-lg hover:shadow-xl hover:border-gray-600 transition-all duration-300"
     style={style}
   >
-    <h3 className="font-semibold text-xl mb-2 text-gray-100">
+    <h3 className="font-semibold text-xl mb-2 text-neutral-100">
       {project.title}
     </h3>
-    <p className="text-gray-400 text-sm">{project.description}</p>
+    <p className="text-neutral-400 text-sm">{project.description}</p>
   </div>
 );
 
@@ -40,7 +40,7 @@ const Button: React.FC<ButtonProps> = ({
     onClick={onClick}
     className={`px-4 py-2 border transition-all duration-300 ${
       variant === "outline"
-        ? "bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500"
+        ? "bg-transparent border-gray-600 text-neutral-300 hover:bg-gray-800 hover:border-gray-500"
         : "bg-blue-600 text-white hover:bg-blue-700"
     } ${className}`}
   >
@@ -111,14 +111,14 @@ const ArcScrollAnimation: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="min-h-screen bg-gray-950 text-neutral-100">
       {/* Hero Section */}
       <div className="h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 mb-4">
             Scroll Down
           </h1>
-          <p className="text-lg md:text-xl text-gray-400">
+          <p className="text-lg md:text-xl text-neutral-400">
             Watch the arc animation in action
           </p>
         </div>
@@ -157,10 +157,10 @@ const ArcScrollAnimation: React.FC = () => {
       {/* Footer Section */}
       <div className="h-screen flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-xl md:text-2xl text-gray-400">
+          <p className="text-xl md:text-2xl text-neutral-400">
             Scroll back up to see the cards return to arc formation
           </p>
-          <div className="mt-6 text-sm text-gray-600">
+          <div className="mt-6 text-sm text-neutral-600">
             Progress: {Math.round(scrollProgress * 100)}%
           </div>
         </div>

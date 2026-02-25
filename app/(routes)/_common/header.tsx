@@ -27,7 +27,7 @@ const Header = () => {
   const profilePicture = profile?.profilePicture || user?.image || "";
   const displayName = profile?.name || user?.name || "";
   return (
-    <div className="max-h-20.5 sticky top-0 right-0 left-0 z-30  border-b border-black/5  dark:border-zinc-900 ">
+    <div className="max-h-20.5 sticky top-0 right-0 left-0 z-30  border-b border-black/5  dark:border-gray-900 ">
       <header className=" px-6  p-4 bg-[#f9f9f9] dark:bg-black">
         <div
           className="w-full max-w-6xl mx-auto

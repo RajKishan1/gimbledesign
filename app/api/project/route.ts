@@ -44,7 +44,7 @@ export async function GET(request: Request) {
                 ? dbError.message
                 : undefined,
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
       throw dbError;
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
         details:
           process.env.NODE_ENV === "development" ? errorMessage : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     if (!prompt) throw new Error("Missing Prompt");
 
     const userId = user.id;
-    const selectedModel = model || "google/gemini-3-pro-preview";
+    const selectedModel = model || "google/gemini-3.1-pro-preview";
 
     // Check and deduct credits (1 credit for landing page submit)
     const creditCost = 1.0;
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
           error:
             "Insufficient credits. You need at least 1 credit to create a project.",
         },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
@@ -143,8 +143,8 @@ export async function POST(request: Request) {
           deviceType === "web"
             ? "ui/generate.web-screens"
             : deviceType === "wireframe"
-            ? "ui/generate.wireframe-screens"
-            : "ui/generate.screens";
+              ? "ui/generate.wireframe-screens"
+              : "ui/generate.screens";
 
         await inngest.send({
           name: eventName,
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
       {
         error: "Failed to create project",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

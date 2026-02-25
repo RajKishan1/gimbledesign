@@ -322,7 +322,7 @@ const PreviewPage = () => {
   // Button text color classes based on theme
   const buttonTextClasses = isDarkTheme
     ? "text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-full"
-    : "text-gray-700 hover:text-gray-900 hover:bg-gray-200/50 disabled:opacity-30 rounded-full";
+    : "text-neutral-700 hover:text-neutral-900 hover:bg-gray-200/50 disabled:opacity-30 rounded-full";
 
   return (
     <div className={backgroundClasses}>

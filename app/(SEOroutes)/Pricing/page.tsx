@@ -65,7 +65,7 @@ const PricingPage = () => {
   return (
     <section className="max-w-5xl mx-auto">
       <Header />
-      <div className="bg-white dark:bg-black transition-colors duration-300 py-10  border border-zinc-900">
+      <div className="bg-white dark:bg-black transition-colors duration-300 py-10  border border-gray-900">
         <div className=" mx-auto">
           {/* Title */}
           <h1
@@ -79,8 +79,8 @@ const PricingPage = () => {
             {pricingPlans.map((plan, index) => (
               <div
                 key={index}
-                className={`mx-auto p-8 bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-900 flex flex-col ${
-                  index === 1 ? "bg-zinc-200 dark:bg-zinc-950" : "bg-black"
+                className={`mx-auto p-8 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-900 flex flex-col ${
+                  index === 1 ? "bg-gray-200 dark:bg-gray-950" : "bg-black"
                 }`}
               >
                 {/* Card Header */}
@@ -111,7 +111,7 @@ const PricingPage = () => {
                   ${
                     plan.buttonStyle === "light"
                       ? "bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-                      : "bg-white text-black border border-gray-300 hover:bg-gray-50 dark:bg-zinc-900 dark:text-white dark:border-zinc-800 dark:hover:bg-zinc-800"
+                      : "bg-white text-black border border-gray-300 hover:bg-gray-50 dark:bg-gray-900 dark:text-white dark:border-gray-800 dark:hover:bg-gray-800"
                   }
                 `}
                 >
@@ -120,7 +120,7 @@ const PricingPage = () => {
 
                 {/* Features List */}
                 <div>
-                  <p className="text-base font-medium mb-4 text-gray-500">
+                  <p className="text-base font-medium mb-4 text-neutral-500">
                     What's included :
                   </p>
                   <ul className="space-y-4">

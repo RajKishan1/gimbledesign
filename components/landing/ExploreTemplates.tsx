@@ -40,12 +40,12 @@ const TemplateData = [
 
 export const TemplateCards = ({ imgUrl, title, text }: Props) => {
   return (
-    <div className="flex flex-col min-w-96 min-h-129 bg-zinc-50">
+    <div className="flex flex-col min-w-96 min-h-129 bg-gray-50">
       <img src={imgUrl} alt="" className="min-h-96"/>
       <span className=" w-full border p-6">
         {" "}
         <h2 className="font-semibold text-[22px] leading-[1.5em] tracking-[-0.035em] mb-2">{title}</h2>
-        <p className="text-black/60 dark:text-zinc-200 text-base leading-[1.6em]">{text}</p>
+        <p className="text-black/60 dark:text-neutral-200 text-base leading-[1.6em]">{text}</p>
       </span>
     </div>
   );

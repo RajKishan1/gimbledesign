@@ -12,7 +12,7 @@ export default function FeaturesBento() {
     return (
       <div
         className={`
-        rounded-2xl border border-neutral-200 dark:border-zinc-900
+        rounded-2xl border border-neutral-200 dark:border-gray-900
         bg-neutral-50 dark:bg-neutral-950
         p-6 shadow-sm hover:shadow-md transition
         ${className}
@@ -47,7 +47,7 @@ export default function FeaturesBento() {
   }
   // function ResponsiveMock() {
   //   return (
-  //     <div className="h-40 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-zinc-900 flex items-center justify-center gap-3">
+  //     <div className="h-40 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-gray-900 flex items-center justify-center gap-3">
   //       <div className="w-10 h-20 bg-neutral-200 dark:bg-neutral-700 rounded-md" />
   //       <div className="w-20 h-28 bg-neutral-200 dark:bg-neutral-700 rounded-md" />
   //     </div>
@@ -56,9 +56,9 @@ export default function FeaturesBento() {
 
   const ResponsiveMock: React.FC = () => {
     return (
-      <div className="relative w-full h-64 bg-white dark:bg-zinc-900 flex items-center justify-center rounded-xl">
+      <div className="relative w-full h-64 bg-white dark:bg-gray-900 flex items-center justify-center rounded-xl">
         {/* Desktop Mockup */}
-        <div className="relative z-0 w-72 h-48 md:w-96 md:h-64 bg-white dark:bg-zinc-900 rounded-t-xl shadow-lg p-4 flex flex-col gap-2">
+        <div className="relative z-0 w-72 h-48 md:w-96 md:h-64 bg-white dark:bg-gray-900 rounded-t-xl shadow-lg p-4 flex flex-col gap-2">
           {/* Blue Dot */}
           <div className="w-2 h-2 rounded-full bg-blue-500"></div>
           {/* Search Bar */}
@@ -72,7 +72,7 @@ export default function FeaturesBento() {
         </div>
 
         {/* Mobile Mockup */}
-        <div className="absolute z-10 bottom-15 right-10 w-32 h-48 md:w-32 md:h-56 bg-white dark:bg-zinc-800 rounded-3xl shadow-lg p-3 flex flex-col gap-1.5 translate-x-1/4 translate-y-1/4 md:translate-x-1/3 md:translate-y-1/3">
+        <div className="absolute z-10 bottom-15 right-10 w-32 h-48 md:w-32 md:h-56 bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-3 flex flex-col gap-1.5 translate-x-1/4 translate-y-1/4 md:translate-x-1/3 md:translate-y-1/3">
           {/* Blue Dot */}
           <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
           {/* Search Bar */}
@@ -90,14 +90,14 @@ export default function FeaturesBento() {
 
   function MockUI() {
     return (
-      <div className="h-40 rounded-xl bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+      <div className="h-40 rounded-xl bg-white dark:bg-gray-900 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
         <div className="w-3/4 h-4 bg-neutral-200 dark:bg-neutral-700 rounded" />
       </div>
     );
   }
 
   return (
-    <section className="relative py-20 bg-white dark:bg-black border border-zinc-900 transition-colors">
+    <section className="relative py-20 bg-white dark:bg-black border border-gray-900 transition-colors">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-14">

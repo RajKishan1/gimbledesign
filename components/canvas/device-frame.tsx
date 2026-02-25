@@ -379,7 +379,7 @@ const DeviceFrame = ({
         {/* Frame title in prototype mode */}
         {isPrototypeMode && (
           <div className="mb-2 px-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-gray-800/80 px-3 py-1 rounded-full shadow-sm">
+            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-white/80 dark:bg-gray-800/80 px-3 py-1 rounded-full shadow-sm">
               {title}
             </span>
           </div>

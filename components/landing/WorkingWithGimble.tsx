@@ -101,7 +101,7 @@ const ListItem = ({
 
         opacity,
       }}
-      className="flex h-28  items-center justify-baseline text-sm font-medium text-gray-700 dark:text-white"
+      className="flex h-28  items-center justify-baseline text-sm font-medium text-neutral-700 dark:text-white"
     >
       <span className="h-5 w-5 rounded-full bg-purple-500 flex items-center justify-center text-white p-1">
         <Check />
@@ -125,7 +125,7 @@ const WorkingWithGimble = () => {
           <span className="rounded-full p-2.5 bg-white">
             <Wand />
           </span>{" "}
-          <h2 className=" text-3xl font-medium text-gray-900 dark:text-white">
+          <h2 className=" text-3xl font-medium text-neutral-900 dark:text-white">
             Working with Gimble
           </h2>
         </div>

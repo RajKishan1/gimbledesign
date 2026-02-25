@@ -560,7 +560,7 @@ ${dna.theme.gradientStyle ? `- Gradient style: ${dna.theme.gradientStyle}` : '- 
 - ALL text MUST use: text-[var(--foreground)], text-[var(--primary)], text-[var(--muted-foreground)], text-[var(--primary-foreground)]
 - ALL borders MUST use: border-[var(--border)]
 - CHARTS use: var(--chart-1) through var(--chart-5)
-- ❌ NEVER use hardcoded colors like bg-blue-500, text-gray-700, #3b82f6
+- ❌ NEVER use hardcoded colors like bg-blue-500, text-neutral-700, #3b82f6
 - ✅ ONLY exception: Semantic status (text-green-500/10, text-red-500/10 for success/error)
 
 TYPOGRAPHY SYSTEM (USE EXACTLY):

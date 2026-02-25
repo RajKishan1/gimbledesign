@@ -41,7 +41,7 @@ THEME:
 - Pick exactly ONE theme for all 4 variations. All 4 must use the SAME theme.
 - If the brief includes a reference design description (e.g. from an image), choose the theme that BEST MATCHES the reference's color palette and mood. Do not drastically change the look—preserve the overall feel (e.g. light/minimal → ocean-breeze or swiss-style; purple accents → lavender or purple-yellow; dark → midnight or netflix).
 - If no reference is given, pick the theme that fits the concept. Theme IDs: ${THEME_IDS.join(
-  ", "
+  ", ",
 )}
 
 VARIATIONS:
@@ -53,12 +53,12 @@ const StyleSchema = z.object({
   name: z
     .string()
     .describe(
-      "Short layout style name (e.g. Grid Layout, Card Stack, Centered Minimal, Bento Grid)"
+      "Short layout style name (e.g. Grid Layout, Card Stack, Centered Minimal, Bento Grid)",
     ),
   visualDescription: z
     .string()
     .describe(
-      "Layout and composition only: structure, arrangement, spacing, hierarchy. No colors—those come from the chosen theme. One paragraph."
+      "Layout and composition only: structure, arrangement, spacing, hierarchy. No colors—those come from the chosen theme. One paragraph.",
     ),
 });
 
@@ -66,12 +66,12 @@ const InspirationAnalysisSchema = z.object({
   scope: z
     .enum(["component", "full_screen"])
     .describe(
-      "component = generate only the single component/widget; full_screen = generate full page/screen layout"
+      "component = generate only the single component/widget; full_screen = generate full page/screen layout",
     ),
   concept: z
     .string()
     .describe(
-      "Exact design concept (e.g. 'Calendar component', '16 UI/UX principle cards', 'Pricing table'). Must match what the user or reference asked for—no broadening."
+      "Exact design concept (e.g. 'Calendar component', '16 UI/UX principle cards', 'Pricing table'). Must match what the user or reference asked for—no broadening.",
     ),
   theme: z
     .string()
@@ -83,7 +83,7 @@ const InspirationAnalysisSchema = z.object({
 });
 
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 export const generateInspirationVariations = inngest.createFunction(
   { id: "generate-inspiration-variations" },
@@ -138,7 +138,7 @@ export const generateInspirationVariations = inngest.createFunction(
         });
 
         return { ...object, themeToUse: themeId, scope: object.scope };
-      }
+      },
     );
 
     const theme =
@@ -217,5 +217,5 @@ Generate the complete HTML for this single design variation now.
       topic: "generation.complete",
       data: { status: "completed", projectId },
     });
-  }
+  },
 );

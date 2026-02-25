@@ -48,7 +48,7 @@ const Footer = () => {
 
   return (
     <div className={isDark ? "dark" : ""}>
-      <footer className="border-t border-gray-200 bg-gray-50 dark:border-zinc-900 dark:bg-black">
+      <footer className="border-t border-gray-200 bg-gray-50 dark:border-gray-900 dark:bg-black">
     
 
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -69,7 +69,7 @@ const Footer = () => {
               </div>
 
               {/* Tagline */}
-              <p className="max-w-xs text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+              <p className="max-w-xs text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
                 AI-powered tools for business growth, seamless scaling, and
                 proven results.
               </p>
@@ -78,35 +78,35 @@ const Footer = () => {
               <div className="flex items-center gap-3">
                 <a
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-gray-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-neutral-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-neutral-400 dark:hover:bg-gray-700"
                   aria-label="Facebook"
                 >
                   <Facebook className="h-4 w-4" />
                 </a>
                 <a
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-gray-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-neutral-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-neutral-400 dark:hover:bg-gray-700"
                   aria-label="Instagram"
                 >
                   <Instagram className="h-4 w-4" />
                 </a>
                 <a
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-gray-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-neutral-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-neutral-400 dark:hover:bg-gray-700"
                   aria-label="LinkedIn"
                 >
                   <Linkedin className="h-4 w-4" />
                 </a>
                 <a
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-gray-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-neutral-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-neutral-400 dark:hover:bg-gray-700"
                   aria-label="X (Twitter)"
                 >
                   <XIcon />
                 </a>
                 <a
                   href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-gray-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-neutral-600 transition-colors hover:bg-gray-300 dark:bg-gray-800 dark:text-neutral-400 dark:hover:bg-gray-700"
                   aria-label="YouTube"
                 >
                   <Youtube className="h-4 w-4" />
@@ -117,7 +117,7 @@ const Footer = () => {
             {/* Navigation Columns */}
             {footerLinks.map((column, index) => (
               <div key={index}>
-                <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">
+                <h3 className="mb-4 text-sm font-semibold text-neutral-900 dark:text-white">
                   {column.title}
                 </h3>
                 <ul className="space-y-3">
@@ -125,7 +125,7 @@ const Footer = () => {
                     <li key={linkIndex}>
                       <a
                         href={link.href}
-                        className="text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                        className="text-sm text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
                       >
                         {link.name}
                       </a>
@@ -138,19 +138,19 @@ const Footer = () => {
 
           {/* Bottom Bar */}
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-gray-200 pt-8 dark:border-gray-800 sm:flex-row">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               Copyright © 2024 Gimble. All rights reserved
             </p>
             <div className="flex items-center gap-6">
               <a
                 href="#"
-                className="text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                className="text-sm text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
               >
                 Privacy Policy
               </a>
               <a
                 href="#"
-                className="text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                className="text-sm text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
               >
                 Terms & Conditions
               </a>

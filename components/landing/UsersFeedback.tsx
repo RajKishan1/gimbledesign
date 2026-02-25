@@ -79,9 +79,9 @@ interface TestimonialCardProps {
 
 const UserCard: React.FC<TestimonialCardProps> = ({ quote, author }) => {
   return (
-    <div className="w-full min-h-75 flex flex-col justify-between border border-zinc-200 bg-white p-6 dark:border-zinc-950 dark:bg-black sm:p-8">
+    <div className="w-full min-h-75 flex flex-col justify-between border border-gray-200 bg-white p-6 dark:border-gray-950 dark:bg-black sm:p-8">
       {/* Quote */}
-      <p className="mb-8 text-base leading-relaxed text-black/60 dark:text-gray-400 sm:mb-12 sm:text-lg">
+      <p className="mb-8 text-base leading-relaxed text-black/60 dark:text-neutral-400 sm:mb-12 sm:text-lg">
         {quote}
       </p>
 
@@ -99,7 +99,7 @@ const UserCard: React.FC<TestimonialCardProps> = ({ quote, author }) => {
           <h4 className="text-[17px] font-semibold text-black dark:text-white sm:text-lg">
             {author.name}
           </h4>
-          <p className="text-sm text-black/60 leading-[1.55em] tracking-[-0.035em] dark:text-gray-400">
+          <p className="text-sm text-black/60 leading-[1.55em] tracking-[-0.035em] dark:text-neutral-400">
             {author.role}
           </p>
         </div>

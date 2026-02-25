@@ -1,9 +1,9 @@
 /**
  * Design Tree Generation Function
- * 
+ *
  * Generates structured Design Tree JSON instead of raw HTML.
  * The Design Tree is then rendered to HTML for display.
- * 
+ *
  * OPTIMIZED: Uses fast model for analysis, smart context for generation.
  * RELIABLE: Each screen generated in its own step for 100% completion rate.
  * HIGH CONTEXT: Uses Design DNA + Component Library for consistency across 20+ screens.
@@ -35,7 +35,9 @@ const ScreenPlanSchema = z.object({
   id: z.string().describe("Unique kebab-case identifier for the screen"),
   name: z.string().describe("Display name of the screen"),
   purpose: z.string().describe("What this screen accomplishes"),
-  visualDescription: z.string().describe("Detailed visual description for generation"),
+  visualDescription: z
+    .string()
+    .describe("Detailed visual description for generation"),
 });
 
 // Analysis schema for planning screens
@@ -48,7 +50,7 @@ const DesignTreeAnalysisSchema = z.object({
 
 // Fast model for analysis, quality model for generation
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 /**
  * Add required properties and IDs to a node recursively
@@ -71,64 +73,67 @@ function normalizeNode(node: any, depth: number = 0): any {
   if (node.fills) normalized.fills = node.fills;
   if (node.strokes) normalized.strokes = node.strokes;
   if (node.shadows) normalized.shadows = node.shadows;
-  if (node.cornerRadius !== undefined) normalized.cornerRadius = node.cornerRadius;
+  if (node.cornerRadius !== undefined)
+    normalized.cornerRadius = node.cornerRadius;
   if (node.clipContent !== undefined) normalized.clipContent = node.clipContent;
   if (node.blur !== undefined) normalized.blur = node.blur;
-  if (node.backdropBlur !== undefined) normalized.backdropBlur = node.backdropBlur;
+  if (node.backdropBlur !== undefined)
+    normalized.backdropBlur = node.backdropBlur;
 
   // Type-specific properties
   switch (node.type) {
-    case 'frame':
-    case 'group':
+    case "frame":
+    case "group":
       if (node.layout) normalized.layout = node.layout;
-      normalized.children = (node.children || []).map((child: any) => 
-        normalizeNode(child, depth + 1)
+      normalized.children = (node.children || []).map((child: any) =>
+        normalizeNode(child, depth + 1),
       );
       break;
-    case 'text':
-      normalized.content = node.content || '';
+    case "text":
+      normalized.content = node.content || "";
       normalized.textStyle = {
-        fontFamily: node.textStyle?.fontFamily || 'var(--font-sans)',
+        fontFamily: node.textStyle?.fontFamily || "var(--font-sans)",
         fontSize: node.textStyle?.fontSize || 16,
         fontWeight: node.textStyle?.fontWeight || 400,
         lineHeight: node.textStyle?.lineHeight || 1.5,
         letterSpacing: node.textStyle?.letterSpacing || 0,
-        textAlign: node.textStyle?.textAlign || 'left',
-        textDecoration: node.textStyle?.textDecoration || 'none',
-        textTransform: node.textStyle?.textTransform || 'none',
+        textAlign: node.textStyle?.textAlign || "left",
+        textDecoration: node.textStyle?.textDecoration || "none",
+        textTransform: node.textStyle?.textTransform || "none",
       };
       if (node.autoWidth !== undefined) normalized.autoWidth = node.autoWidth;
-      if (node.autoHeight !== undefined) normalized.autoHeight = node.autoHeight;
+      if (node.autoHeight !== undefined)
+        normalized.autoHeight = node.autoHeight;
       break;
-    case 'image':
-      normalized.src = node.src || '';
-      normalized.alt = node.alt || '';
-      normalized.objectFit = node.objectFit || 'cover';
+    case "image":
+      normalized.src = node.src || "";
+      normalized.alt = node.alt || "";
+      normalized.objectFit = node.objectFit || "cover";
       break;
-    case 'icon':
-      normalized.iconName = node.iconName || 'home-01';
-      normalized.iconLibrary = node.iconLibrary || 'hugeicons';
+    case "icon":
+      normalized.iconName = node.iconName || "home-01";
+      normalized.iconLibrary = node.iconLibrary || "hugeicons";
       if (node.color) normalized.color = node.color;
       break;
-    case 'button':
+    case "button":
       if (node.layout) normalized.layout = node.layout;
-      normalized.children = (node.children || []).map((child: any) => 
-        normalizeNode(child, depth + 1)
+      normalized.children = (node.children || []).map((child: any) =>
+        normalizeNode(child, depth + 1),
       );
       if (node.variant) normalized.variant = node.variant;
       if (node.disabled !== undefined) normalized.disabled = node.disabled;
       break;
-    case 'input':
-      normalized.inputType = node.inputType || 'text';
+    case "input":
+      normalized.inputType = node.inputType || "text";
       if (node.placeholder) normalized.placeholder = node.placeholder;
       if (node.value) normalized.value = node.value;
       if (node.disabled !== undefined) normalized.disabled = node.disabled;
       break;
-    case 'rectangle':
+    case "rectangle":
       // No additional properties
       break;
-    case 'svg':
-      normalized.svgContent = node.svgContent || '';
+    case "svg":
+      normalized.svgContent = node.svgContent || "";
       if (node.viewBox) normalized.viewBox = node.viewBox;
       break;
   }
@@ -142,15 +147,17 @@ function normalizeNode(node: any, depth: number = 0): any {
 function normalizeDesignTree(tree: any): DesignTree {
   return {
     id: tree.id || generateNodeId(),
-    name: tree.name || 'Screen',
+    name: tree.name || "Screen",
     width: tree.width || 393,
     height: tree.height || 852,
     backgroundColor: tree.backgroundColor,
-    root: normalizeNode(tree.root || {
-      type: 'frame',
-      name: 'Root',
-      children: [],
-    }),
+    root: normalizeNode(
+      tree.root || {
+        type: "frame",
+        name: "Root",
+        children: [],
+      },
+    ),
     createdAt: new Date(),
     updatedAt: new Date(),
     version: 1,
@@ -186,10 +193,10 @@ export const generateDesignTree = inngest.createFunction(
       frames,
       theme: existingTheme,
     } = event.data;
-    
+
     const CHANNEL = `user:${userId}`;
     const isExistingGeneration = Array.isArray(frames) && frames.length > 0;
-    
+
     // Use fast model for analysis, user-selected or quality model for generation
     const analysisModel = FAST_MODEL;
     const generationModel = model || QUALITY_MODEL;
@@ -204,24 +211,26 @@ export const generateDesignTree = inngest.createFunction(
     });
 
     // PHASE 1: Analysis (using fast model)
-    const analysis = await step.run("analyze-and-plan-design-tree", async () => {
-      await publish({
-        channel: CHANNEL,
-        topic: "analysis.start",
-        data: {
-          status: "analyzing",
-          projectId: projectId,
-        },
-      });
+    const analysis = await step.run(
+      "analyze-and-plan-design-tree",
+      async () => {
+        await publish({
+          channel: CHANNEL,
+          topic: "analysis.start",
+          data: {
+            status: "analyzing",
+            projectId: projectId,
+          },
+        });
 
-      const contextSummary = isExistingGeneration
-        ? `Existing app with ${frames.length} screens. Theme: ${existingTheme}. 
+        const contextSummary = isExistingGeneration
+          ? `Existing app with ${frames.length} screens. Theme: ${existingTheme}. 
            Screen names: ${frames.map((f: FrameType) => f.title).join(", ")}.
            Maintain design system consistency.`
-        : "";
+          : "";
 
-      const analysisPrompt = isExistingGeneration
-        ? `
+        const analysisPrompt = isExistingGeneration
+          ? `
           USER REQUEST: ${prompt}
           SELECTED THEME: ${existingTheme}
 
@@ -229,7 +238,7 @@ export const generateDesignTree = inngest.createFunction(
 
           CRITICAL: Maintain design system consistency with existing screens.
         `.trim()
-        : `
+          : `
           USER REQUEST: ${prompt}
 
           ANALYZE THE USER'S REQUEST:
@@ -243,36 +252,37 @@ export const generateDesignTree = inngest.createFunction(
           - For specific screens: only those requested
         `.trim();
 
-      const { object } = await generateObject({
-        model: openrouter.chat(analysisModel),
-        schema: DesignTreeAnalysisSchema,
-        system: DESIGN_TREE_ANALYSIS_PROMPT,
-        prompt: analysisPrompt,
-      });
-
-      const themeToUse = isExistingGeneration ? existingTheme : object.theme;
-
-      if (!isExistingGeneration) {
-        await prisma.project.update({
-          where: { id: projectId, userId: userId },
-          data: { theme: themeToUse },
+        const { object } = await generateObject({
+          model: openrouter.chat(analysisModel),
+          schema: DesignTreeAnalysisSchema,
+          system: DESIGN_TREE_ANALYSIS_PROMPT,
+          prompt: analysisPrompt,
         });
-      }
 
-      await publish({
-        channel: CHANNEL,
-        topic: "analysis.complete",
-        data: {
-          status: "generating",
-          theme: themeToUse,
-          totalScreens: object.screens.length,
-          screens: object.screens,
-          projectId: projectId,
-        },
-      });
+        const themeToUse = isExistingGeneration ? existingTheme : object.theme;
 
-      return { ...object, themeToUse };
-    });
+        if (!isExistingGeneration) {
+          await prisma.project.update({
+            where: { id: projectId, userId: userId },
+            data: { theme: themeToUse },
+          });
+        }
+
+        await publish({
+          channel: CHANNEL,
+          topic: "analysis.complete",
+          data: {
+            status: "generating",
+            theme: themeToUse,
+            totalScreens: object.screens.length,
+            screens: object.screens,
+            projectId: projectId,
+          },
+        });
+
+        return { ...object, themeToUse };
+      },
+    );
 
     // PHASE 2: Sequential Generation with HIGH CONTEXT FIDELITY
     // Uses Design DNA approach for consistency across 20+ screens
@@ -282,7 +292,13 @@ export const generateDesignTree = inngest.createFunction(
 
     // Design Context - built from first screens, maintained throughout
     let designContext: DesignContext = isExistingGeneration
-      ? buildDesignContext(frames.map((f: any) => ({ title: f.title, htmlContent: f.htmlContent || '' })), analysis.themeToUse)
+      ? buildDesignContext(
+          frames.map((f: any) => ({
+            title: f.title,
+            htmlContent: f.htmlContent || "",
+          })),
+          analysis.themeToUse,
+        )
       : buildDesignContext([], analysis.themeToUse);
 
     for (let i = 0; i < analysis.screens.length; i++) {
@@ -293,9 +309,13 @@ export const generateDesignTree = inngest.createFunction(
         if (generatedFrames.length >= 2 && generatedFrames.length <= 3) {
           const framesForContext = generatedFrames.map((f: any) => ({
             title: f.title,
-            htmlContent: f.htmlContent || renderDesignTreeToHtml(f.designTree, {}),
+            htmlContent:
+              f.htmlContent || renderDesignTreeToHtml(f.designTree, {}),
           }));
-          designContext = buildDesignContext(framesForContext, analysis.themeToUse);
+          designContext = buildDesignContext(
+            framesForContext,
+            analysis.themeToUse,
+          );
         }
 
         // Build context from recent frames - but now with Design DNA
@@ -303,8 +323,8 @@ export const generateDesignTree = inngest.createFunction(
           .slice(-2)
           .map((f: any) =>
             f.designTree
-              ? `Screen: ${f.title}\nDimensions: ${f.designTree.width}x${f.designTree.height}\nLayout: ${f.designTree.root?.layout?.mode || 'vertical'}`
-              : ""
+              ? `Screen: ${f.title}\nDimensions: ${f.designTree.width}x${f.designTree.height}\nLayout: ${f.designTree.root?.layout?.mode || "vertical"}`
+              : "",
           )
           .filter(Boolean)
           .join("\n\n");
@@ -312,7 +332,7 @@ export const generateDesignTree = inngest.createFunction(
         // Generate Design DNA context string for high fidelity
         const designDNAContext = designContext.isInitialized
           ? generateDesignDNAString(designContext.dna)
-          : '';
+          : "";
 
         const result = await generateText({
           model: openrouter.chat(generationModel),
@@ -332,26 +352,37 @@ export const generateDesignTree = inngest.createFunction(
             VISUAL DESCRIPTION:
             ${screenPlan.visualDescription}
 
-            ${designDNAContext ? `
+            ${
+              designDNAContext
+                ? `
             ${designDNAContext}
-            ` : ''}
+            `
+                : ""
+            }
 
-            ${previousTreesContext ? `
+            ${
+              previousTreesContext
+                ? `
             PREVIOUS SCREENS (maintain exact same styling):
             ${previousTreesContext}
-            ` : 'This is the first screen - establish the Design DNA that ALL subsequent screens will follow.'}
+            `
+                : "This is the first screen - establish the Design DNA that ALL subsequent screens will follow."
+            }
 
             THEME VARIABLES:
             ${fullThemeCSS}
 
-            ${i === 0 ? `
+            ${
+              i === 0
+                ? `
             **FIRST SCREEN - ESTABLISH DESIGN DNA:**
             Your choices here define the entire app's visual language:
             - Typography: Use consistent font sizes and weights
             - Spacing: Use 4/8/12/16/24/32 scale consistently
             - Colors: Use CSS variables from theme
             - Layout patterns: Establish navigation and component patterns
-            ` : `
+            `
+                : `
             **MAINTAIN DESIGN DNA (CRITICAL):**
             This screen MUST match the visual style of screen 1.
             Use IDENTICAL:
@@ -360,7 +391,8 @@ export const generateDesignTree = inngest.createFunction(
             - Color usage patterns
             - Component styles (buttons, cards, inputs)
             - Navigation structure (if applicable)
-            `}
+            `
+            }
 
             Generate the complete Design Tree JSON for this screen.
             The root frame should have:
@@ -374,14 +406,14 @@ export const generateDesignTree = inngest.createFunction(
         // Parse the JSON response
         let designTreeJson: any;
         try {
-          let jsonText = result.text || '{}';
+          let jsonText = result.text || "{}";
           const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             jsonText = jsonMatch[0];
           }
           designTreeJson = JSON.parse(jsonText);
         } catch (parseError) {
-          console.error('Failed to parse Design Tree JSON:', parseError);
+          console.error("Failed to parse Design Tree JSON:", parseError);
           // Create a fallback empty tree
           designTreeJson = {
             id: screenPlan.id,
@@ -389,22 +421,30 @@ export const generateDesignTree = inngest.createFunction(
             width: 393,
             height: 852,
             root: {
-              type: 'frame',
-              name: 'Root',
+              type: "frame",
+              name: "Root",
               width: 393,
               height: 852,
-              layout: { mode: 'vertical', padding: { top: 0, right: 0, bottom: 0, left: 0 }, gap: 0 },
-              fills: [{ type: 'solid', color: 'var(--background)' }],
+              layout: {
+                mode: "vertical",
+                padding: { top: 0, right: 0, bottom: 0, left: 0 },
+                gap: 0,
+              },
+              fills: [{ type: "solid", color: "var(--background)" }],
               children: [
                 {
-                  type: 'text',
-                  name: 'Placeholder',
+                  type: "text",
+                  name: "Placeholder",
                   content: `${screenPlan.name} - Generation failed, please regenerate`,
                   width: 390,
                   height: 50,
-                  textStyle: { fontSize: 16, fontWeight: 400, textAlign: 'center' },
-                  fills: [{ type: 'solid', color: 'var(--foreground)' }],
-                }
+                  textStyle: {
+                    fontSize: 16,
+                    fontWeight: 400,
+                    textAlign: "center",
+                  },
+                  fills: [{ type: "solid", color: "var(--foreground)" }],
+                },
               ],
             },
           };
@@ -439,10 +479,10 @@ export const generateDesignTree = inngest.createFunction(
         designContext = updateDesignContext(
           designContext,
           { title: frame.title, htmlContent: htmlContent },
-          generatedFrames.map((f: any) => ({ 
-            title: f.title, 
-            htmlContent: f.htmlContent || '' 
-          }))
+          generatedFrames.map((f: any) => ({
+            title: f.title,
+            htmlContent: f.htmlContent || "",
+          })),
         );
 
         await publish({
@@ -471,7 +511,7 @@ export const generateDesignTree = inngest.createFunction(
         projectId: projectId,
       },
     });
-  }
+  },
 );
 
 /**
@@ -513,7 +553,7 @@ export const regenerateDesignTreeFrame = inngest.createFunction(
       // Get existing Design Tree for context
       const existingTree = frame.designTree
         ? JSON.stringify(frame.designTree, null, 2)
-        : '';
+        : "";
 
       const result = await generateText({
         model: openrouter.chat(selectedModel),
@@ -526,7 +566,7 @@ export const regenerateDesignTreeFrame = inngest.createFunction(
           USER REQUEST: ${prompt}
 
           ORIGINAL SCREEN TITLE: ${frame.title}
-          ${existingTree ? `ORIGINAL DESIGN TREE:\n${existingTree}` : ''}
+          ${existingTree ? `ORIGINAL DESIGN TREE:\n${existingTree}` : ""}
 
           THEME VARIABLES:
           ${fullThemeCSS}
@@ -544,15 +584,15 @@ export const regenerateDesignTreeFrame = inngest.createFunction(
       // Parse the response
       let designTreeJson: any;
       try {
-        let jsonText = result.text || '{}';
+        let jsonText = result.text || "{}";
         const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           jsonText = jsonMatch[0];
         }
         designTreeJson = JSON.parse(jsonText);
       } catch (parseError) {
-        console.error('Failed to parse Design Tree JSON:', parseError);
-        throw new Error('Failed to generate valid Design Tree');
+        console.error("Failed to parse Design Tree JSON:", parseError);
+        throw new Error("Failed to generate valid Design Tree");
       }
 
       const normalizedTree = normalizeDesignTree(designTreeJson);
@@ -590,5 +630,5 @@ export const regenerateDesignTreeFrame = inngest.createFunction(
         projectId: projectId,
       },
     });
-  }
+  },
 );

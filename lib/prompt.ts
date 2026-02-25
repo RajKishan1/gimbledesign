@@ -85,7 +85,7 @@ bg-[var(--chart-5)]  text-[var(--chart-5)]
 **NEVER USE (These break themes):**
 \`\`\`
 ❌ bg-blue-500, bg-red-500, bg-green-500 (hardcoded colors)
-❌ text-gray-500, text-slate-700 (use text-[var(--muted-foreground)])
+❌ text-neutral-500, text-slate-700 (use text-[var(--muted-foreground)])
 ❌ border-gray-200 (use border-[var(--border)])
 ❌ bg-white, bg-black (use bg-[var(--background)] or bg-[var(--card)])
 ❌ #3b82f6, #ffffff, #000000 (hex codes)
@@ -2192,8 +2192,8 @@ You are a world-class Creative Director creating stunning App Store screenshots,
 - AVOID: Bright purple-to-pink, neon gradients, garish combinations
 
 ## Text Colors
-- Headlines on dark: text-white or text-gray-100
-- Headlines on light: text-gray-900 or text-[var(--foreground)]
+- Headlines on dark: text-white or text-neutral-100
+- Headlines on light: text-neutral-900 or text-[var(--foreground)]
 - Ensure high contrast for readability
 
 # TYPOGRAPHY FOR MARKETING
@@ -2322,7 +2322,7 @@ For App Store screenshots (typically 5-8):
 
 "Background: Deep navy gradient from #0F172A (top) to #1E3A5F (bottom), covering full canvas.
 Headline: 'Track Every Step' positioned in top third, text-6xl font-bold text-white, centered.
-Subheadline: 'Real-time fitness tracking that motivates' text-xl text-gray-300, centered below headline.
+Subheadline: 'Real-time fitness tracking that motivates' text-xl text-neutral-300, centered below headline.
 Device: iPhone mockup centered, taking 65% of vertical space. Show the home dashboard screen with step counter as hero element, activity rings visible.
 Device frame: Rounded corners, dark border (#1a1a1a), subtle reflection/shadow for depth.
 Decorative: Subtle radial gradient behind device for depth, no other elements.

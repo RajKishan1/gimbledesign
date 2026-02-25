@@ -21,7 +21,7 @@ export default function BillingToggle() {
       <div
         className="
           relative mx-3 w-9 h-5
-          bg-zinc-200
+          bg-gray-200
           rounded-full
           after:content-['']
           after:absolute after:top-0.5 after:left-0.5

@@ -72,7 +72,7 @@ Based on your `.env` file, you have:
 ## 📝 Important Notes
 
 1. **AI SDK Provider Configuration**:
-   - Your `inngest/functions/generateScreens.ts` and `inngest/functions/regenerateFrame.ts` use `generateObject` and `generateText` with model strings like `"google/gemini-3-pro-preview"`.
+   - Your `inngest/functions/generateScreens.ts` and `inngest/functions/regenerateFrame.ts` use `generateObject` and `generateText` with model strings like `"google/gemini-3.1-pro-preview"`.
    - These functions may need to explicitly use the OpenRouter provider. Currently, the `openrouter` import is commented out.
    - Make sure the AI SDK is configured to use OpenRouter. You might need to set up the provider in these functions.
 

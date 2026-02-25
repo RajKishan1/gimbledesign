@@ -258,7 +258,7 @@ const PrototypeElementOverlay: React.FC<PrototypeElementOverlayProps> = ({
           <div className="absolute inset-0 border-4 border-dashed border-indigo-400 bg-indigo-400/10 rounded-xl animate-pulse" />
           <div className="relative z-10 flex flex-col items-center gap-2 p-4 bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-xl">
             <Target className="w-8 h-8 text-indigo-500" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
               Click to link here
             </span>
           </div>

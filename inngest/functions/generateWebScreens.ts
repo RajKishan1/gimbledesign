@@ -3,7 +3,10 @@ import { inngest } from "../client";
 import { z } from "zod";
 import { openrouter } from "@/lib/openrouter";
 import { FrameType } from "@/types/project";
-import { WEB_ANALYSIS_PROMPT, WEB_GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
+import {
+  WEB_ANALYSIS_PROMPT,
+  WEB_GENERATION_SYSTEM_PROMPT,
+} from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
 import { unsplashTool } from "../tool";
@@ -27,22 +30,22 @@ const ScreenSchema = z.object({
   id: z
     .string()
     .describe(
-      "Unique identifier for the screen (e.g., 'home-dashboard', 'profile-settings', 'analytics-overview'). Use kebab-case."
+      "Unique identifier for the screen (e.g., 'home-dashboard', 'profile-settings', 'analytics-overview'). Use kebab-case.",
     ),
   name: z
     .string()
     .describe(
-      "Short, descriptive name of the screen (e.g., 'Home Dashboard', 'Profile', 'Analytics Overview')"
+      "Short, descriptive name of the screen (e.g., 'Home Dashboard', 'Profile', 'Analytics Overview')",
     ),
   purpose: z
     .string()
     .describe(
-      "One clear sentence explaining what this screen accomplishes for the user and its role in the application"
+      "One clear sentence explaining what this screen accomplishes for the user and its role in the application",
     ),
   visualDescription: z
     .string()
     .describe(
-      "A dense, high-fidelity visual directive for desktop web interface. Describe the layout (sidebar navigation, top navbar, content area), specific data examples, component hierarchy, grid systems, and physical attributes suitable for 1440px width displays."
+      "A dense, high-fidelity visual directive for desktop web interface. Describe the layout (sidebar navigation, top navbar, content area), specific data examples, component hierarchy, grid systems, and physical attributes suitable for 1440px width displays.",
     ),
 });
 
@@ -51,30 +54,32 @@ const FlexibleAppSchema = z.object({
   theme: z
     .string()
     .describe(
-      "The specific visual theme ID (e.g., 'midnight', 'ocean-breeze', 'neo-brutalism')."
+      "The specific visual theme ID (e.g., 'midnight', 'ocean-breeze', 'neo-brutalism').",
     ),
   appName: z
     .string()
     .describe(
-      "A catchy, memorable name for the web application based on the user's request."
+      "A catchy, memorable name for the web application based on the user's request.",
     ),
   totalScreenCount: z
     .number()
     .min(1)
     .max(20)
-    .describe("Exact number of screens requested by user or appropriate for the app scope."),
+    .describe(
+      "Exact number of screens requested by user or appropriate for the app scope.",
+    ),
   screens: z
     .array(ScreenSchema)
     .min(1)
     .max(20)
     .describe(
-      "Screens matching the user's request. Generate the exact number and types of screens they asked for."
+      "Screens matching the user's request. Generate the exact number and types of screens they asked for.",
     ),
 });
 
 // Fast model for analysis, quality model for generation
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 export const generateWebScreens = inngest.createFunction(
   { id: "generate-web-screens" },
@@ -164,11 +169,15 @@ export const generateWebScreens = inngest.createFunction(
           - Don't force a structure that doesn't fit the request
           
           Set totalScreenCount based on the user's actual request, not a predetermined formula.
-          ${requestedScreenCount != null ? `
+          ${
+            requestedScreenCount != null
+              ? `
           ═══════════════════════════════════════════════════════════════
           MANDATORY: The user explicitly asked for exactly ${requestedScreenCount} screen(s). You MUST set totalScreenCount to ${requestedScreenCount} and output exactly ${requestedScreenCount} items in the screens array. Do NOT output more than ${requestedScreenCount} screens.
           ═══════════════════════════════════════════════════════════════
-          ` : ""}
+          `
+              : ""
+          }
         `.trim();
 
       const { object } = await generateObject({
@@ -186,7 +195,7 @@ export const generateWebScreens = inngest.createFunction(
             id: projectId,
             userId: userId,
           },
-          data: { 
+          data: {
             theme: themeToUse,
             deviceType: "web",
           },
@@ -210,7 +219,8 @@ export const generateWebScreens = inngest.createFunction(
 
     // Enforce user-requested screen limit (e.g. "5 screens" -> only generate 5)
     const analysisToUse =
-      requestedScreenCount != null && analysis.screens.length > requestedScreenCount
+      requestedScreenCount != null &&
+      analysis.screens.length > requestedScreenCount
         ? {
             ...analysis,
             screens: analysis.screens.slice(0, requestedScreenCount),
@@ -220,8 +230,12 @@ export const generateWebScreens = inngest.createFunction(
 
     // PHASE 2: Sequential Generation with ENHANCED CONTEXT FIDELITY
     // Uses Component Registry (immutable) + Design DNA + Recent Screen approach
-    const generatedFrames: typeof frames = isExistingGeneration ? [...frames] : [];
-    const selectedTheme = THEME_LIST.find((t) => t.id === analysisToUse.themeToUse);
+    const generatedFrames: typeof frames = isExistingGeneration
+      ? [...frames]
+      : [];
+    const selectedTheme = THEME_LIST.find(
+      (t) => t.id === analysisToUse.themeToUse,
+    );
     const fullThemeCSS = `${BASE_VARIABLES}\n${selectedTheme?.style || ""}`;
 
     // Design Context - built from first screens, maintained throughout
@@ -231,13 +245,14 @@ export const generateWebScreens = inngest.createFunction(
 
     // Component Registry - stores exact HTML components for perfect consistency
     // Built after first screen, used for ALL subsequent screens
-    let componentRegistry: ComponentRegistry | null = isExistingGeneration && frames.length > 0
-      ? buildComponentRegistry(frames[0], prompt)
-      : null;
+    let componentRegistry: ComponentRegistry | null =
+      isExistingGeneration && frames.length > 0
+        ? buildComponentRegistry(frames[0], prompt)
+        : null;
 
     // Detect if user requested a specific design system
     const designSystemSpec = detectDesignSystem(prompt);
-    const designSystemContext = designSystemSpec.detected 
+    const designSystemContext = designSystemSpec.detected
       ? `
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -245,11 +260,11 @@ export const generateWebScreens = inngest.createFunction(
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 You MUST follow these rules on EVERY screen:
-${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}
 
 ⚠️  VIOLATION OF THESE RULES WILL BREAK DESIGN CONSISTENCY
 `
-      : '';
+      : "";
 
     for (let i = 0; i < analysisToUse.screens.length; i++) {
       const screenPlan = analysisToUse.screens[i];
@@ -257,44 +272,56 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
       await step.run(`generate-screen-${i}`, async () => {
         // After generating first screen, build Component Registry
         if (generatedFrames.length === 1 && !componentRegistry) {
-          componentRegistry = buildComponentRegistry(generatedFrames[0] as FrameType, prompt);
+          componentRegistry = buildComponentRegistry(
+            generatedFrames[0] as FrameType,
+            prompt,
+          );
         }
-        
+
         // After generating second screen, update registry if needed
         if (generatedFrames.length === 2 && componentRegistry) {
-          componentRegistry = updateRegistryIfNeeded(componentRegistry, generatedFrames[1] as FrameType);
+          componentRegistry = updateRegistryIfNeeded(
+            componentRegistry,
+            generatedFrames[1] as FrameType,
+          );
         }
 
         // After generating first 2-3 screens, rebuild design context
         if (generatedFrames.length >= 2 && generatedFrames.length <= 3) {
-          designContext = buildDesignContext(generatedFrames, analysisToUse.themeToUse);
+          designContext = buildDesignContext(
+            generatedFrames,
+            analysisToUse.themeToUse,
+          );
         }
 
         // Generate context string based on whether we have a Component Registry
         let contextString: string;
-        
+
         if (componentRegistry && i > 0) {
           // Use Component Registry for enhanced consistency
-          const recentFrame = generatedFrames.length > 0 
-            ? generatedFrames[generatedFrames.length - 1] as FrameType 
-            : null;
-          
+          const recentFrame =
+            generatedFrames.length > 0
+              ? (generatedFrames[generatedFrames.length - 1] as FrameType)
+              : null;
+
           contextString = generateFullScreenContext(
             componentRegistry,
             recentFrame,
             i,
             screenPlan.name,
-            analysisToUse.screens.length
+            analysisToUse.screens.length,
           );
-          
+
           // Also include Design DNA for additional patterns
-          contextString += '\n\n' + generateFullContext(
-            designContext,
-            screenPlan,
-            [], // Don't include recent frames again
-            i,
-            analysisToUse.screens.length
-          );
+          contextString +=
+            "\n\n" +
+            generateFullContext(
+              designContext,
+              screenPlan,
+              [], // Don't include recent frames again
+              i,
+              analysisToUse.screens.length,
+            );
         } else if (designContext.isInitialized) {
           // Fallback to Design DNA approach
           const recentFrames = generatedFrames.slice(-2);
@@ -303,16 +330,16 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
             screenPlan,
             recentFrames,
             i,
-            analysisToUse.screens.length
+            analysisToUse.screens.length,
           );
         } else {
           contextString = `No previous screens - this is the first screen. Establish the Design DNA that ALL subsequent screens will follow.`;
         }
 
         // Determine which sidebar item should be active
-        const sidebarActiveHint = componentRegistry?.sidebar 
+        const sidebarActiveHint = componentRegistry?.sidebar
           ? `\n\nACTIVE SIDEBAR ITEM: For this screen ("${screenPlan.name}"), highlight the appropriate sidebar navigation item.`
-          : '';
+          : "";
 
         const result = await generateText({
           model: openrouter.chat(generationModel),
@@ -340,7 +367,9 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
           WEB DESKTOP INTERFACE INSTRUCTIONS (1440px WIDTH)
           ════════════════════════════════════════════════════════════════════════════
 
-          ${i === 0 ? `
+          ${
+            i === 0
+              ? `
           **FIRST SCREEN - ESTABLISH DESIGN DNA:**
           You are creating the FOUNDATION for all subsequent web screens. Every decision you make here will be replicated:
           - Sidebar navigation structure (items, icons, styling) - THESE ARE LOCKED
@@ -351,7 +380,8 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
           
           Make deliberate, professional choices that will scale across all screens.
           The sidebar items and icons you choose here are LOCKED for the entire app.
-          ` : `
+          `
+              : `
           **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${analysisToUse.screens.length}):**
           This screen MUST be indistinguishable in style from previous screens.
           
@@ -365,7 +395,8 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
           7. Highlight the appropriate sidebar item for "${screenPlan.name}"
           
           ⚠️ If you change sidebar items, icons, or styling, the app will look broken.
-          `}
+          `
+          }
 
           **LAYOUT STRUCTURE:**
           - Root: \`relative w-full min-h-screen flex\`
@@ -400,7 +431,7 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
         designContext = updateDesignContext(
           designContext,
           frame,
-          generatedFrames
+          generatedFrames,
         );
 
         await publish({
@@ -429,5 +460,5 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
         projectId: projectId,
       },
     });
-  }
+  },
 );

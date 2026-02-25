@@ -11,7 +11,7 @@ const LatestPost = () => {
       category: "Productivity",
       date: "Sep 5, 2025",
       linear: "from-gray-200 via-teal-100 to-gray-900",
-      darklinear: "from-gray-800 via-teal-900 to-zinc-950",
+      darklinear: "from-gray-800 via-teal-900 to-gray-950",
     },
     {
       id: 2,
@@ -47,7 +47,7 @@ const LatestPost = () => {
             </h2>
 
             {/* Description */}
-            <p className="mx-auto max-w-2xl text-gray-600 text-center dark:text-gray-400  text-[17px] leading-[1.55em] tracking-[-0.035em]">
+            <p className="mx-auto max-w-2xl text-neutral-600 text-center dark:text-neutral-400  text-[17px] leading-[1.55em] tracking-[-0.035em]">
               Discover the latest updates, creative strategies, and
               <br /> design ideas shared through our blog posts
             </p>
@@ -75,13 +75,13 @@ const LatestPost = () => {
                 </div>
 
                 {/* Content */}
-                <div className="p-6 border border-t-0 border-zinc-200">
-                  <h3 className="mb-4 text-xl font-medium leading-[1.5em] tracking-[-0.035em] text-gray-900 transition-colors group-hover:text-gray-700 dark:text-white dark:group-hover:text-gray-300">
+                <div className="p-6 border border-t-0 border-gray-200">
+                  <h3 className="mb-4 text-xl font-medium leading-[1.5em] tracking-[-0.035em] text-neutral-900 transition-colors group-hover:text-neutral-700 dark:text-white dark:group-hover:text-neutral-300">
                     {post.title}
                   </h3>
 
                   {/* Meta Information */}
-                  <div className="flex items-center gap-3 text-sm  leading-[1.55em] tracking-[-0.035] text-black/80 dark:text-gray-400">
+                  <div className="flex items-center gap-3 text-sm  leading-[1.55em] tracking-[-0.035] text-black/80 dark:text-neutral-400">
                     <span className="font-medium ">{post.category}</span>
                     <span className="h-0.5 w-5 rounded-full bg-gray-400 "></span>
                     <span className="text-sm text-black/60">{post.date}</span>

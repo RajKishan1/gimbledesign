@@ -60,7 +60,7 @@
 //   ];
 
 //   return (
-//     <div className="bg-white dark:bg-black transition-colors duration-300 py-10  border border-zinc-900">
+//     <div className="bg-white dark:bg-black transition-colors duration-300 py-10  border border-gray-900">
 //       <div className=" mx-auto">
 //         {/* Title */}
 //         <h1
@@ -74,8 +74,8 @@
 //           {pricingPlans.map((plan, index) => (
 //             <div
 //               key={index}
-//               className={`mx-auto p-8 bg-gray-50 dark:bg-black border border-gray-200 dark:border-zinc-900 flex flex-col ${
-//                 index === 1 ? "bg-zinc-200 dark:bg-zinc-950" : "bg-black"
+//               className={`mx-auto p-8 bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-900 flex flex-col ${
+//                 index === 1 ? "bg-gray-200 dark:bg-gray-950" : "bg-black"
 //               }`}
 //             >
 //               {/* Card Header */}
@@ -106,7 +106,7 @@
 //                   ${
 //                     plan.buttonStyle === "light"
 //                       ? "bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100"
-//                       : "bg-white text-black border border-gray-300 hover:bg-gray-50 dark:bg-zinc-900 dark:text-white dark:border-zinc-800 dark:hover:bg-zinc-800"
+//                       : "bg-white text-black border border-gray-300 hover:bg-gray-50 dark:bg-gray-900 dark:text-white dark:border-gray-800 dark:hover:bg-gray-800"
 //                   }
 //                 `}
 //               >
@@ -115,7 +115,7 @@
 
 //               {/* Features List */}
 //               <div>
-//                 <p className="text-base font-medium mb-4 text-gray-500">
+//                 <p className="text-base font-medium mb-4 text-neutral-500">
 //                   What's included :
 //                 </p>
 //                 <ul className="space-y-4">
@@ -218,7 +218,7 @@ const PricingPage = () => {
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className="relative flex flex-col  border border-gray-200 bg-[#f9f9f9]  dark:border-zinc-900 dark:bg-zinc-950 "
+                className="relative flex flex-col  border border-gray-200 bg-[#f9f9f9]  dark:border-gray-900 dark:bg-gray-950 "
               >
                 {/* Popular Badge */}
                 {plan.popular && (
@@ -231,10 +231,10 @@ const PricingPage = () => {
 
                 {/* Plan Header */}
                 <div className="mb-6 px-6 pt-6">
-                  <h3 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">
+                  <h3 className="mb-2 text-2xl font-semibold text-neutral-900 dark:text-white">
                     {plan.name}
                   </h3>
-                  <p className="text-base text-gray-600 dark:text-gray-400">
+                  <p className="text-base text-neutral-600 dark:text-neutral-400">
                     {plan.description}
                   </p>
                 </div>
@@ -242,10 +242,10 @@ const PricingPage = () => {
                 {/* Price */}
                 <div className="mb-2 px-6">
                   <div className="flex items-baseline">
-                    <span className="text-3xl font-medium text-gray-900 dark:text-white">
+                    <span className="text-3xl font-medium text-neutral-900 dark:text-white">
                       {plan.price}
                     </span>
-                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                    <span className="ml-2 text-sm text-neutral-600 dark:text-neutral-400">
                       {plan.period}
                     </span>
                   </div>
@@ -262,7 +262,7 @@ const PricingPage = () => {
                         </span>
                       ) : (
                         <svg
-                          className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400 dark:text-gray-600"
+                          className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-400 dark:text-neutral-600"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -275,7 +275,7 @@ const PricingPage = () => {
                           />
                         </svg>
                       )}
-                      <span className="text-base text-gray-700 dark:text-gray-300">
+                      <span className="text-base text-neutral-700 dark:text-neutral-300">
                         {feature.text}
                       </span>
                     </div>
@@ -283,13 +283,13 @@ const PricingPage = () => {
                 </div>
 
                 {/* Button */}
-                <div className="p-6 border-t border-zinc-200">
+                <div className="p-6 border-t border-gray-200">
                   {" "}
                   <button
                     className={`w-full rounded-lg px-6 py-3 font-semibold transition-all ${
                       plan.buttonVariant === "primary"
                         ? "bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800"
-                        : "border border-gray-100 bg-white text-gray-900 hover:bg-gray-50 active:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
+                        : "border border-gray-100 bg-white text-neutral-900 hover:bg-gray-50 active:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
                     }`}
                   >
                     {plan.buttonText}

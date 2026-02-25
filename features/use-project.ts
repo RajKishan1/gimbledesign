@@ -39,11 +39,11 @@ export const useCreateProject = () => {
         .post("/api/project", {
           prompt: data.prompt,
           model:
-            getGenerationModel(data.model) || "google/gemini-3-pro-preview",
+            getGenerationModel(data.model) || "google/gemini-3.1-pro-preview",
           deviceType: data.deviceType || "mobile",
           wireframeKind:
             data.deviceType === "wireframe"
-              ? data.wireframeKind ?? "web"
+              ? (data.wireframeKind ?? "web")
               : undefined,
           dimensions: data.dimensions,
           createOnly: data.createOnly ?? false,
@@ -64,7 +64,7 @@ export const useCreateProject = () => {
               model: variables.model,
               deviceType: variables.deviceType ?? "mobile",
               wireframeKind: variables.wireframeKind,
-            })
+            }),
           );
         } catch (_) {}
       }
@@ -149,8 +149,7 @@ export const useDuplicateProject = () => {
       if (newId) router.push(`/project/${newId}`);
     },
     onError: (error: any) => {
-      const msg =
-        error?.response?.data?.error || "Failed to duplicate project";
+      const msg = error?.response?.data?.error || "Failed to duplicate project";
       toast.error(msg);
     },
   });

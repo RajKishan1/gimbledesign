@@ -152,7 +152,7 @@ const PromptInput = ({
       />
       <InputGroup
         className={cn(
-          "min-h-39 bg-[#ffffff] rounded-2xl dark:bg-zinc-950 p-2.5 ",
+          "min-h-39 bg-[#ffffff] rounded-2xl dark:bg-gray-950 p-2.5 ",
           className && className
         )}
       >
@@ -208,7 +208,7 @@ const PromptInput = ({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-colors"
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
                 >
                   <span className="flex items-center gap-1.5">
                     {selectedTypeIcon}
@@ -223,7 +223,7 @@ const PromptInput = ({
                 </button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-72 p-0" sideOffset={8}>
-                <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div className="p-3 border-b border-gray-100 dark:border-gray-800">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Type
                   </p>
@@ -237,7 +237,7 @@ const PromptInput = ({
                           "w-full flex items-center gap-2 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                           deviceType === type.value
                             ? "bg-accent text-accent-foreground"
-                            : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                            : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
                         )}
                       >
                         {type.icon}
@@ -249,7 +249,7 @@ const PromptInput = ({
                     ))}
                   </div>
                   {deviceType === "wireframe" && (
-                    <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
                         Wireframe
                       </p>
@@ -261,7 +261,7 @@ const PromptInput = ({
                             "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                             wireframeKind === "web"
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
                           )}
                         >
                           <Globe className="size-4" />
@@ -274,7 +274,7 @@ const PromptInput = ({
                             "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                             wireframeKind === "mobile"
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
                           )}
                         >
                           <Smartphone className="size-4" />
@@ -289,7 +289,7 @@ const PromptInput = ({
                     </div>
                   )}
                   {deviceType === "inspirations" && (
-                    <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
                         Inspiration
                       </p>
@@ -301,7 +301,7 @@ const PromptInput = ({
                             "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                             inspirationKind === "web"
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
                           )}
                         >
                           <Globe className="size-4" />
@@ -314,7 +314,7 @@ const PromptInput = ({
                             "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                             inspirationKind === "mobile"
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
                           )}
                         >
                           <Smartphone className="size-4" />
@@ -345,7 +345,7 @@ const PromptInput = ({
                             "w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md transition-colors",
                             selectedModel === model.id
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
                           )}
                         >
                           <div className="flex items-center gap-2 w-full">
@@ -389,7 +389,7 @@ const PromptInput = ({
                         <button
                           type="button"
                           onClick={() => setShowAllModels(true)}
-                          className="w-full flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+                          className="w-full flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                         >
                           <ChevronDownIcon className="size-4" />
                           Change model

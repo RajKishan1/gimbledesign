@@ -28,22 +28,22 @@ const ScreenSchema = z.object({
   id: z
     .string()
     .describe(
-      "Unique identifier for the screen (e.g., 'home-dashboard', 'profile-settings', 'transaction-history'). Use kebab-case."
+      "Unique identifier for the screen (e.g., 'home-dashboard', 'profile-settings', 'transaction-history'). Use kebab-case.",
     ),
   name: z
     .string()
     .describe(
-      "Short, descriptive name of the screen (e.g., 'Home Dashboard', 'Profile', 'Transaction History')"
+      "Short, descriptive name of the screen (e.g., 'Home Dashboard', 'Profile', 'Transaction History')",
     ),
   purpose: z
     .string()
     .describe(
-      "One clear sentence explaining what this screen accomplishes for the user and its role in the app"
+      "One clear sentence explaining what this screen accomplishes for the user and its role in the app",
     ),
   visualDescription: z
     .string()
     .describe(
-      "A dense, high-fidelity visual directive (like an image generation prompt). Describe the layout, specific data examples (e.g. 'Oct-Mar'), component hierarchy, and physical attributes (e.g. 'Chunky cards', 'Floating header','Floating action button', 'Bottom navigation',Header with user avatar)."
+      "A dense, high-fidelity visual directive (like an image generation prompt). Describe the layout, specific data examples (e.g. 'Oct-Mar'), component hierarchy, and physical attributes (e.g. 'Chunky cards', 'Floating header','Floating action button', 'Bottom navigation',Header with user avatar).",
     ),
 });
 
@@ -52,30 +52,32 @@ const FlexibleAppSchema = z.object({
   theme: z
     .string()
     .describe(
-      "The specific visual theme ID (e.g., 'midnight', 'ocean-breeze', 'neo-brutalism')."
+      "The specific visual theme ID (e.g., 'midnight', 'ocean-breeze', 'neo-brutalism').",
     ),
   appName: z
     .string()
     .describe(
-      "A catchy, memorable name for the app based on the user's request."
+      "A catchy, memorable name for the app based on the user's request.",
     ),
   totalScreenCount: z
     .number()
     .min(1)
     .max(24)
-    .describe("Exact number of screens requested by user or appropriate for the app scope."),
+    .describe(
+      "Exact number of screens requested by user or appropriate for the app scope.",
+    ),
   screens: z
     .array(ScreenSchema)
     .min(1)
     .max(24)
     .describe(
-      "Screens matching the user's request. Generate the exact number and types of screens they asked for."
+      "Screens matching the user's request. Generate the exact number and types of screens they asked for.",
     ),
 });
 
 // Fast model for analysis, quality model for generation
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 export const generateScreens = inngest.createFunction(
   { id: "generate-ui-screens" },
@@ -166,11 +168,15 @@ export const generateScreens = inngest.createFunction(
           - Don't force a structure that doesn't fit the request
           
           Set totalScreenCount based on the user's actual request, not a predetermined formula.
-          ${requestedScreenCount != null ? `
+          ${
+            requestedScreenCount != null
+              ? `
           ═══════════════════════════════════════════════════════════════
           MANDATORY: The user explicitly asked for exactly ${requestedScreenCount} screen(s). You MUST set totalScreenCount to ${requestedScreenCount} and output exactly ${requestedScreenCount} items in the screens array. Do NOT output more than ${requestedScreenCount} screens.
           ═══════════════════════════════════════════════════════════════
-          ` : ""}
+          `
+              : ""
+          }
         `.trim();
 
       const { object } = await generateObject({
@@ -209,7 +215,8 @@ export const generateScreens = inngest.createFunction(
 
     // Enforce user-requested screen limit (e.g. "5 screens" -> only generate 5)
     const analysisToUse =
-      requestedScreenCount != null && analysis.screens.length > requestedScreenCount
+      requestedScreenCount != null &&
+      analysis.screens.length > requestedScreenCount
         ? {
             ...analysis,
             screens: analysis.screens.slice(0, requestedScreenCount),
@@ -219,8 +226,12 @@ export const generateScreens = inngest.createFunction(
 
     // PHASE 2: Sequential Generation with ENHANCED CONTEXT FIDELITY
     // Uses Component Registry (immutable) + Design DNA + Recent Screen approach
-    const generatedFrames: typeof frames = isExistingGeneration ? [...frames] : [];
-    const selectedTheme = THEME_LIST.find((t) => t.id === analysisToUse.themeToUse);
+    const generatedFrames: typeof frames = isExistingGeneration
+      ? [...frames]
+      : [];
+    const selectedTheme = THEME_LIST.find(
+      (t) => t.id === analysisToUse.themeToUse,
+    );
     const fullThemeCSS = `${BASE_VARIABLES}\n${selectedTheme?.style || ""}`;
 
     // Design Context - built from first screens, maintained throughout
@@ -230,15 +241,16 @@ export const generateScreens = inngest.createFunction(
 
     // Component Registry - stores exact HTML components for perfect consistency
     // Built after first screen, used for ALL subsequent screens
-    let componentRegistry: ComponentRegistry | null = isExistingGeneration && frames.length > 0
-      ? buildComponentRegistry(frames[0], prompt)
-      : null;
+    let componentRegistry: ComponentRegistry | null =
+      isExistingGeneration && frames.length > 0
+        ? buildComponentRegistry(frames[0], prompt)
+        : null;
 
     // Detect if user requested a specific design system
     const designSystemSpec = detectDesignSystem(prompt);
-    const designSystemContext = designSystemSpec.detected 
-      ? `\n\n⚠️ DESIGN SYSTEM REQUIRED: ${designSystemSpec.name}\n${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n\nYou MUST follow these rules on EVERY screen.`
-      : '';
+    const designSystemContext = designSystemSpec.detected
+      ? `\n\n⚠️ DESIGN SYSTEM REQUIRED: ${designSystemSpec.name}\n${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n\nYou MUST follow these rules on EVERY screen.`
+      : "";
 
     for (let i = 0; i < analysisToUse.screens.length; i++) {
       const screenPlan = analysisToUse.screens[i];
@@ -246,44 +258,56 @@ export const generateScreens = inngest.createFunction(
       await step.run(`generate-screen-${i}`, async () => {
         // After generating first screen, build Component Registry
         if (generatedFrames.length === 1 && !componentRegistry) {
-          componentRegistry = buildComponentRegistry(generatedFrames[0] as FrameType, prompt);
+          componentRegistry = buildComponentRegistry(
+            generatedFrames[0] as FrameType,
+            prompt,
+          );
         }
-        
+
         // After generating second screen, update registry if needed
         if (generatedFrames.length === 2 && componentRegistry) {
-          componentRegistry = updateRegistryIfNeeded(componentRegistry, generatedFrames[1] as FrameType);
+          componentRegistry = updateRegistryIfNeeded(
+            componentRegistry,
+            generatedFrames[1] as FrameType,
+          );
         }
 
         // After generating first 2-3 screens, rebuild design context
         if (generatedFrames.length >= 2 && generatedFrames.length <= 3) {
-          designContext = buildDesignContext(generatedFrames, analysisToUse.themeToUse);
+          designContext = buildDesignContext(
+            generatedFrames,
+            analysisToUse.themeToUse,
+          );
         }
 
         // Generate context string based on whether we have a Component Registry
         let contextString: string;
-        
+
         if (componentRegistry && i > 0) {
           // Use Component Registry for enhanced consistency
-          const recentFrame = generatedFrames.length > 0 
-            ? generatedFrames[generatedFrames.length - 1] as FrameType 
-            : null;
-          
+          const recentFrame =
+            generatedFrames.length > 0
+              ? (generatedFrames[generatedFrames.length - 1] as FrameType)
+              : null;
+
           contextString = generateFullScreenContext(
             componentRegistry,
             recentFrame,
             i,
             screenPlan.name,
-            analysisToUse.screens.length
+            analysisToUse.screens.length,
           );
-          
+
           // Also include Design DNA for additional patterns
-          contextString += '\n\n' + generateFullContext(
-            designContext,
-            screenPlan,
-            [], // Don't include recent frames again
-            i,
-            analysisToUse.screens.length
-          );
+          contextString +=
+            "\n\n" +
+            generateFullContext(
+              designContext,
+              screenPlan,
+              [], // Don't include recent frames again
+              i,
+              analysisToUse.screens.length,
+            );
         } else if (designContext.isInitialized) {
           // Fallback to Design DNA approach
           const recentFrames = generatedFrames.slice(-2);
@@ -292,19 +316,19 @@ export const generateScreens = inngest.createFunction(
             screenPlan,
             recentFrames,
             i,
-            analysisToUse.screens.length
+            analysisToUse.screens.length,
           );
         } else {
           contextString = `No previous screens - this is the first screen. Establish the Design DNA (typography, spacing, colors, navigation patterns) that ALL subsequent screens will follow.${designSystemContext}`;
         }
 
         // Determine active navigation item
-        const activeNavItem = componentRegistry?.navigation 
+        const activeNavItem = componentRegistry?.navigation
           ? getActiveNavItem(screenPlan.name, componentRegistry.navigation)
           : null;
-        const navActiveHint = activeNavItem 
+        const navActiveHint = activeNavItem
           ? `\n\nACTIVE NAVIGATION: For this screen ("${screenPlan.name}"), the active nav icon should be: ${activeNavItem}`
-          : '';
+          : "";
 
         const result = await generateText({
           model: openrouter.chat(generationModel),
@@ -332,7 +356,9 @@ export const generateScreens = inngest.createFunction(
           GENERATION INSTRUCTIONS
           ════════════════════════════════════════════════════════════════════════════
 
-          ${i === 0 ? `
+          ${
+            i === 0
+              ? `
           **FIRST SCREEN - ESTABLISH DESIGN DNA:**
           You are creating the FOUNDATION for all subsequent screens. Every decision you make here will be replicated:
           - Typography hierarchy (heading sizes, body text, captions)
@@ -344,7 +370,8 @@ export const generateScreens = inngest.createFunction(
           
           Make deliberate, professional choices that will scale across 20+ screens.
           The navigation icons you choose here are LOCKED for the entire app.
-          ` : `
+          `
+              : `
           **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${analysisToUse.screens.length}):**
           This screen MUST be indistinguishable in style from previous screens.
           
@@ -357,7 +384,8 @@ export const generateScreens = inngest.createFunction(
           6. Only the CONTENT changes - the VISUAL FRAMEWORK stays IDENTICAL
           
           ⚠️ If you change navigation icons or styling, the app will look broken.
-          `}
+          `
+          }
 
           **OUTPUT RULES:**
           1. Generate ONLY raw HTML starting with <div>
@@ -391,7 +419,7 @@ export const generateScreens = inngest.createFunction(
         designContext = updateDesignContext(
           designContext,
           frame,
-          generatedFrames
+          generatedFrames,
         );
 
         await publish({
@@ -420,5 +448,5 @@ export const generateScreens = inngest.createFunction(
         projectId: projectId,
       },
     });
-  }
+  },
 );

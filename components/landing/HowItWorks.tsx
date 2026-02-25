@@ -29,7 +29,7 @@ const HowItWorks = () => {
 
   return (
     <div
-      className={` bg-white dark:bg-black transition-colors duration-300 pt-10 ${inter.className} border-x border-zinc-900`}
+      className={` bg-white dark:bg-black transition-colors duration-300 pt-10 ${inter.className} border-x border-gray-900`}
     >
       <div className="max-w-6xl mx-auto">
         {/* Title */}
@@ -43,11 +43,11 @@ const HowItWorks = () => {
             <div
               key={index}
               className={` p-8 ${
-                index < 4 ? "border border-gray-200 dark:border-zinc-900" : ""
+                index < 4 ? "border border-gray-200 dark:border-gray-900" : ""
               }`}
             >
               {/* Step Number */}
-              <p className="text-xl font-medium leading-6 mb-5 text-gray-400 dark:text-gray-500">
+              <p className="text-xl font-medium leading-6 mb-5 text-neutral-400 dark:text-neutral-500">
                 {step.number}
               </p>
 
@@ -57,7 +57,7 @@ const HowItWorks = () => {
               </h2>
 
               {/* Step Description */}
-              <p className="max-w-3/5 text-lg font-medium leading-relaxed text-gray-600 dark:text-gray-400">
+              <p className="max-w-3/5 text-lg font-medium leading-relaxed text-neutral-600 dark:text-neutral-400">
                 {step.description}
               </p>
             </div>

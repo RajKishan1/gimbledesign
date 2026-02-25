@@ -35,7 +35,7 @@ const WhatYouGet = () => {
     },
   ];
   return (
-    <section className="bg-[#f9f9f9] dark:bg-black border border-zinc-200 dark:border-zinc-900 px-6">
+    <section className="bg-[#f9f9f9] dark:bg-black border border-gray-200 dark:border-gray-900 px-6">
       <div className="flex flex-col items-center my-21">
         <span
           className="p-1 px-3.75 text-[13px]
@@ -55,19 +55,19 @@ const WhatYouGet = () => {
       <div className="flex justify-center">
         <div className="max-w-1/2">
           {" "}
-          <div className="lg:col-span-8 space-y-4 max-w-135 border-x border-gray-200 dark:border-zinc-900 ">
+          <div className="lg:col-span-8 space-y-4 max-w-135 border-x border-gray-200 dark:border-gray-900 ">
             {offers.map((faq, index) => (
               <div
                 key={index}
-                className={`border-t border-gray-200 dark:border-zinc-800 px-8 py-2 my-auto ${
+                className={`border-t border-gray-200 dark:border-gray-800 px-8 py-2 my-auto ${
                   index === offers.length - 1
-                    ? "border-b border-gray-200 dark:border-zinc-800"
+                    ? "border-b border-gray-200 dark:border-gray-800"
                     : ""
                 }`}
               >
                 <button
                   onClick={() => toggleFAQ(index)}
-                  className="w-full py-6 flex items-center justify-between text-left transition-colors duration-200 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="w-full py-6 flex items-center justify-between text-left transition-colors duration-200 hover:text-neutral-600 dark:hover:text-neutral-300"
                   aria-expanded={openIndex === index}
                 >
                   <span className="text-lg font-normal pr-8 text-black dark:text-white">
@@ -88,7 +88,7 @@ const WhatYouGet = () => {
                       : "max-h-0 opacity-0"
                   }`}
                 >
-                  <div className="pb-6 pr-12 leading-relaxed text-gray-600 dark:text-gray-400">
+                  <div className="pb-6 pr-12 leading-relaxed text-neutral-600 dark:text-neutral-400">
                     {faq.answer}
                   </div>
                 </div>
@@ -96,7 +96,7 @@ const WhatYouGet = () => {
             ))}
           </div>{" "}
         </div>
-        <div className="w-1/2 bg-white border-t border-r border-zinc-200"></div>
+        <div className="w-1/2 bg-white border-t border-r border-gray-200"></div>
       </div>
     </section>
   );

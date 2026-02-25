@@ -813,7 +813,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
   // Helper to render color preview
   const ColorPreview = ({ color }: { color: string }) => {
     if (!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") {
-      return <span className="text-gray-400 text-xs">transparent</span>;
+      return <span className="text-neutral-400 text-xs">transparent</span>;
     }
     return (
       <div className="flex items-center gap-1.5">
@@ -832,9 +832,9 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
     const key = copyKey || label;
     return (
       <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded group">
-        <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+        <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
         <div className="flex items-center gap-1">
-          <span className="text-xs font-mono text-gray-900 dark:text-gray-100 truncate max-w-[140px]">
+          <span className="text-xs font-mono text-neutral-900 dark:text-neutral-100 truncate max-w-[140px]">
             {value}
           </span>
           <button
@@ -844,7 +844,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
             {copiedProperty === key ? (
               <Check className="w-3 h-3 text-green-500" />
             ) : (
-              <Copy className="w-3 h-3 text-gray-400" />
+              <Copy className="w-3 h-3 text-neutral-400" />
             )}
           </button>
         </div>
@@ -856,7 +856,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
     <div className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50 dark:bg-gray-800/80 rounded-md mb-1">
       <Icon className="w-3.5 h-3.5 text-blue-500" />
-      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{title}</span>
+      <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{title}</span>
     </div>
   );
 
@@ -898,7 +898,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
               className="w-5 h-5 rounded border border-gray-300 dark:border-gray-600 shrink-0"
               style={{ backgroundColor: color.variable }}
             />
-            <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
+            <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate">
               {color.name}
             </span>
           </button>
@@ -910,7 +910,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <div className="w-5 h-5 rounded border border-gray-300 dark:border-gray-600 bg-[repeating-conic-gradient(#ccc_0_25%,#fff_0_50%)] bg-size-[8px_8px]" />
-            <span className="text-xs text-gray-700 dark:text-gray-300">None / Transparent</span>
+            <span className="text-xs text-neutral-700 dark:text-neutral-300">None / Transparent</span>
           </button>
         </div>
       </div>
@@ -931,11 +931,11 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
             <Code className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
               &lt;{element.tagName}&gt;
             </h3>
             {element.id && (
-              <span className="text-[10px] text-gray-500">#{element.id}</span>
+              <span className="text-[10px] text-neutral-500">#{element.id}</span>
             )}
           </div>
         </div>
@@ -943,7 +943,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
           onClick={onClose}
           className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
         >
-          <X className="w-4 h-4 text-gray-500" />
+          <X className="w-4 h-4 text-neutral-500" />
         </button>
       </div>
 
@@ -961,7 +961,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
               "flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors",
               activeTab === tab.id
                 ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/20"
-                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
             )}
           >
             <tab.icon className="w-3.5 h-3.5" />
@@ -1004,7 +1004,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 {/* Text Color */}
                 <div className="relative">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Text Color</span>
+                    <span className="text-xs text-neutral-500">Text Color</span>
                     <button
                       onClick={() => {
                         setTextColorOpen(!textColorOpen);
@@ -1016,7 +1016,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600"
                         style={{ backgroundColor: textColor || styles?.color }}
                       />
-                      <ChevronDown className="w-3 h-3 text-gray-500" />
+                      <ChevronDown className="w-3 h-3 text-neutral-500" />
                     </button>
                   </div>
                   <ColorSelector
@@ -1035,7 +1035,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 {/* Background Color */}
                 <div className="relative">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Background</span>
+                    <span className="text-xs text-neutral-500">Background</span>
                     <button
                       onClick={() => {
                         setBgColorOpen(!bgColorOpen);
@@ -1047,7 +1047,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600"
                         style={{ backgroundColor: bgColor || styles?.backgroundColor }}
                       />
-                      <ChevronDown className="w-3 h-3 text-gray-500" />
+                      <ChevronDown className="w-3 h-3 text-neutral-500" />
                     </button>
                   </div>
                   <ColorSelector
@@ -1091,7 +1091,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       placeholder="0"
                     />
                     <div className="w-16 h-10 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center mx-2">
-                      <span className="text-[9px] text-gray-500">content</span>
+                      <span className="text-[9px] text-neutral-500">content</span>
                     </div>
                     <input
                       type="text"
@@ -1113,7 +1113,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 text-center mt-1">Values in pixels</p>
+                <p className="text-[10px] text-neutral-400 text-center mt-1">Values in pixels</p>
                 {(paddingTop !== element.styles?.paddingTop || 
                   paddingRight !== element.styles?.paddingRight || 
                   paddingBottom !== element.styles?.paddingBottom || 
@@ -1138,7 +1138,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       onChange={(e) => handleBorderRadiusChange(e.target.value)}
                       className="w-16 px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
-                    <span className="text-xs text-gray-500">px</span>
+                    <span className="text-xs text-neutral-500">px</span>
                   </div>
                   {borderRadius !== element.styles?.borderRadius && (
                     <div className="mt-1 text-[10px] text-amber-500 flex items-center gap-1">
@@ -1177,7 +1177,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <SectionHeader icon={Type} title="Typography" />
               <div className="space-y-0.5">
                 <div className="flex items-center justify-between py-1.5 px-2">
-                  <span className="text-xs text-gray-500">Color</span>
+                  <span className="text-xs text-neutral-500">Color</span>
                   <ColorPreview color={styles.color} />
                 </div>
                 <PropertyRow label="Font Size" value={styles.fontSize} />
@@ -1194,7 +1194,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <SectionHeader icon={Palette} title="Background" />
               <div className="space-y-0.5">
                 <div className="flex items-center justify-between py-1.5 px-2">
-                  <span className="text-xs text-gray-500">Background</span>
+                  <span className="text-xs text-neutral-500">Background</span>
                   <ColorPreview color={styles.backgroundColor} />
                 </div>
               </div>
@@ -1209,7 +1209,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <PropertyRow label="Border Style" value={styles.borderStyle} />
                 {styles.borderColor && styles.borderColor !== "rgb(0, 0, 0)" && (
                   <div className="flex items-center justify-between py-1.5 px-2">
-                    <span className="text-xs text-gray-500">Border Color</span>
+                    <span className="text-xs text-neutral-500">Border Color</span>
                     <ColorPreview color={styles.borderColor} />
                   </div>
                 )}
@@ -1235,16 +1235,16 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <SectionHeader icon={Box} title="Dimensions" />
               <div className="grid grid-cols-2 gap-1 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                 <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <div className="text-lg font-semibold text-neutral-900 dark:text-white">
                     {Math.round(element.computedWidth || 0)}
                   </div>
-                  <div className="text-[10px] text-gray-500">Width</div>
+                  <div className="text-[10px] text-neutral-500">Width</div>
                 </div>
                 <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <div className="text-lg font-semibold text-neutral-900 dark:text-white">
                     {Math.round(element.computedHeight || 0)}
                   </div>
-                  <div className="text-[10px] text-gray-500">Height</div>
+                  <div className="text-[10px] text-neutral-500">Height</div>
                 </div>
               </div>
             </div>
@@ -1267,13 +1267,13 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <SectionHeader icon={Box} title="Spacing (Read-only)" />
               {/* Padding Visual */}
               <div className="p-2">
-                <div className="text-[10px] text-center text-gray-500 mb-1">Padding</div>
+                <div className="text-[10px] text-center text-neutral-500 mb-1">Padding</div>
                 <div className="relative border border-dashed border-blue-300 dark:border-blue-700 rounded p-1">
                   <div className="text-[10px] text-center text-blue-500">{styles.paddingTop}</div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-blue-500">{styles.paddingLeft}</span>
                     <div className="w-12 h-8 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-[9px] text-gray-500">content</span>
+                      <span className="text-[9px] text-neutral-500">content</span>
                     </div>
                     <span className="text-[10px] text-blue-500">{styles.paddingRight}</span>
                   </div>
@@ -1282,13 +1282,13 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </div>
               {/* Margin Visual */}
               <div className="p-2">
-                <div className="text-[10px] text-center text-gray-500 mb-1">Margin</div>
+                <div className="text-[10px] text-center text-neutral-500 mb-1">Margin</div>
                 <div className="relative border border-dashed border-orange-300 dark:border-orange-700 rounded p-1">
                   <div className="text-[10px] text-center text-orange-500">{styles.marginTop}</div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-orange-500">{styles.marginLeft}</span>
                     <div className="w-12 h-8 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <span className="text-[9px] text-gray-500">element</span>
+                      <span className="text-[9px] text-neutral-500">element</span>
                     </div>
                     <span className="text-[10px] text-orange-500">{styles.marginRight}</span>
                   </div>

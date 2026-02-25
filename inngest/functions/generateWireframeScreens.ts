@@ -9,12 +9,12 @@ const ElementPlanItemSchema = z.object({
   element: z
     .string()
     .describe(
-      "UI element name, e.g. 'Primary CTA button', 'Sidebar nav link: Dashboard', 'Search input'."
+      "UI element name, e.g. 'Primary CTA button', 'Sidebar nav link: Dashboard', 'Search input'.",
     ),
   reason: z
     .string()
     .describe(
-      "One sentence: why this element exists from a product/user perspective."
+      "One sentence: why this element exists from a product/user perspective.",
     ),
 });
 
@@ -23,17 +23,17 @@ const RecommendedSectionSchema = z.object({
   name: z
     .string()
     .describe(
-      "Section name as it appears in the layout, e.g. 'Hero', 'Value propositions', 'Features grid', 'Testimonials', 'Pricing', 'FAQ', 'Footer'."
+      "Section name as it appears in the layout, e.g. 'Hero', 'Value propositions', 'Features grid', 'Testimonials', 'Pricing', 'FAQ', 'Footer'.",
     ),
   purpose: z
     .string()
     .describe(
-      "One sentence: what this section accomplishes for the user or product goal."
+      "One sentence: what this section accomplishes for the user or product goal.",
     ),
   keyElements: z
     .array(z.string())
     .describe(
-      "List of 2-6 specific UI elements in this section, e.g. ['Headline', 'Subheadline', 'Primary CTA', 'Secondary link']."
+      "List of 2-6 specific UI elements in this section, e.g. ['Headline', 'Subheadline', 'Primary CTA', 'Secondary link'].",
     ),
 });
 
@@ -42,33 +42,33 @@ const WireframeResearchSchema = z.object({
   productSummary: z
     .string()
     .describe(
-      "2-4 sentences: what the product is, who it's for, and the main value proposition."
+      "2-4 sentences: what the product is, who it's for, and the main value proposition.",
     ),
   userGoals: z
     .array(z.string())
     .describe(
-      "3-6 specific goals users have when they land on this screen (e.g. 'Understand the product quickly', 'Find pricing', 'Sign up')."
+      "3-6 specific goals users have when they land on this screen (e.g. 'Understand the product quickly', 'Find pricing', 'Sign up').",
     ),
   targetUsers: z
     .string()
     .describe(
-      "1-2 sentences: primary audience (e.g. 'SMB owners looking for project management', 'Shoppers comparing prices')."
+      "1-2 sentences: primary audience (e.g. 'SMB owners looking for project management', 'Shoppers comparing prices').",
     ),
   uxResearchSummary: z
     .string()
     .describe(
-      "3-5 sentences: UX best practices for this screen type—what works in the industry, common patterns, conversion and clarity principles. Reference real-world examples or patterns (e.g. 'Landing pages with a single clear CTA above the fold convert better')."
+      "3-5 sentences: UX best practices for this screen type—what works in the industry, common patterns, conversion and clarity principles. Reference real-world examples or patterns (e.g. 'Landing pages with a single clear CTA above the fold convert better').",
     ),
   uiBestPractices: z
     .array(z.string())
     .describe(
-      "4-8 concrete UI/UX principles to apply: visual hierarchy, F-pattern, whitespace, one primary CTA, trust signals, etc. Be specific to this screen type."
+      "4-8 concrete UI/UX principles to apply: visual hierarchy, F-pattern, whitespace, one primary CTA, trust signals, etc. Be specific to this screen type.",
     ),
   recommendedSections: z
     .array(RecommendedSectionSchema)
     .min(6)
     .describe(
-      "MANDATORY: 6-14 sections that this screen type should include. For landing: Hero, Navigation, Value props (or Problem/solution), Features, Social proof/Testimonials, Pricing or use cases, FAQ or objections, Final CTA, Footer. For product detail: Breadcrumb, Gallery, Title/price, Add to cart, Description, Specs, Reviews, Related products, Footer. For dashboard: Sidebar nav, Header, Key metrics row, Main content widgets (list 4-6), Footer. Each section has name, purpose, and keyElements. Do NOT output fewer than 6 sections—comprehensive screens have many sections."
+      "MANDATORY: 6-14 sections that this screen type should include. For landing: Hero, Navigation, Value props (or Problem/solution), Features, Social proof/Testimonials, Pricing or use cases, FAQ or objections, Final CTA, Footer. For product detail: Breadcrumb, Gallery, Title/price, Add to cart, Description, Specs, Reviews, Related products, Footer. For dashboard: Sidebar nav, Header, Key metrics row, Main content widgets (list 4-6), Footer. Each section has name, purpose, and keyElements. Do NOT output fewer than 6 sections—comprehensive screens have many sections.",
     ),
 });
 
@@ -77,7 +77,7 @@ const WireframeConceptSchema = z.object({
   screenType: z
     .string()
     .describe(
-      "The EXACT type of page/screen the user asked for. Extract literally from the request. Examples: 'landing page', 'product detail page', 'homepage', 'dashboard', 'checkout', 'catalog', 'pricing page', 'about page', 'contact page', 'login/signup'. If user says 'landing page' or 'landing page for e-commerce', output 'landing page'. If they say 'product page' or 'product detail', output 'product detail page'. Do NOT substitute: landing page ≠ product detail ≠ dashboard."
+      "The EXACT type of page/screen the user asked for. Extract literally from the request. Examples: 'landing page', 'product detail page', 'homepage', 'dashboard', 'checkout', 'catalog', 'pricing page', 'about page', 'contact page', 'login/signup'. If user says 'landing page' or 'landing page for e-commerce', output 'landing page'. If they say 'product page' or 'product detail', output 'product detail page'. Do NOT substitute: landing page ≠ product detail ≠ dashboard.",
     ),
   appName: z
     .string()
@@ -85,24 +85,24 @@ const WireframeConceptSchema = z.object({
   layoutDescription: z
     .string()
     .describe(
-      "Wireframe layout: list EVERY section in order from top to bottom. MUST include every section from the research (do not skip or merge). E.g. for landing: 1. Hero, 2. Navigation, 3. Value propositions (3 cards), 4. Features grid, 5. Social proof/Testimonials, 6. Pricing/Use cases, 7. FAQ, 8. Final CTA, 9. Footer. For product detail: 1. Header, 2. Breadcrumb, 3. Product gallery, 4. Product info (title, price, add to cart), 5. Description, 6. Specs, 7. Reviews, 8. Related products, 9. Footer. No colors—only structure and hierarchy. Minimum 6-10 sections for a full page."
+      "Wireframe layout: list EVERY section in order from top to bottom. MUST include every section from the research (do not skip or merge). E.g. for landing: 1. Hero, 2. Navigation, 3. Value propositions (3 cards), 4. Features grid, 5. Social proof/Testimonials, 6. Pricing/Use cases, 7. FAQ, 8. Final CTA, 9. Footer. For product detail: 1. Header, 2. Breadcrumb, 3. Product gallery, 4. Product info (title, price, add to cart), 5. Description, 6. Specs, 7. Reviews, 8. Related products, 9. Footer. No colors—only structure and hierarchy. Minimum 6-10 sections for a full page.",
     ),
   purpose: z
     .string()
     .describe(
-      "One sentence: what this screen/product accomplishes (e.g. 'Landing page to convert visitors to sign-up' or 'Dashboard for viewing analytics'). Must align with screenType."
+      "One sentence: what this screen/product accomplishes (e.g. 'Landing page to convert visitors to sign-up' or 'Dashboard for viewing analytics'). Must align with screenType.",
     ),
   principlesApplied: z
     .string()
     .optional()
     .describe(
-      "Brief note on how key UI/UX principles will guide this wireframe: visual hierarchy, proximity, clarity, alignment, contrast, simplicity, whitespace, layout, balance & harmony, consistency, visual cues, typography, interaction cost. 2-4 sentences."
+      "Brief note on how key UI/UX principles will guide this wireframe: visual hierarchy, proximity, clarity, alignment, contrast, simplicity, whitespace, layout, balance & harmony, consistency, visual cues, typography, interaction cost. 2-4 sentences.",
     ),
   elementPlan: z
     .array(ElementPlanItemSchema)
     .optional()
     .describe(
-      "Every significant UI element that will appear (buttons, links, inputs, sections, nav items). Each entry must have a product reason—why it exists for the user or the product goal."
+      "Every significant UI element that will appear (buttons, links, inputs, sections, nav items). Each entry must have a product reason—why it exists for the user or the product goal.",
     ),
 });
 
@@ -214,7 +214,7 @@ STRICT RULES:
 ${THEME_VARIABLES_GUIDE}`;
 
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 export const generateWireframeScreens = inngest.createFunction(
   { id: "generate-wireframe-screens" },
@@ -283,7 +283,7 @@ export const generateWireframeScreens = inngest.createFunction(
         research.recommendedSections
           .map(
             (s) =>
-              `- ${s.name}: ${s.purpose}. Key elements: ${s.keyElements.join(", ")}`
+              `- ${s.name}: ${s.purpose}. Key elements: ${s.keyElements.join(", ")}`,
           )
           .join("\n") || "";
 
@@ -476,8 +476,8 @@ export const generateWireframeScreens = inngest.createFunction(
           SCREEN TYPE (generate exactly this): ${analysis.screenType}
 
           Wireframe viewport ${i + 1}/3: ${viewport.name} (${
-              viewport.width
-            }px width)
+            viewport.width
+          }px width)
           - Purpose: ${analysis.purpose}
           - LAYOUT (must match screen type): ${analysis.layoutDescription}
 
@@ -488,14 +488,14 @@ export const generateWireframeScreens = inngest.createFunction(
           ELEMENT PLAN: ${elementPlanText || "(Use layout description above.)"}
 
           Generate wireframe HTML for a ${analysis.screenType}. Viewport: ${
-              viewport.name
-            }. Root <div> width ${viewport.width}px. Include EVERY section listed above. Adapt for ${
-              viewport.id === "web"
-                ? "desktop"
-                : viewport.id === "tablet"
+            viewport.name
+          }. Root <div> width ${viewport.width}px. Include EVERY section listed above. Adapt for ${
+            viewport.id === "web"
+              ? "desktop"
+              : viewport.id === "tablet"
                 ? "tablet"
                 : "mobile"
-            }. Use theme variables. Placeholder text only; no images. Do not generate a different page type. Do not skip sections.
+          }. Use theme variables. Placeholder text only; no images. Do not generate a different page type. Do not skip sections.
           `.trim(),
           });
 
@@ -535,5 +535,5 @@ export const generateWireframeScreens = inngest.createFunction(
       topic: "generation.complete",
       data: { status: "completed", projectId },
     });
-  }
+  },
 );

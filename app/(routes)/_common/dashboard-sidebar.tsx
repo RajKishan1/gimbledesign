@@ -42,13 +42,13 @@ export default function DashboardSidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
+        "flex flex-col h-screen border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
         isCollapsed ? "w-16" : "w-56"
       )}
     >
       <div
         className={cn(
-          "flex items-center border-b border-zinc-200 dark:border-zinc-800",
+          "flex items-center border-b border-gray-200 dark:border-gray-800",
           isCollapsed ? "justify-center p-3" : "justify-between p-4"
         )}
       >
@@ -70,7 +70,7 @@ export default function DashboardSidebar() {
         <button
           type="button"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-muted-foreground hover:text-foreground transition-colors shrink-0"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? (
@@ -97,7 +97,7 @@ export default function DashboardSidebar() {
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 isActive
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-foreground",
+                  : "text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-foreground",
                 isCollapsed && "justify-center px-2"
               )}
             >
@@ -117,8 +117,8 @@ export default function DashboardSidebar() {
 
       {!isCollapsed && (
         <>
-          <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 py-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 text-primary">
+          <div className="border-t border-gray-200 dark:border-gray-800 px-4 py-3">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-primary">
               <span className="shrink-0">
                 <HugeiconsIcon
                   icon={Coins01Icon}
@@ -139,7 +139,7 @@ export default function DashboardSidebar() {
           </div>
           <Link
             href="/profile"
-            className="border-t border-zinc-200 dark:border-zinc-800 p-4 flex items-center gap-3 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors"
+            className="border-t border-gray-200 dark:border-gray-800 p-4 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
           >
             <Avatar className="h-9 w-9 shrink-0 rounded-full">
               <AvatarImage src={profilePicture} alt={displayName} />
@@ -166,10 +166,10 @@ export default function DashboardSidebar() {
       )}
 
       {isCollapsed && (
-        <div className="border-t border-zinc-200 dark:border-zinc-800 p-3 flex flex-col items-center gap-2">
+        <div className="border-t border-gray-200 dark:border-gray-800 p-3 flex flex-col items-center gap-2">
           <Link
             href="/profile"
-            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label="Profile"
           >
             <Avatar className="h-8 w-8 rounded-full">
