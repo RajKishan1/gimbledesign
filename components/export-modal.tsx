@@ -5,46 +5,13 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Copy, Code, ExternalLink } from "lucide-react";
+import { Download, Code, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 interface ExportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-// Figma logo icon component (four interconnected dots)
-function FigmaIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 200 300"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M50 300C77.6142 300 100 277.614 100 250V200H50C22.3858 200 0 222.386 0 250C0 277.614 22.3858 300 50 300Z"
-        fill="#0ACF83"
-      />
-      <path
-        d="M0 150C0 122.386 22.3858 100 50 100H100V200H50C22.3858 200 0 177.614 0 150Z"
-        fill="#A259FF"
-      />
-      <path
-        d="M0 50C0 22.3858 22.3858 0 50 0H100V100H50C22.3858 100 0 77.6142 0 50Z"
-        fill="#F24E1E"
-      />
-      <path
-        d="M100 0H150C177.614 0 200 22.3858 200 50C200 77.6142 177.614 100 150 100H100V0Z"
-        fill="#FF7262"
-      />
-      <path
-        d="M200 150C200 177.614 177.614 200 150 200C122.386 200 100 177.614 100 150C100 122.386 122.386 100 150 100C177.614 100 200 122.386 200 150Z"
-        fill="#1ABCFE"
-      />
-    </svg>
-  );
 }
 
 export function ExportModal({ open, onOpenChange }: ExportModalProps) {
@@ -102,22 +69,6 @@ export function ExportModal({ open, onOpenChange }: ExportModalProps) {
               <Download className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
             </button>
 
-            {/* Copy to Figma Option */}
-            <button
-              className="flex items-center justify-between p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors group"
-              onClick={() => {
-                // TODO: Implement copy to Figma functionality
-                console.log("Copy to Figma");
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <FigmaIcon className="w-5 h-5" />
-                <span className="text-sm font-medium text-foreground">
-                  Copy to Figma
-                </span>
-              </div>
-              <Copy className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            </button>
           </div>
         </div>
       </DialogContent>

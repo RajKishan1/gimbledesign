@@ -14,11 +14,6 @@ import ElementHoverOverlay from "./element-hover-overlay";
 import { toast } from "sonner";
 import DeviceFrameSkeleton from "./device-frame-skeleton";
 import { useRegenerateFrame, useDeleteFrame } from "@/features/use-frame";
-import {
-  parseHtmlToDesignTree,
-  copyDesignTreeAsSvg,
-  collectImageUrlsFromTree,
-} from "@/lib/design-tree";
 
 type PropsType = {
   html: string;
@@ -230,56 +225,52 @@ const DeviceFrame = ({
     deleteMutation.mutate(frameId);
   }, [frameId, deleteMutation]);
 
-  const handleCopyToFigma = useCallback(async () => {
+  const handlePasteToFigma = useCallback(async () => {
     if (isCopyingToFigma) return;
     setIsCopyingToFigma(true);
     try {
-      const iframeDoc = iframeRef.current?.contentDocument;
-      const body = iframeDoc?.body;
-      if (!body) {
-        toast.error(
-          "Design not ready. Wait for the frame to load, then try again.",
-        );
+      const res = await fetch("/api/figma-clipboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: fullHtml,
+          width: DEVICE_WIDTH,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Request failed" }));
+        toast.error(err.error || "Failed to prepare for Figma");
         return;
       }
-      const tree = parseHtmlToDesignTree(body, {
-        frameId,
-        frameName: title,
-        frameWidth: DEVICE_WIDTH,
-        frameHeight: contentHeight,
-      });
-      let embeddedImages: Record<string, string> = {};
-      const urls = collectImageUrlsFromTree(tree);
-      if (urls.length > 0) {
+      const clipboardHtml = await res.text();
+      // Prefer Clipboard API (works after async; no 5s user-gesture limit). Fallback to copy event + execCommand.
+      const blob = new Blob([clipboardHtml], { type: "text/html" });
+      if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
         try {
-          const res = await fetch("/api/embed-images", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ urls }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.images) embeddedImages = data.images;
-          }
+          await navigator.clipboard.write([
+            new ClipboardItem({ "text/html": blob }),
+          ]);
+          toast.success("Copied! Paste in Figma with Ctrl+V (or Cmd+V)");
+          return;
         } catch {
-          // continue without embedded images
+          // Fall through to execCommand fallback
         }
       }
-      await copyDesignTreeAsSvg(tree, {
-        embeddedImages: Object.keys(embeddedImages).length
-          ? embeddedImages
-          : undefined,
-      });
-      toast.success(
-        "Design copied as SVG! Paste in Figma (Ctrl+V or Cmd+V) for vector layers—no plugin needed.",
-      );
+      const handler = (e: ClipboardEvent) => {
+        e.clipboardData?.setData("text/html", clipboardHtml);
+        e.preventDefault();
+        document.removeEventListener("copy", handler);
+      };
+      document.addEventListener("copy", handler);
+      document.execCommand("copy");
+      toast.success("Copied! Paste in Figma with Ctrl+V (or Cmd+V)");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to copy design to Figma");
+      toast.error("Failed to copy to Figma");
     } finally {
       setIsCopyingToFigma(false);
     }
-  }, [frameId, title, isCopyingToFigma, contentHeight, DEVICE_WIDTH]);
+  }, [fullHtml, isCopyingToFigma, DEVICE_WIDTH]);
 
   // Handle click in prototype mode - used for drop target
   const handlePrototypeClick = useCallback(
@@ -371,7 +362,7 @@ const DeviceFrame = ({
             onDownloadPng={handleDownloadPng}
             onRegenerate={handleRegenerate}
             onDeleteFrame={handleDeleteFrame}
-            onCopyToFigma={handleCopyToFigma}
+            onPasteToFigma={handlePasteToFigma}
             onOpenHtmlDialog={onOpenHtmlDialog}
           />
         )}

@@ -15,7 +15,6 @@ import {
   Send,
   Wand2,
   Wand2Icon,
-  Layers,
 } from "lucide-react";
 import { useState } from "react";
 import { Separator } from "../ui/separator";
@@ -51,8 +50,41 @@ type PropsType = {
   onDownloadPng?: () => void;
   onRegenerate?: (prompt: string) => void;
   onDeleteFrame?: () => void;
-  onCopyToFigma?: () => void;
+  onPasteToFigma?: () => void;
 };
+
+function FigmaIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 200 300"
+      className={className}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M50 300C77.6142 300 100 277.614 100 250V200H50C22.3858 200 0 222.386 0 250C0 277.614 22.3858 300 50 300Z"
+        fill="#0ACF83"
+      />
+      <path
+        d="M0 150C0 122.386 22.3858 100 50 100H100V200H50C22.3858 200 0 177.614 0 150Z"
+        fill="#A259FF"
+      />
+      <path
+        d="M0 50C0 22.3858 22.3858 0 50 0H100V100H50C22.3858 100 0 77.6142 0 50Z"
+        fill="#F24E1E"
+      />
+      <path
+        d="M100 0H150C177.614 0 200 22.3858 200 50C200 77.6142 177.614 100 150 100H100V0Z"
+        fill="#FF7262"
+      />
+      <path
+        d="M200 150C200 177.614 177.614 200 150 200C122.386 200 100 177.614 100 150C100 122.386 122.386 100 150 100C177.614 100 200 122.386 200 150Z"
+        fill="#1ABCFE"
+      />
+    </svg>
+  );
+}
+
 const DeviceFrameToolbar = ({
   title,
   isSelected,
@@ -66,7 +98,7 @@ const DeviceFrameToolbar = ({
   onDownloadPng,
   onRegenerate,
   onDeleteFrame,
-  onCopyToFigma,
+  onPasteToFigma,
 }: PropsType) => {
   const [promptValue, setPromptValue] = useState("");
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -165,12 +197,12 @@ const DeviceFrameToolbar = ({
                     size="icon-xs"
                     className="rounded-full!"
                     variant="ghost"
-                    onClick={onCopyToFigma}
+                    onClick={onPasteToFigma}
                   >
                     {isCopyingToFigma ? (
                       <Spinner />
                     ) : (
-                      <Layers className="size-3.5! stroke-1.5!" />
+                      <FigmaIcon className="size-3.5! stroke-0" />
                     )}
                   </Button>
                 </TooltipTrigger>
