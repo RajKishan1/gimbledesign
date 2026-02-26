@@ -27,43 +27,41 @@ const Header = () => {
   const profilePicture = profile?.profilePicture || user?.image || "";
   const displayName = profile?.name || user?.name || "";
   return (
-    <div className="max-h-20.5 sticky top-0 right-0 left-0 z-30  border-b border-black/5  dark:border-gray-900 ">
-      <header className=" px-6  p-4 bg-[#f9f9f9] dark:bg-black">
-        <div
-          className="w-full max-w-6xl mx-auto
-         flex items-center justify-between"
-        >
+    <div className="sticky top-0 right-0 left-0 z-30 border-b border-border bg-background">
+      <header className="px-6 py-4 bg-background">
+        <div className="w-full max-w-6xl mx-auto flex items-center justify-between gap-6">
           <Logo />
-          <nav className="flex gap-6 items-center text-black/80 font-medium tex   t-sm leading-[1.55em]">
+          <nav className="flex gap-8 items-center text-sm font-medium">
             <Link
               href={user ? "/dashboard" : "/login"}
-              className="text-sm font-medium text-foreground hover:opacity-80 transition-opacity"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Dashboard
             </Link>
             <Link
-              href="/"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              href="/explore"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Explore
             </Link>
             <Link
               href="/Pricing"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Pricing
             </Link>
           </nav>
-          <div
-            className="flex flex-1 items-center
-           justify-end gap-3
-
-          "
-          >
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-4"
+              asChild
+            >
+              <Link href="/Pricing">UPGRADE</Link>
+            </Button>
             <Button
               variant="outline"
               size="icon"
-              className="relative rounded-full h-8 w-8"
+              className="relative rounded-full h-8 w-8 shrink-0"
               onClick={() => setTheme(isDark ? "light" : "dark")}
             >
               <SunIcon
@@ -119,7 +117,7 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button className="rounded-full bg-[#6248ff]" asChild>
+              <Button className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90" asChild>
                 <Link href="/login">Get Started</Link>
               </Button>
             )}

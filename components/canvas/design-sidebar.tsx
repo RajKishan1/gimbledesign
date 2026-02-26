@@ -41,12 +41,12 @@ type DesignTab = "chat" | "theme" | "fonts";
 // Shimmer Card Component (only for currently generating frame)
 function ShimmerCard({ title }: { title: string }) {
   return (
-    <div className="rounded-lg border border-neutral-200 dark:border-[#2b2b2b] bg-white dark:bg-[#1f1f1f] p-3">
+    <div className="rounded-lg border border-border bg-card p-3">
       <div className="space-y-2">
-        <div className="h-3 w-24 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
-        <div className="h-2 w-full rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
-        <div className="h-2 w-3/4 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
-        <div className="h-2 w-5/6 rounded bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
+        <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+        <div className="h-2 w-full rounded bg-muted animate-pulse" />
+        <div className="h-2 w-3/4 rounded bg-muted animate-pulse" />
+        <div className="h-2 w-5/6 rounded bg-muted animate-pulse" />
       </div>
     </div>
   );
@@ -78,13 +78,13 @@ function StatusMessage({
 }) {
   const statusColors = {
     analyzing:
-      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+      "bg-primary/10 text-primary border-primary/20",
     generating:
       "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
     running:
       "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
     reading:
-      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+      "bg-primary/10 text-primary border-primary/20",
     enhancing:
       "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
   };
@@ -116,7 +116,7 @@ function ChatBubble({ message, role }: { message: string; role: string }) {
       className={cn(
         "rounded-lg p-3 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300",
         isUser
-          ? "bg-foreground text-background ml-auto max-w-[80%]"
+          ? "bg-foreground text-background ml-auto max-w-[80%] max-h-32 overflow-y-auto overflow-x-hidden"
           : "bg-muted text-foreground mr-auto max-w-[80%]",
       )}
     >
@@ -129,14 +129,14 @@ function ChatBubble({ message, role }: { message: string; role: string }) {
 function SelectedFrameCard({ title }: { title: string }) {
   const screenName = `@${title}`;
   return (
-    <div className="rounded-lg border border-blue-200 dark:border-blue-800/30 bg-blue-50/50 dark:bg-blue-900/10 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center flex-shrink-0">
+<div className="rounded-lg border border-primary/20 bg-primary/10 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
           <ImageIcon className="w-4 h-4 text-white" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs text-muted-foreground mb-1">Editing screen</p>
-          <p className="text-sm font-medium text-blue-700 dark:text-blue-400 truncate">
+          <p className="text-sm font-medium text-primary truncate">
             {screenName}
           </p>
         </div>
@@ -404,7 +404,7 @@ const DesignSidebar = ({
   return (
     <div
       className={cn(
-        "relative flex flex-col bg-white dark:bg-[#191919] border-l border-neutral-200 dark:border-[#212121] transition-all duration-300 ease-in-out",
+        "relative flex flex-col h-full min-h-0 bg-card border-l border-border transition-all duration-300 ease-in-out",
         isCollapsed ? "w-12" : "w-72",
       )}
     >
@@ -467,8 +467,8 @@ const DesignSidebar = ({
       </div>
 
       {!isCollapsed && mode === "design" && (
-        <div className="flex flex-col h-full">
-          <div className="flex border-b border-neutral-200 dark:border-[#2b2b2b] pt-8">
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="flex shrink-0 border-b border-border pt-8">
             <button
               onClick={() => setActiveTab("chat")}
               className={cn(
@@ -505,8 +505,8 @@ const DesignSidebar = ({
           </div>
 
           {activeTab === "chat" && (
-            <div className="flex flex-col h-full p-4">
-              <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+            <div className="flex flex-col flex-1 min-h-0 p-4">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-2 mb-4 space-y-3">
                 <ChatMessages
                   loadingStatus={loadingStatus}
                   frames={frames}
@@ -518,7 +518,7 @@ const DesignSidebar = ({
                 />
               </div>
 
-              <div className="flex flex-col gap-0 bg-[#F4F4F5] dark:bg-[#242424] rounded-none border-none shadow-sm">
+              <div className="flex flex-col shrink-0 gap-0 bg-muted rounded-none border-none shadow-sm">
                 <div className="p-3 pb-2">
                   <Textarea
                     placeholder={
@@ -534,7 +534,7 @@ const DesignSidebar = ({
                         handleGenerate();
                       }
                     }}
-                    className="min-h-[80px] rounded-none resize-none  border-0 bg-white dark:bg-[#202020] shadow-none focus-visible:ring-0 placeholder:text-neutral-500"
+                    className="min-h-[80px] rounded-none resize-none border-0 bg-card shadow-none focus-visible:ring-0 placeholder:text-muted-foreground"
                   />
                 </div>
                 <div className="flex items-center justify-between px-3 pb-3 gap-2">
@@ -595,8 +595,8 @@ const DesignSidebar = ({
           )}
 
           {activeTab === "theme" && (
-            <div className="flex flex-col h-full overflow-y-auto p-4">
-              <h3 className="font-medium mb-2">Choose a theme</h3>
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pr-2">
+              <h3 className="font-medium mb-2 shrink-0">Choose a theme</h3>
               <div className="space-y-1.5">
                 {themes?.map((theme) => (
                   <ThemeItem
@@ -611,8 +611,8 @@ const DesignSidebar = ({
           )}
 
           {activeTab === "fonts" && (
-            <div className="flex flex-col h-full overflow-y-auto p-4">
-              <h3 className="font-medium mb-2">Choose a font</h3>
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pr-2">
+              <h3 className="font-medium mb-2 shrink-0">Choose a font</h3>
               <div className="space-y-1.5">
                 {fonts?.map((font) => (
                   <FontItem
@@ -629,15 +629,15 @@ const DesignSidebar = ({
       )}
 
       {!isCollapsed && mode === "prototype" && (
-        <div className="flex flex-col h-full p-4">
-          <div className="flex items-center justify-between mb-4 pt-8">
+        <div className="flex flex-col flex-1 min-h-0 p-4">
+          <div className="flex shrink-0 items-center justify-between mb-4 pt-8">
             <h3 className="font-medium text-sm">Interactions</h3>
             <span className="text-xs font-medium text-muted-foreground">
               {links.length} Link{links.length !== 1 ? "s" : ""}
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-2">
             <div className="flex items-center justify-between mb-2">
               {links.length > 0 && (
                 <Button
@@ -676,7 +676,7 @@ const DesignSidebar = ({
                         "group p-2 rounded-lg border transition-all cursor-pointer",
                         isSelected
                           ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700"
-                          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-indigo-300",
+                          : "bg-card border-border hover:border-primary/50",
                       )}
                       onClick={() =>
                         setSelectedLinkId(isSelected ? null : link.id)
@@ -739,8 +739,7 @@ function ThemeItem({
       onClick={onSelect}
       className={cn(
         `flex items-center justify-between w-full cursor-pointer
-        px-2 py-1.5 rounded-none border gap-3 dark:bg-[#2c2c2c]
-        bg-gray-100
+        px-2 py-1.5 rounded-none border border-border gap-3 bg-muted
         `,
         isSelected ? "border-1" : "border-none",
       )}
@@ -762,7 +761,7 @@ function ThemeItem({
       </div>
 
       <div className="flex items-center gap-2 flex-[0.9]">
-        <span className="text-sm text-neutral-600 dark:text-neutral-400">
+        <span className="text-sm text-muted-foreground">
           {theme.name}
         </span>
         {isSelected && <CheckIcon size={16} color={color.primary} />}
@@ -785,17 +784,16 @@ function FontItem({
       onClick={onSelect}
       className={cn(
         `flex items-center justify-between w-full cursor-pointer
-        px-3 py-2.5 rounded-none border gap-3 dark:bg-[#2c2c2c]
-        bg-gray-100 transition-colors
+        px-3 py-2.5 rounded-none border border-border gap-3 bg-muted transition-colors
         `,
         isSelected
           ? "border-2 border-foreground bg-foreground/5 dark:bg-foreground/10"
-          : "border-none hover:bg-gray-200 dark:hover:bg-[#353535]",
+          : "border-none hover:bg-accent",
       )}
     >
       <div className="flex flex-col items-start flex-1 min-w-0">
         <span
-          className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate w-full"
+          className="text-sm font-medium text-foreground truncate w-full"
           style={{ fontFamily: font.family }}
         >
           {font.name}

@@ -26,9 +26,7 @@ const Header = ({
   return (
     <div className="sticky top-0">
       <header
-        className="border-b
-    bg-white dark:bg-[#191919] border-neutral-200 dark:border-[#212121]  backdrop-blur-sm
-    "
+        className="border-b border-border bg-card backdrop-blur-sm"
       >
         <div
           className="flex items-center justify-between px-4

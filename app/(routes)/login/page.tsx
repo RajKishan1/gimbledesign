@@ -25,15 +25,15 @@ export default function LoginPage() {
 
   if (isPending || session?.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f9f9f9] dark:bg-black">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9] dark:bg-black">
-      <header className="border-b border-gray-50 dark:border-gray-900 px-6 py-4 bg-white dark:bg-black">
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="border-b border-border px-6 py-4 bg-card">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link
             href="/"
@@ -45,7 +45,7 @@ export default function LoginPage() {
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <div className="border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 p-8 shadow-sm">
+          <div className="border border-border rounded-lg bg-card p-8 shadow-sm">
             <h1 className="text-2xl font-semibold text-center text-foreground mb-1">
               Log in or Sign up
             </h1>

@@ -27,6 +27,7 @@ model Project {
   width         Int?     // Custom width for inspirations / variable-size designs
   height        Int?     // Custom height for inspirations / variable-size designs
   initialPrompt String?  // User's original prompt, shown in design sidebar
+  isExplore     Boolean  @default(false) // When true, project is shown on Explore (set by admin only)
   frames        Frame[]
   chatMessages  ChatMessage[]
 
@@ -67,6 +68,7 @@ model ChatMessage {
 model User {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   userId        String   @unique
+  role          String   @default("user") // "user" | "admin" — admin can only be set at DB level
   credits       Float    @default(25.0)
   totalCreditsUsed Float @default(0.0)
   name          String?

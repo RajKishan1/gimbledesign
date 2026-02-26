@@ -17,9 +17,9 @@ import {
   Zap,
   Lightbulb,
   ArrowUp,
+  ArrowRight,
   Layout,
 } from "lucide-react";
-import { HiOutlineSparkles } from "react-icons/hi2";
 import { Spinner } from "./ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import {
@@ -152,13 +152,13 @@ const PromptInput = ({
       />
       <InputGroup
         className={cn(
-          "min-h-39 bg-[#ffffff] rounded-2xl dark:bg-gray-950 p-2.5 ",
+          "min-h-39 bg-card rounded-2xl border border-border shadow-sm p-2.5",
           className && className
         )}
       >
         <InputGroupTextarea
           className="text-base! py-2.5! "
-          placeholder="Describe design you need..."
+          placeholder="Describe your design vision..."
           value={promptText}
           onChange={(e) => {
             setPromptText(e.target.value);
@@ -208,7 +208,7 @@ const PromptInput = ({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md border border-transparent hover:border-border transition-colors"
                 >
                   <span className="flex items-center gap-1.5">
                     {selectedTypeIcon}
@@ -223,7 +223,7 @@ const PromptInput = ({
                 </button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-72 p-0" sideOffset={8}>
-                <div className="p-3 border-b border-gray-100 dark:border-gray-800">
+                <div className="p-3 border-b border-border">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Type
                   </p>
@@ -237,7 +237,7 @@ const PromptInput = ({
                           "w-full flex items-center gap-2 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                           deviceType === type.value
                             ? "bg-accent text-accent-foreground"
-                            : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
+                            : "hover:bg-accent text-foreground"
                         )}
                       >
                         {type.icon}
@@ -249,7 +249,7 @@ const PromptInput = ({
                     ))}
                   </div>
                   {deviceType === "wireframe" && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <div className="mt-3 pt-3 border-t border-border">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
                         Wireframe
                       </p>
@@ -261,7 +261,7 @@ const PromptInput = ({
                             "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                             wireframeKind === "web"
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
+                              : "hover:bg-accent text-foreground"
                           )}
                         >
                           <Globe className="size-4" />
@@ -274,7 +274,7 @@ const PromptInput = ({
                             "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                             wireframeKind === "mobile"
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
+                              : "hover:bg-accent text-foreground"
                           )}
                         >
                           <Smartphone className="size-4" />
@@ -289,7 +289,7 @@ const PromptInput = ({
                     </div>
                   )}
                   {deviceType === "inspirations" && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <div className="mt-3 pt-3 border-t border-border">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
                         Inspiration
                       </p>
@@ -301,7 +301,7 @@ const PromptInput = ({
                             "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                             inspirationKind === "web"
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
+                              : "hover:bg-accent text-foreground"
                           )}
                         >
                           <Globe className="size-4" />
@@ -314,7 +314,7 @@ const PromptInput = ({
                             "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
                             inspirationKind === "mobile"
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800 text-foreground"
+                              : "hover:bg-accent text-foreground"
                           )}
                         >
                           <Smartphone className="size-4" />
@@ -345,7 +345,7 @@ const PromptInput = ({
                             "w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md transition-colors",
                             selectedModel === model.id
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                              : "hover:bg-accent"
                           )}
                         >
                           <div className="flex items-center gap-2 w-full">
@@ -389,7 +389,7 @@ const PromptInput = ({
                         <button
                           type="button"
                           onClick={() => setShowAllModels(true)}
-                          className="w-full flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                          className="w-full flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                         >
                           <ChevronDownIcon className="size-4" />
                           Change model
@@ -406,7 +406,7 @@ const PromptInput = ({
             <InputGroupButton
               variant="default"
               className={cn(
-                "rounded-full relative bg-[#6248ff] overflow-hidden py-1",
+                "rounded-lg relative bg-primary text-primary-foreground hover:bg-primary/90 overflow-hidden px-4 font-medium",
                 isLoading && "min-w-28"
               )}
               size="sm"
@@ -422,10 +422,10 @@ const PromptInput = ({
                   {loadingText && <span className="ml-2">{loadingText}</span>}
                 </>
               ) : (
-                <div className="px-1 flex gap-1.5 items-center">
-                  Design
-                  <HiOutlineSparkles />
-                </div>
+                <span className="flex items-center gap-2">
+                  GENERATE
+                  <ArrowRight className="size-4" />
+                </span>
               )}
             </InputGroupButton>
           )}

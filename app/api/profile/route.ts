@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
+import { normalizeRole } from "@/types/user";
 
 export async function GET() {
   try {
@@ -47,6 +48,7 @@ export async function GET() {
       data: {
         id: userRecord.id,
         userId: userRecord.userId,
+        role: normalizeRole(userRecord.role),
         name: userRecord.name || user.name || "",
         email: userRecord.email || user.email || "",
         profilePicture: userRecord.profilePicture || user.image || null,
@@ -119,6 +121,7 @@ export async function PATCH(request: NextRequest) {
       data: {
         id: userRecord.id,
         userId: userRecord.userId,
+        role: normalizeRole(userRecord.role),
         name: userRecord.name || user.name || "",
         email: userRecord.email || user.email || "",
         profilePicture: userRecord.profilePicture || user.image || null,

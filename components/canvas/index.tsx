@@ -245,15 +245,14 @@ const Canvas = ({
               <div
                 ref={canvasRootRef}
                 className={cn(
-                  `absolute inset-0 w-full h-full bg-[#F4F4F5]
-                  dark:bg-[#131313] p-3
+                  `absolute inset-0 w-full h-full bg-muted p-3
               `,
                   toolMode === TOOL_MODE_ENUM.HAND
                     ? "cursor-grab active:cursor-grabbing"
                     : linkingState.isLinking
                     ? "cursor-crosshair"
                     : "cursor-default",
-                  isPrototypeMode && "bg-[#F0F0F5] dark:bg-[#181820]"
+                  isPrototypeMode && "bg-accent/30"
                 )}
                 style={{
                   backgroundImage: isPrototypeMode

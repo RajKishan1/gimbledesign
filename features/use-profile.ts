@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import type { UserRole } from "@/types/user";
 
 export interface ProfileData {
   id: string;
   userId: string;
+  role: UserRole;
   name: string;
   email: string;
   profilePicture: string | null;

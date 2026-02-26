@@ -10,7 +10,7 @@ function AppLayout({
   const isLandingPage = pathname === "/";
 
   return (
-    <main className="w-full min-h-screen bg-[#f9f9f9] dark:bg-black">
+    <main className="w-full min-h-screen bg-background">
       <div className="flex flex-row min-h-screen justify-center">
         <div className={isLandingPage ? "max-w-300 w-full" : "w-full"}>
           {children}

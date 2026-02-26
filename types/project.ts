@@ -7,6 +7,7 @@ export type ProjectType = {
   width?: number;
   height?: number;
   thumbnail?: string;
+  isExplore?: boolean;
   frames: FrameType[];
   createdAt: Date;
   updatedAt?: Date;

@@ -4,9 +4,10 @@ const Logo = () => {
   return (
     <Link
       href="/"
-      className="flex-1 text-black dark:text-white flex items-center gap-1 "
+      className="flex items-center gap-0.5 font-semibold text-xl tracking-tight text-foreground hover:opacity-90 transition-opacity"
     >
-      <span className="font-semibold text-[21px] leading-[1.2em] tracking-[-0.03em]">Gimble</span>
+      <span>gimble</span>
+      <span className="text-primary">.</span>
     </Link>
   );
 };

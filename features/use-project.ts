@@ -72,11 +72,17 @@ export const useCreateProject = () => {
     },
     onError: (error: any) => {
       console.log("Project failed", error);
-      if (error?.response?.status === 402) {
-        toast.error(error?.response?.data?.error || "Insufficient credits");
-      } else {
-        toast.error("Failed to create project");
+      const status = error?.response?.status;
+      if (status === 401) {
+        toast.error("Please sign in to create designs.");
+        if (typeof window !== "undefined") window.location.href = "/login";
+        return;
       }
+      if (status === 402) {
+        toast.error(error?.response?.data?.error || "Insufficient credits");
+        return;
+      }
+      toast.error("Failed to create project");
     },
   });
 };

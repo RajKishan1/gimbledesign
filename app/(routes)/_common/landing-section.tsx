@@ -384,6 +384,7 @@ import { openSauceOne } from "@/app/fonts";
 import WhatYouGet from "@/components/landing/WhatYouGet";
 import { getGenerationModel } from "@/constant/models";
 import Lines from "@/components/landing/atoms/Lines";
+import { toast } from "sonner";
 
 // Loading state type for the design process
 type LoadingState = "idle" | "enhancing" | "designing";
@@ -414,6 +415,7 @@ const getLoadingText = (
 const LandingSection = () => {
   const { data: session } = authClient.useSession();
   const user = session?.user;
+  const router = useRouter();
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("auto");
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -501,6 +503,11 @@ const LandingSection = () => {
 
   const handleSubmit = async () => {
     if (!promptText) return;
+    if (!user) {
+      toast.error("Please sign in to create designs.");
+      router.push("/login");
+      return;
+    }
 
     try {
       // Step 1: Enhancing - Enhance the prompt with device-type-specific guidance
