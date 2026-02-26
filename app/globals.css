@@ -5,7 +5,7 @@
 
 /* 60-30-10 design system: 60% base, 30% secondary, 10% accent (neon) */
 :root {
-  --neon: #00ff9f;
+  --neon: #39FF14;
   /* Light theme: #f2f2f2 (60%), white (30%), neon (10%) */
   --background: #f2f2f2;
   --foreground: #1a1a1a;

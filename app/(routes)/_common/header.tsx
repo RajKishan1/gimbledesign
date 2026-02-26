@@ -81,14 +81,13 @@ const Header = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Avatar
-                    className="h-8 w-8
-                  shrink-0 rounded-full"
+                    className="h-8 w-8 shrink-0 rounded-full"
                   >
                     <AvatarImage
                       src={profilePicture}
                       alt={displayName || user?.name || ""}
                     />
-                    <AvatarFallback className="rounded-lg">
+                    <AvatarFallback className="rounded-full bg-muted text-foreground">
                       {displayName
                         ? displayName
                             .split(" ")

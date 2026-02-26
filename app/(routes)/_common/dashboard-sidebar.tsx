@@ -84,10 +84,10 @@ export default function DashboardSidebar() {
       <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto overflow-x-hidden">
         {buttonNavItems.map((item) => {
           const isActive =
-            item.href === "/"
-              ? isExploreActive
-              : item.href === "/dashboard"
+            item.href === "/dashboard"
               ? isDashboardActive && item.label === "Dashboard"
+              : item.href === "/explore"
+              ? isExploreActive
               : item.href === "/profile"
               ? isProfileActive
               : pathname === item.href || pathname.startsWith(`${item.href}/`);
