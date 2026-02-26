@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckmarkCircle01Icon, Copy01Icon } from "@hugeicons/core-free-icons";
 import {
   type ComponentProps,
   createContext,
@@ -162,7 +163,7 @@ export const CodeBlockCopyButton = ({
     }
   };
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const icon = isCopied ? CheckmarkCircle01Icon : Copy01Icon;
 
   return (
     <Button
@@ -172,7 +173,7 @@ export const CodeBlockCopyButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <Icon size={14} />}
+      {children ?? <HugeiconsIcon icon={icon} size={14} color="currentColor" strokeWidth={1.75} />}
     </Button>
   );
 };

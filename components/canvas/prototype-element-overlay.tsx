@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { usePrototype } from "@/context/prototype-context";
 import { cn } from "@/lib/utils";
-import { Link2, Plus, Target } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Link01Icon, PlusSignIcon, Target01Icon } from "@hugeicons/core-free-icons";
 import { INTERACTIVE_ELEMENT_SELECTORS } from "@/constant/canvas";
 
 interface InteractiveElement {
@@ -234,9 +235,9 @@ const PrototypeElementOverlay: React.FC<PrototypeElementOverlayProps> = ({
               )}
             >
               {isLinked ? (
-                <Link2 className="w-2.5 h-2.5 text-white" />
+                <HugeiconsIcon icon={Link01Icon} size={10} color="currentColor" strokeWidth={1.75} className="text-white" />
               ) : (
-                <Plus className={cn("w-2.5 h-2.5", isHovered || isActivelyLinking ? "text-white" : "text-indigo-500")} />
+                <HugeiconsIcon icon={PlusSignIcon} size={10} color="currentColor" strokeWidth={1.75} className={cn(isHovered || isActivelyLinking ? "text-white" : "text-indigo-500")} />
               )}
             </div>
 
@@ -257,7 +258,7 @@ const PrototypeElementOverlay: React.FC<PrototypeElementOverlayProps> = ({
         <div className="absolute inset-0 pointer-events-auto flex items-center justify-center">
           <div className="absolute inset-0 border-4 border-dashed border-indigo-400 bg-indigo-400/10 rounded-xl animate-pulse" />
           <div className="relative z-10 flex flex-col items-center gap-2 p-4 bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-xl">
-            <Target className="w-8 h-8 text-indigo-500" />
+            <HugeiconsIcon icon={Target01Icon} size={32} color="currentColor" strokeWidth={1.75} className="text-indigo-500" />
             <span className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
               Click to link here
             </span>

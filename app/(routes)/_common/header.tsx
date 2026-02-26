@@ -3,7 +3,8 @@ import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
-import { LogOutIcon, MoonIcon, SunIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Logout01Icon, Moon01Icon, Sun01Icon } from "@hugeicons/core-free-icons";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import {
@@ -64,15 +65,23 @@ const Header = () => {
               className="relative rounded-full h-8 w-8 shrink-0"
               onClick={() => setTheme(isDark ? "light" : "dark")}
             >
-              <SunIcon
+              <HugeiconsIcon
+                icon={Sun01Icon}
+                size={20}
+                color="currentColor"
+                strokeWidth={1.75}
                 className={cn(
-                  "absolute h-5 w-5 transition",
+                  "absolute transition",
                   isDark ? "scale-100" : "scale-0"
                 )}
               />
-              <MoonIcon
+              <HugeiconsIcon
+                icon={Moon01Icon}
+                size={20}
+                color="currentColor"
+                strokeWidth={1.75}
                 className={cn(
-                  "absolute h-5 w-5 transition",
+                  "absolute transition",
                   isDark ? "scale-0" : "scale-100"
                 )}
               />
@@ -110,7 +119,7 @@ const Header = () => {
                     className="w-full flex items-center cursor-pointer"
                     onClick={() => authClient.signOut()}
                   >
-                    <LogOutIcon className="size-4" />
+                    <HugeiconsIcon icon={Logout01Icon} size={16} color="currentColor" strokeWidth={1.75} />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>

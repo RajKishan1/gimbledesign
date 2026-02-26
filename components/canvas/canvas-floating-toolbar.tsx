@@ -1,6 +1,7 @@
 "use client";
 
-import { CameraIcon, Save, Download } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Camera01Icon, FloppyDiskIcon, Download01Icon } from "@hugeicons/core-free-icons";
 import { useCanvas } from "@/context/canvas-context";
 import { Button } from "../ui/button";
 import { useUpdateProject } from "@/features/use-project-id";
@@ -45,7 +46,7 @@ const CanvasFloatingToolbar = ({
               {isScreenshotting ? (
                 <Spinner />
               ) : (
-                <CameraIcon className="size-4" />
+                <HugeiconsIcon icon={Camera01Icon} size={16} color="currentColor" strokeWidth={1.75} />
               )}
             </Button>
             <Button
@@ -58,7 +59,7 @@ const CanvasFloatingToolbar = ({
                 <Spinner />
               ) : (
                 <>
-                  <Save className="size-4" />
+                  <HugeiconsIcon icon={FloppyDiskIcon} size={16} color="currentColor" strokeWidth={1.75} />
                   Save
                 </>
               )}
@@ -69,7 +70,7 @@ const CanvasFloatingToolbar = ({
               className="rounded-none border-none font-normal cursor-pointer"
               onClick={() => setIsExportModalOpen(true)}
             >
-              <Download className="size-4" />
+              <HugeiconsIcon icon={Download01Icon} size={16} color="currentColor" strokeWidth={1.75} />
               Export
             </Button>
           </div>

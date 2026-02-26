@@ -9,14 +9,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Download,
-  Code,
-  FileText,
-  Sparkles,
-  ArrowRight,
-  Check,
-} from "lucide-react";
+  Download01Icon,
+  CodeIcon,
+  DocumentCodeIcon,
+  SparklesIcon,
+  ArrowRight01Icon,
+  CheckmarkCircle01Icon,
+} from "@hugeicons/core-free-icons";
 import { useState, useCallback } from "react";
 import { useGetProjectById } from "@/features/use-project-id";
 import { useCanvas } from "@/context/canvas-context";
@@ -32,7 +33,7 @@ const EXPORT_FORMATS = [
     id: "code-to-clipboard",
     label: "Code to Clipboard",
     description: "Copy full HTML for all screens to the clipboard.",
-    icon: Code,
+    icon: CodeIcon,
     supported: true,
   },
   {
@@ -40,7 +41,7 @@ const EXPORT_FORMATS = [
     label: "Prompt Export",
     description:
       "Export the full prompt and complete output—including code for every screen—as a single document.",
-    icon: FileText,
+    icon: DocumentCodeIcon,
     supported: true,
   },
   {
@@ -48,7 +49,7 @@ const EXPORT_FORMATS = [
     label: "Build with AI",
     description:
       "Get a ready-to-use prompt with code and steps to continue in any AI builder.",
-    icon: Sparkles,
+    icon: SparklesIcon,
     supported: true,
   },
 ] as const;
@@ -209,9 +210,9 @@ export function ExportModal({ open, onOpenChange, projectId }: ExportModalProps)
                           : "border-muted-foreground"
                       )}
                     >
-                      {isSelected ? <Check className="h-2.5 w-2.5" /> : null}
+                      {isSelected ? <HugeiconsIcon icon={CheckmarkCircle01Icon} size={10} color="currentColor" strokeWidth={1.75} /> : null}
                     </span>
-                    <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <HugeiconsIcon icon={Icon} size={20} color="currentColor" strokeWidth={1.75} className="shrink-0 text-muted-foreground" />
                     <span className="text-sm font-medium text-foreground">
                       {format.label}
                     </span>
@@ -252,7 +253,7 @@ export function ExportModal({ open, onOpenChange, projectId }: ExportModalProps)
                 className="w-full bg-primary text-primary-foreground hover:opacity-90"
                 onClick={handlePrimaryAction}
               >
-                <Download className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={Download01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2 shrink-0" />
                 Copy code to clipboard
               </Button>
             )}
@@ -261,7 +262,7 @@ export function ExportModal({ open, onOpenChange, projectId }: ExportModalProps)
                 className="w-full bg-primary text-primary-foreground hover:opacity-90"
                 onClick={handlePrimaryAction}
               >
-                <FileText className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={DocumentCodeIcon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2 shrink-0" />
                 Export prompt & code
               </Button>
             )}
@@ -270,9 +271,9 @@ export function ExportModal({ open, onOpenChange, projectId }: ExportModalProps)
                 className="w-full bg-primary text-primary-foreground hover:opacity-90"
                 onClick={handlePrimaryAction}
               >
-                <Sparkles className="w-4 h-4 mr-2" />
+                <HugeiconsIcon icon={SparklesIcon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2 shrink-0" />
                 Build with AI
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <HugeiconsIcon icon={ArrowRight01Icon} size={16} color="currentColor" strokeWidth={1.75} className="ml-2 shrink-0" />
               </Button>
             )}
           </div>

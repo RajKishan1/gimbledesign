@@ -3,7 +3,8 @@
 import { useCanvas } from "@/context/canvas-context";
 import { parseThemeColors, ThemeType } from "@/lib/themes";
 import { cn } from "@/lib/utils";
-import { CheckIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
 
 const ThemeSelector = () => {
   const { themes, theme: currentTheme, setTheme } = useCanvas();
@@ -66,7 +67,7 @@ function ThemeItem({
 
       <div className="flex items-center gap-2 flex-[0.9]">
         <span className="text-sm">{theme.name}</span>
-        {isSelected && <CheckIcon size={16} color={color.primary} />}
+        {isSelected && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} color={color.primary} strokeWidth={1.75} />}
       </div>
     </button>
   );

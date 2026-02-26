@@ -3,7 +3,8 @@
 import React, { useMemo } from "react";
 import { usePrototype, PrototypeLink } from "@/context/prototype-context";
 import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
 
 interface ConnectorArrowProps {
   link: PrototypeLink;
@@ -242,7 +243,7 @@ const ConnectorArrow: React.FC<ConnectorArrowProps> = ({
             className="hover:fill-red-600 transition-colors"
           />
           <g transform="translate(-6, -6)">
-            <X size={12} color="white" strokeWidth={3} />
+            <HugeiconsIcon icon={Cancel01Icon} size={12} color="white" strokeWidth={2} />
           </g>
         </g>
       )}

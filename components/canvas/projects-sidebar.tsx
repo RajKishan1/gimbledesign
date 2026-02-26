@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 import { cn } from "@/lib/utils";
@@ -60,57 +61,9 @@ const ProjectsSidebar = () => {
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? (
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M1.33325 8C1.33325 5.54058 1.33325 4.31087 1.8758 3.43918C2.07652 3.11668 2.32586 2.83618 2.61253 2.61036C3.38736 2 4.48043 2 6.66658 2H9.33325C11.5194 2 12.6125 2 13.3873 2.61036C13.674 2.83618 13.9233 3.11668 14.1241 3.43918C14.6666 4.31087 14.6666 5.54058 14.6666 8C14.6666 10.4594 14.6666 11.6891 14.1241 12.5608C13.9233 12.8833 13.674 13.1638 13.3873 13.3897C12.6125 14 11.5194 14 9.33325 14H6.66658C4.48043 14 3.38736 14 2.61253 13.3897C2.32586 13.1638 2.07652 12.8833 1.8758 12.5608C1.33325 11.6891 1.33325 10.4594 1.33325 8Z"
-                stroke="#B5B5B5"
-                stroke-width="1.24444"
-              />
-              <path
-                d="M6.33325 2V14"
-                stroke="#B5B5B5"
-                stroke-width="1.24444"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M3.33325 4.66797H3.99992M3.33325 6.66797H3.99992"
-                stroke="#B5B5B5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+            <HugeiconsIcon icon={ArrowRight01Icon} size={16} color="currentColor" strokeWidth={1.75} className="text-neutral-500" />
           ) : (
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M1.33325 8C1.33325 5.54058 1.33325 4.31087 1.8758 3.43918C2.07652 3.11668 2.32586 2.83618 2.61253 2.61036C3.38736 2 4.48043 2 6.66658 2H9.33325C11.5194 2 12.6125 2 13.3873 2.61036C13.674 2.83618 13.9233 3.11668 14.1241 3.43918C14.6666 4.31087 14.6666 5.54058 14.6666 8C14.6666 10.4594 14.6666 11.6891 14.1241 12.5608C13.9233 12.8833 13.674 13.1638 13.3873 13.3897C12.6125 14 11.5194 14 9.33325 14H6.66658C4.48043 14 3.38736 14 2.61253 13.3897C2.32586 13.1638 2.07652 12.8833 1.8758 12.5608C1.33325 11.6891 1.33325 10.4594 1.33325 8Z"
-                stroke="#B5B5B5"
-                stroke-width="1.24444"
-              />
-              <path
-                d="M6.33325 2V14"
-                stroke="#B5B5B5"
-                stroke-width="1.24444"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M3.33325 4.66797H3.99992M3.33325 6.66797H3.99992"
-                stroke="#B5B5B5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={16} color="currentColor" strokeWidth={1.75} className="text-neutral-500" />
           )}
         </button>
       </div>

@@ -4,7 +4,8 @@ import React from "react";
 import { motion } from "framer-motion";
 import { usePrototype, CanvasMode } from "@/context/prototype-context";
 import { cn } from "@/lib/utils";
-import { Pencil, GitBranch, Play, Link2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { PencilEdit01Icon, Link01Icon, PlayIcon } from "@hugeicons/core-free-icons";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
@@ -20,12 +21,12 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
     {
       id: "design",
       label: "Design",
-      icon: <Pencil className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={PencilEdit01Icon} size={16} color="currentColor" strokeWidth={1.75} />,
     },
     {
       id: "prototype",
       label: "Prototype",
-      icon: <GitBranch className="w-4 h-4" />,
+      icon: <HugeiconsIcon icon={Link01Icon} size={16} color="currentColor" strokeWidth={1.75} />,
     },
   ];
 
@@ -83,7 +84,7 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
             "text-xs font-medium"
           )}
         >
-          <Link2 className="w-3 h-3" />
+          <HugeiconsIcon icon={Link01Icon} size={12} color="currentColor" strokeWidth={1.75} />
           {links.length} link{links.length !== 1 ? "s" : ""}
         </motion.div>
       )}
@@ -101,7 +102,7 @@ const ModeToggle: React.FC<ModeToggleProps> = ({ projectId, onPlay }) => {
                 size="sm"
                 disabled={links.length === 0}
               >
-                <Play className="w-4 h-4" />
+                <HugeiconsIcon icon={PlayIcon} size={16} color="currentColor" strokeWidth={1.75} />
                 <span>Play</span>
               </Button>
             </TooltipTrigger>

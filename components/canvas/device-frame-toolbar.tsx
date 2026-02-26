@@ -1,21 +1,20 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CodeIcon,
-  DownloadIcon,
-  GripVertical,
+  Download01Icon,
+  DragDropVerticalIcon,
   MoreHorizontalIcon,
-  Trash2Icon,
-  Send,
-  Wand2,
-  Wand2Icon,
-  Sparkles,
-  Pencil,
-  Eye,
-  ChevronDown,
-  Share2,
-} from "lucide-react";
+  Delete01Icon,
+  MailSend01Icon,
+  SparklesIcon,
+  PencilEdit01Icon,
+  EyeIcon,
+  ArrowDown01Icon,
+  Share01Icon,
+} from "@hugeicons/core-free-icons";
 import { useState, useRef } from "react";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
@@ -142,7 +141,7 @@ const DeviceFrameToolbar = ({
         role="button"
         className="flex flex-1 cursor-grab items-center justify-start gap-1.5 active:cursor-grabbing h-full min-w-0"
       >
-        <GripVertical className="size-4 text-muted-foreground shrink-0" />
+        <HugeiconsIcon icon={DragDropVerticalIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0 text-muted-foreground" />
         <span
           className={cn(
             "font-medium text-sm truncate",
@@ -171,9 +170,9 @@ const DeviceFrameToolbar = ({
                 disabled={disabled}
                 onClick={openAiPopover}
               >
-                <Sparkles className="size-3.5" />
+                <HugeiconsIcon icon={SparklesIcon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                 <span className="text-xs font-medium">Generate</span>
-                <ChevronDown className="size-3" />
+                <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="shrink-0" />
               </Button>
               <Button
                 variant="ghost"
@@ -182,9 +181,9 @@ const DeviceFrameToolbar = ({
                 disabled={disabled}
                 onClick={openAiPopover}
               >
-                <Pencil className="size-3.5" />
+                <HugeiconsIcon icon={PencilEdit01Icon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                 <span className="text-xs font-medium">Modify</span>
-                <ChevronDown className="size-3" />
+                <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="shrink-0" />
               </Button>
               <PopoverContent
                 align="start"
@@ -218,7 +217,7 @@ const DeviceFrameToolbar = ({
                         {isRegenerating ? (
                           <Spinner className="size-4" />
                         ) : (
-                          <Send className="size-4" />
+                          <HugeiconsIcon icon={MailSend01Icon} size={16} color="currentColor" strokeWidth={1.75} />
                         )}
                       </Button>
                     </InputGroupAddon>
@@ -237,7 +236,7 @@ const DeviceFrameToolbar = ({
                     className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
                     onClick={() => window.open(previewUrl, "_blank")}
                   >
-                    <Eye className="size-3.5" />
+                    <HugeiconsIcon icon={EyeIcon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                     <span className="text-xs font-medium">Preview</span>
                   </Button>
                 </TooltipTrigger>
@@ -258,9 +257,9 @@ const DeviceFrameToolbar = ({
                         size="sm"
                         className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
                       >
-                        <MoreHorizontalIcon className="size-3.5" />
+                        <HugeiconsIcon icon={MoreHorizontalIcon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                         <span className="text-xs font-medium">More</span>
-                        <ChevronDown className="size-3" />
+                        <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
@@ -273,7 +272,7 @@ const DeviceFrameToolbar = ({
                   onClick={onOpenHtmlDialog}
                   className="cursor-pointer gap-2"
                 >
-                  <CodeIcon className="size-4" />
+                  <HugeiconsIcon icon={CodeIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                   View code
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -290,7 +289,7 @@ const DeviceFrameToolbar = ({
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                    <Share2 className="size-4" />
+                    <HugeiconsIcon icon={Share01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                     Export
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="rounded-lg">
@@ -302,7 +301,7 @@ const DeviceFrameToolbar = ({
                       {isDownloading ? (
                         <Spinner className="size-4" />
                       ) : (
-                        <DownloadIcon className="size-4" />
+                        <HugeiconsIcon icon={Download01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                       )}
                       Download as PNG
                     </DropdownMenuItem>
@@ -316,7 +315,7 @@ const DeviceFrameToolbar = ({
                   {isDownloading ? (
                     <Spinner className="size-4" />
                   ) : (
-                    <DownloadIcon className="size-4" />
+                    <HugeiconsIcon icon={Download01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                   )}
                   Download
                 </DropdownMenuItem>
@@ -329,7 +328,7 @@ const DeviceFrameToolbar = ({
                   {isDeleting ? (
                     <Spinner className="size-4" />
                   ) : (
-                    <Trash2Icon className="size-4" />
+                    <HugeiconsIcon icon={Delete01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                   )}
                   Delete
                 </DropdownMenuItem>

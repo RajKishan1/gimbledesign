@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Monitor, Smartphone } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { LaptopIcon, SmartPhone01Icon } from "@hugeicons/core-free-icons";
 
 interface DeviceTypeModalProps {
   open: boolean;
@@ -39,7 +40,7 @@ export function DeviceTypeModal({
             onClick={() => onSelect("web")}
           >
             <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
-              <Monitor className="w-6 h-6 text-primary" />
+              <HugeiconsIcon icon={LaptopIcon} size={24} color="currentColor" strokeWidth={1.75} className="text-primary" />
             </div>
             <div className="flex flex-col">
               <span className="font-medium text-neutral-800 dark:text-white">
@@ -56,7 +57,7 @@ export function DeviceTypeModal({
             onClick={() => onSelect("mobile")}
           >
             <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
-              <Smartphone className="w-6 h-6 text-primary" />
+              <HugeiconsIcon icon={SmartPhone01Icon} size={24} color="currentColor" strokeWidth={1.75} className="text-primary" />
             </div>
             <div className="flex flex-col">
               <span className="font-medium text-neutral-800 dark:text-white">

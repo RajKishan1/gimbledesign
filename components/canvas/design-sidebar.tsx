@@ -1,17 +1,19 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ChevronRight,
-  ChevronLeft,
-  ImageIcon,
-  Sparkles,
-  GitBranch,
-  Trash2,
-  Link2,
-  MessageSquare,
-  Palette,
-} from "lucide-react";
+  ArrowRight01Icon,
+  ArrowLeft01Icon,
+  ImageUpload01Icon,
+  SparklesIcon,
+  Link01Icon,
+  Delete01Icon,
+  Message01Icon,
+  ColorsIcon,
+  CheckmarkCircle01Icon,
+  TypeCursorIcon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Spinner } from "../ui/spinner";
@@ -19,7 +21,6 @@ import { cn } from "@/lib/utils";
 import { usePrototype } from "@/context/prototype-context";
 import { useCanvas } from "@/context/canvas-context";
 import { parseThemeColors, ThemeType } from "@/lib/themes";
-import { CheckIcon, Type } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRegenerateFrame } from "@/features/use-frame";
@@ -58,7 +59,7 @@ function CompletedFrameCard({ title }: { title: string }) {
     <div className="rounded-lg border border-green-200 dark:border-green-800/30 bg-green-50/50 dark:bg-green-900/10 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded-full bg-green-500 dark:bg-green-600 flex items-center justify-center flex-shrink-0">
-          <CheckIcon className="w-4 h-4 text-white" />
+          <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} color="currentColor" strokeWidth={1.75} className="text-white" />
         </div>
         <span className="text-sm font-medium text-green-700 dark:text-green-400 flex-1">
           {title}
@@ -132,7 +133,7 @@ function SelectedFrameCard({ title }: { title: string }) {
 <div className="rounded-lg border border-primary/20 bg-primary/10 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-          <ImageIcon className="w-4 h-4 text-white" />
+          <HugeiconsIcon icon={ImageUpload01Icon} size={16} color="currentColor" strokeWidth={1.75} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs text-muted-foreground mb-1">Editing screen</p>
@@ -241,7 +242,7 @@ function ChatMessages({
   if (!hasContent) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <MessageSquare className="w-8 h-8 text-muted-foreground/50 mb-2" />
+        <HugeiconsIcon icon={Message01Icon} size={32} color="currentColor" strokeWidth={1.75} className="text-muted-foreground/50 mb-2" />
         <p className="text-sm text-muted-foreground">
           Start generating designs
         </p>
@@ -500,7 +501,7 @@ const DesignSidebar = ({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Type className="size-4" />
+              <HugeiconsIcon icon={TypeCursorIcon} size={16} color="currentColor" strokeWidth={1.75} />
             </button>
           </div>
 
@@ -544,7 +545,7 @@ const DesignSidebar = ({
                     className="h-8 w-8 text-muted-foreground hover:text-foreground"
                     type="button"
                   >
-                    <ImageIcon className="size-4" />
+                    <HugeiconsIcon icon={ImageUpload01Icon} size={16} color="currentColor" strokeWidth={1.75} />
                   </Button>
 
                   <div className="flex items-center gap-2">
@@ -554,7 +555,7 @@ const DesignSidebar = ({
                       className="h-8 px-2 rounded-none text-muted-foreground hover:text-foreground bg-muted/50"
                       type="button"
                     >
-                      <Sparkles className="size-4" />
+                      <HugeiconsIcon icon={SparklesIcon} size={16} color="currentColor" strokeWidth={1.75} />
                     </Button>
 
                     <Button
@@ -709,7 +710,7 @@ const DesignSidebar = ({
                             removeLink(link.id);
                           }}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <HugeiconsIcon icon={Delete01Icon} size={12} color="currentColor" strokeWidth={1.75} />
                         </Button>
                       </div>
                     </div>
@@ -764,7 +765,7 @@ function ThemeItem({
         <span className="text-sm text-muted-foreground">
           {theme.name}
         </span>
-        {isSelected && <CheckIcon size={16} color={color.primary} />}
+        {isSelected && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} color={color.primary} strokeWidth={1.75} />}
       </div>
     </button>
   );
@@ -803,7 +804,7 @@ function FontItem({
         </span>
       </div>
       {isSelected && (
-        <CheckIcon size={16} className="text-foreground flex-shrink-0" />
+        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} color="currentColor" strokeWidth={1.75} className="text-foreground flex-shrink-0" />
       )}
     </button>
   );

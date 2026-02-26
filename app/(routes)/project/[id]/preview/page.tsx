@@ -8,13 +8,14 @@ import { THEME_LIST } from "@/lib/themes";
 import { DEFAULT_FONT, getFontById } from "@/constant/fonts";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowLeft,
-  ArrowRight,
-  X,
-  Smartphone,
-  ChevronDown,
-} from "lucide-react";
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Cancel01Icon,
+  SmartPhone01Icon,
+  ArrowDown01Icon,
+} from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -320,7 +321,7 @@ const PreviewPage = () => {
           onClick={() => router.push(`/project/${projectId}`)}
           className={buttonClasses}
         >
-          <X className="w-5 h-5" />
+          <HugeiconsIcon icon={Cancel01Icon} size={20} color="currentColor" strokeWidth={1.75} />
         </Button>
 
         {/* Device size dropdown - center */}
@@ -331,11 +332,11 @@ const PreviewPage = () => {
               size="sm"
               className="gap-2 border-border bg-card text-foreground hover:bg-accent shrink-0"
             >
-              <Smartphone className="w-4 h-4" />
+              <HugeiconsIcon icon={SmartPhone01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
               <span className="max-w-[160px] truncate">
                 {PREVIEW_DEVICE_PRESETS.find((p) => p.id === devicePresetId)?.name ?? "Device"}
               </span>
-              <ChevronDown className="w-4 h-4 opacity-70" />
+              <HugeiconsIcon icon={ArrowDown01Icon} size={16} color="currentColor" strokeWidth={1.75} className="opacity-70 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center" className="w-56 rounded-lg">
@@ -360,7 +361,7 @@ const PreviewPage = () => {
             disabled={historyIndex <= 0}
             className={buttonClasses}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={20} color="currentColor" strokeWidth={1.75} />
           </Button>
           <Button
             variant="ghost"
@@ -369,7 +370,7 @@ const PreviewPage = () => {
             disabled={historyIndex >= navigationHistory.length - 1}
             className={buttonClasses}
           >
-            <ArrowRight className="w-5 h-5" />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={20} color="currentColor" strokeWidth={1.75} />
           </Button>
         </div>
       </div>

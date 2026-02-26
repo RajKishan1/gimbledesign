@@ -1,7 +1,8 @@
 import { TOOL_MODE_ENUM, ToolModeType } from "@/constant/canvas";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
-import { HandIcon, ImagePlusIcon, MinusIcon, MousePointerIcon, PlusIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { HandPointingRight01Icon, ImageUpload01Icon, MinusSignIcon, CursorPointer01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { Separator } from "../ui/separator";
 
 type PropsType = {
@@ -39,7 +40,7 @@ const CanvasControls = ({
           )}
           onClick={() => setToolMode(TOOL_MODE_ENUM.SELECT)}
         >
-          <MousePointerIcon />
+          <HugeiconsIcon icon={CursorPointer01Icon} size={18} color="currentColor" strokeWidth={1.75} />
         </Button>
         <Button
           size="icon-sm"
@@ -50,7 +51,7 @@ const CanvasControls = ({
           )}
           onClick={() => setToolMode(TOOL_MODE_ENUM.HAND)}
         >
-          <HandIcon />
+          <HugeiconsIcon icon={HandPointingRight01Icon} size={18} color="currentColor" strokeWidth={1.75} />
         </Button>
       </div>
 
@@ -64,7 +65,7 @@ const CanvasControls = ({
             onClick={onInsertImage}
             title="Add image"
           >
-            <ImagePlusIcon />
+            <HugeiconsIcon icon={ImageUpload01Icon} size={18} color="currentColor" strokeWidth={1.75} />
           </Button>
         </>
       )}
@@ -79,7 +80,7 @@ const CanvasControls = ({
           )}
           onClick={() => zoomOut()}
         >
-          <MinusIcon />
+          <HugeiconsIcon icon={MinusSignIcon} size={18} color="currentColor" strokeWidth={1.75} />
         </Button>
         <div className="min-w-10 text-center text-sm">{zoomPercent}%</div>
         <Button
@@ -90,7 +91,7 @@ const CanvasControls = ({
           )}
           onClick={() => zoomIn()}
         >
-          <PlusIcon />
+          <HugeiconsIcon icon={PlusSignIcon} size={18} color="currentColor" strokeWidth={1.75} />
         </Button>
       </div>
     </div>

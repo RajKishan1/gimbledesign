@@ -3,7 +3,8 @@ import { useTheme } from "next-themes";
 import { useRouter, useParams } from "next/navigation";
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon, MoonIcon, SunIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon, Moon01Icon, Sun01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import CanvasFloatingToolbar from "@/components/canvas/canvas-floating-toolbar";
 import ModeToggle from "@/components/canvas/mode-toggle";
@@ -40,7 +41,7 @@ const Header = ({
                 className="rounded-full cursor-pointer"
                 onClick={() => router.push("/")}
               >
-                <ArrowLeftIcon className="size-4" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} size={16} color="currentColor" strokeWidth={1.75} />
               </button>
               <p className="max-w-[200px] truncate font-medium text-sm">
                 {projectName || "Untitled Project"}
@@ -60,15 +61,23 @@ const Header = ({
               className="relative border-none rounded-none h-8 w-8"
               onClick={() => setTheme(isDark ? "light" : "dark")}
             >
-              <SunIcon
+              <HugeiconsIcon
+                icon={Sun01Icon}
+                size={20}
+                color="currentColor"
+                strokeWidth={1.75}
                 className={cn(
-                  "absolute h-5 w-5 transition",
+                  "absolute transition",
                   isDark ? "scale-100" : "scale-0"
                 )}
               />
-              <MoonIcon
+              <HugeiconsIcon
+                icon={Moon01Icon}
+                size={20}
+                color="currentColor"
+                strokeWidth={1.75}
                 className={cn(
-                  "absolute h-5 w-5 transition",
+                  "absolute transition",
                   isDark ? "scale-0" : "scale-100"
                 )}
               />

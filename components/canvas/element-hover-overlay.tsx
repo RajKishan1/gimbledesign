@@ -2,7 +2,19 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { X, Type, Palette, Box, Layout, Code, Copy, Check, ChevronDown, Pencil } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  TypeCursorIcon,
+  ColorsIcon,
+  BoundingBoxIcon,
+  Layout01Icon,
+  CodeIcon,
+  Copy01Icon,
+  CheckmarkCircle01Icon,
+  ArrowDown01Icon,
+  PencilEdit01Icon,
+} from "@hugeicons/core-free-icons";
 
 // Theme color variables that can be used
 const THEME_COLOR_VARIABLES = [
@@ -842,9 +854,9 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
             className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-opacity"
           >
             {copiedProperty === key ? (
-              <Check className="w-3 h-3 text-green-500" />
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} color="currentColor" strokeWidth={1.75} className="text-green-500" />
             ) : (
-              <Copy className="w-3 h-3 text-neutral-400" />
+              <HugeiconsIcon icon={Copy01Icon} size={12} color="currentColor" strokeWidth={1.75} className="text-neutral-400" />
             )}
           </button>
         </div>
@@ -853,9 +865,9 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
   };
 
   // Section Header
-  const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
+  const SectionHeader = ({ icon: Icon, title }: { icon: typeof PencilEdit01Icon; title: string }) => (
     <div className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50 dark:bg-gray-800/80 rounded-md mb-1">
-      <Icon className="w-3.5 h-3.5 text-blue-500" />
+      <HugeiconsIcon icon={Icon} size={14} color="currentColor" strokeWidth={1.75} className="text-blue-500" />
       <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{title}</span>
     </div>
   );
@@ -928,7 +940,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded bg-blue-500 flex items-center justify-center">
-            <Code className="w-3.5 h-3.5 text-white" />
+            <HugeiconsIcon icon={CodeIcon} size={14} color="currentColor" strokeWidth={1.75} className="text-white" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
@@ -943,16 +955,16 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
           onClick={onClose}
           className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors"
         >
-          <X className="w-4 h-4 text-neutral-500" />
+          <HugeiconsIcon icon={Cancel01Icon} size={16} color="currentColor" strokeWidth={1.75} className="text-neutral-500" />
         </button>
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         {[
-          { id: "edit", label: "Edit", icon: Pencil },
-          { id: "styles", label: "Styles", icon: Palette },
-          { id: "layout", label: "Layout", icon: Layout },
+          { id: "edit", label: "Edit", icon: PencilEdit01Icon },
+          { id: "styles", label: "Styles", icon: ColorsIcon },
+          { id: "layout", label: "Layout", icon: Layout01Icon },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -964,7 +976,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
             )}
           >
-            <tab.icon className="w-3.5 h-3.5" />
+            <HugeiconsIcon icon={tab.icon} size={14} color="currentColor" strokeWidth={1.75} />
             {tab.label}
           </button>
         ))}
@@ -978,7 +990,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
             {/* Text Content Editor */}
             {element.text && (
               <div>
-                <SectionHeader icon={Type} title="Text Content" />
+                <SectionHeader icon={TypeCursorIcon} title="Text Content" />
                 <div className="p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   <textarea
                     value={editableText}
@@ -999,7 +1011,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {/* Colors Section */}
             <div>
-              <SectionHeader icon={Palette} title="Colors" />
+              <SectionHeader icon={ColorsIcon} title="Colors" />
               <div className="space-y-2 p-2">
                 {/* Text Color */}
                 <div className="relative">
@@ -1016,7 +1028,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600"
                         style={{ backgroundColor: textColor || styles?.color }}
                       />
-                      <ChevronDown className="w-3 h-3 text-neutral-500" />
+                      <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="text-neutral-500" />
                     </button>
                   </div>
                   <ColorSelector
@@ -1047,7 +1059,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600"
                         style={{ backgroundColor: bgColor || styles?.backgroundColor }}
                       />
-                      <ChevronDown className="w-3 h-3 text-neutral-500" />
+                      <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="text-neutral-500" />
                     </button>
                   </div>
                   <ColorSelector
@@ -1067,7 +1079,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {/* Padding Section */}
             <div>
-              <SectionHeader icon={Box} title="Padding" />
+              <SectionHeader icon={BoundingBoxIcon} title="Padding" />
               <div className="p-2">
                 <div className="relative border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg p-3">
                   {/* Top */}
@@ -1129,7 +1141,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
             {/* Border Radius */}
             {styles?.borderRadius && styles.borderRadius !== "0px" && (
               <div>
-                <SectionHeader icon={Box} title="Border Radius" />
+                <SectionHeader icon={BoundingBoxIcon} title="Border Radius" />
                 <div className="p-2">
                   <div className="flex items-center gap-2">
                     <input
@@ -1159,7 +1171,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
               onClick={handleSave}
               className="w-full px-3 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5"
             >
-              <Check className="w-4 h-4" />
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} color="currentColor" strokeWidth={1.75} />
               Done
             </button>
             {hasChanges && (
@@ -1174,7 +1186,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <div className="space-y-3">
             {/* Typography */}
             <div>
-              <SectionHeader icon={Type} title="Typography" />
+              <SectionHeader icon={TypeCursorIcon} title="Typography" />
               <div className="space-y-0.5">
                 <div className="flex items-center justify-between py-1.5 px-2">
                   <span className="text-xs text-neutral-500">Color</span>
@@ -1191,7 +1203,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {/* Background */}
             <div>
-              <SectionHeader icon={Palette} title="Background" />
+              <SectionHeader icon={ColorsIcon} title="Background" />
               <div className="space-y-0.5">
                 <div className="flex items-center justify-between py-1.5 px-2">
                   <span className="text-xs text-neutral-500">Background</span>
@@ -1202,7 +1214,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {/* Border */}
             <div>
-              <SectionHeader icon={Box} title="Border" />
+              <SectionHeader icon={BoundingBoxIcon} title="Border" />
               <div className="space-y-0.5">
                 <PropertyRow label="Border Radius" value={styles.borderRadius} />
                 <PropertyRow label="Border Width" value={styles.borderWidth} />
@@ -1219,7 +1231,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {/* Effects */}
             <div>
-              <SectionHeader icon={Palette} title="Effects" />
+              <SectionHeader icon={ColorsIcon} title="Effects" />
               <div className="space-y-0.5">
                 <PropertyRow label="Opacity" value={styles.opacity} />
                 <PropertyRow label="Overflow" value={styles.overflow} />
@@ -1232,7 +1244,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <div className="space-y-3">
             {/* Dimensions */}
             <div>
-              <SectionHeader icon={Box} title="Dimensions" />
+              <SectionHeader icon={BoundingBoxIcon} title="Dimensions" />
               <div className="grid grid-cols-2 gap-1 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                 <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
                   <div className="text-lg font-semibold text-neutral-900 dark:text-white">
@@ -1251,7 +1263,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {/* Display */}
             <div>
-              <SectionHeader icon={Layout} title="Display" />
+              <SectionHeader icon={Layout01Icon} title="Display" />
               <div className="space-y-0.5">
                 <PropertyRow label="Display" value={styles.display} />
                 <PropertyRow label="Position" value={styles.position} />
@@ -1264,7 +1276,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {/* Spacing */}
             <div>
-              <SectionHeader icon={Box} title="Spacing (Read-only)" />
+              <SectionHeader icon={BoundingBoxIcon} title="Spacing (Read-only)" />
               {/* Padding Visual */}
               <div className="p-2">
                 <div className="text-[10px] text-center text-neutral-500 mb-1">Padding</div>
@@ -1300,7 +1312,7 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
             {/* Class Names */}
             {element.className && (
               <div>
-                <SectionHeader icon={Code} title="CSS Classes" />
+                <SectionHeader icon={CodeIcon} title="CSS Classes" />
                 <div className="p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   <div className="flex flex-wrap gap-1">
                     {element.className.toString().split(/\s+/).filter(Boolean).map((cls, i) => (
@@ -1318,11 +1330,11 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   >
                     {copiedProperty === "classes" ? (
                       <>
-                        <Check className="w-3 h-3" /> Copied!
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} color="currentColor" strokeWidth={1.75} /> Copied!
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3 h-3" /> Copy all classes
+                        <HugeiconsIcon icon={Copy01Icon} size={12} color="currentColor" strokeWidth={1.75} /> Copy all classes
                       </>
                     )}
                   </button>

@@ -4,7 +4,8 @@ import React, { useState, memo } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { Edit2, Coins, ArrowLeft, Upload, X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Edit01Icon, CreditCardIcon, ArrowLeft01Icon, Upload01Icon, Cancel01Icon, FolderOpenIcon } from "@hugeicons/core-free-icons";
 import Header from "../_common/header";
 import { useGetProfile, useUpdateProfile } from "@/features/use-profile";
 import { useGetCredits } from "@/features/use-credits";
@@ -24,7 +25,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { FolderOpenDotIcon } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfilePage = () => {
@@ -164,7 +164,7 @@ const ProfilePage = () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Back Button */}
         <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-          <ArrowLeft className="size-4 mr-2" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2" />
           Back
         </Button>
 
@@ -209,7 +209,7 @@ const ProfilePage = () => {
               >
                 <DialogTrigger asChild>
                   <Button variant="outline">
-                    <Edit2 className="size-4 mr-2" />
+                    <HugeiconsIcon icon={Edit01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2" />
                     Edit Profile
                   </Button>
                 </DialogTrigger>
@@ -265,7 +265,7 @@ const ProfilePage = () => {
                               }}
                               className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
                             >
-                              <X className="size-3" />
+                              <HugeiconsIcon icon={Cancel01Icon} size={12} color="currentColor" strokeWidth={1.75} />
                             </button>
                           </div>
                         )}
@@ -299,7 +299,7 @@ const ProfilePage = () => {
                                   </>
                                 ) : (
                                   <>
-                                    <Upload className="size-4 mr-2" />
+                                    <HugeiconsIcon icon={Upload01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2" />
                                     Upload Image
                                   </>
                                 )}
@@ -342,7 +342,7 @@ const ProfilePage = () => {
                               }}
                               className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
                             >
-                              <X className="size-4" />
+                              <HugeiconsIcon icon={Cancel01Icon} size={16} color="currentColor" strokeWidth={1.75} />
                             </button>
                           </div>
                         )}
@@ -374,7 +374,7 @@ const ProfilePage = () => {
                                   </>
                                 ) : (
                                   <>
-                                    <Upload className="size-4 mr-2" />
+                                    <HugeiconsIcon icon={Upload01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2" />
                                     Upload Image
                                   </>
                                 )}
@@ -426,7 +426,7 @@ const ProfilePage = () => {
 
         <div className="mt-8 p-6 rounded-lg border bg-card">
           <div className="flex items-center gap-2 mb-4">
-            <Coins className="size-5 text-primary" />
+            <HugeiconsIcon icon={CreditCardIcon} size={20} color="currentColor" strokeWidth={1.75} className="text-primary" />
             <h2 className="text-xl font-semibold">Credits</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -493,7 +493,7 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
           />
         ) : (
           <div className="w-16 h-16 rounded-full flex items-center justify-center text-primary">
-            <FolderOpenDotIcon size={36} />
+            <HugeiconsIcon icon={FolderOpenIcon} size={36} color="currentColor" strokeWidth={1.75} />
           </div>
         )}
       </div>

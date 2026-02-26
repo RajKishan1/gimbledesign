@@ -1,12 +1,22 @@
 "use client";
 
-import { createElement, useState, type ComponentType } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, FolderOpen, MessageCircle, Settings, Lightbulb, RefreshCw } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Home01Icon, CompassIcon, Brain01Icon } from "@hugeicons/core-free-icons";
+import {
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  FolderOpenIcon,
+  Message01Icon,
+  Settings01Icon,
+  BulbIcon,
+  Refresh01Icon,
+  Home01Icon,
+  CompassIcon,
+  Brain01Icon,
+} from "@hugeicons/core-free-icons";
 import { useGetProfile } from "@/features/use-profile";
 import { useGetCredits } from "@/features/use-credits";
 import { authClient } from "@/lib/auth-client";
@@ -15,13 +25,13 @@ import { authClient } from "@/lib/auth-client";
 const buttonNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home01Icon, isHugeicon: true },
   { href: "/explore", label: "Explore", icon: CompassIcon, isHugeicon: true },
-  { href: "/profile", label: "Settings", icon: Settings },
+  { href: "/profile", label: "Settings", icon: Settings01Icon, isHugeicon: true },
 ];
 
 /* Text-only links (no button background) */
 const linkNavItems = [
-  { href: "/dashboard", label: "Projects", icon: FolderOpen },
-  { href: "/FAQ", label: "Support", icon: MessageCircle },
+  { href: "/dashboard", label: "Projects", icon: FolderOpenIcon, isHugeicon: true },
+  { href: "/FAQ", label: "Support", icon: Message01Icon, isHugeicon: true },
 ];
 
 export default function DashboardSidebar() {
@@ -76,7 +86,7 @@ export default function DashboardSidebar() {
           className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors shrink-0"
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+          {isCollapsed ? <HugeiconsIcon icon={ArrowRight01Icon} size={16} color="currentColor" strokeWidth={1.75} /> : <HugeiconsIcon icon={ArrowLeft01Icon} size={16} color="currentColor" strokeWidth={1.75} />}
         </button>
       </div>
 
@@ -103,11 +113,7 @@ export default function DashboardSidebar() {
                   : "bg-card text-foreground hover:bg-card/90 shadow-sm border border-border"
               )}
             >
-              {item.isHugeicon ? (
-                <HugeiconsIcon icon={item.icon} size={20} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-              ) : (
-                createElement(item.icon as ComponentType<{ className?: string }>, { className: "size-5 shrink-0" })
-              )}
+              <HugeiconsIcon icon={item.icon} size={20} color="currentColor" strokeWidth={1.75} className="shrink-0" />
               {!isCollapsed && <span className="truncate">{item.label}</span>}
             </Link>
           );
@@ -122,7 +128,7 @@ export default function DashboardSidebar() {
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                {createElement(item.icon as ComponentType<{ className?: string }>, { className: "size-4 shrink-0" })}
+                <HugeiconsIcon icon={item.icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                 <span className="truncate">{item.label}</span>
               </Link>
             ))}
@@ -140,7 +146,7 @@ export default function DashboardSidebar() {
               className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border shadow-sm hover:bg-card/90 transition-colors"
             >
               <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary shrink-0">
-                <RefreshCw className="size-4" />
+                <HugeiconsIcon icon={Refresh01Icon} size={16} color="currentColor" strokeWidth={1.75} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground">Free Plan</p>
@@ -150,7 +156,7 @@ export default function DashboardSidebar() {
                 <span className="text-xs text-muted-foreground">
                   {isLoadingCredits ? "…" : `${credits != null ? Math.max(0, Math.floor(Number(credits))) : 0} left`}
                 </span>
-                <ChevronRight className="size-3.5 text-muted-foreground" />
+                <HugeiconsIcon icon={ArrowRight01Icon} size={14} color="currentColor" strokeWidth={1.75} className="text-muted-foreground" />
               </div>
             </Link>
 
@@ -159,7 +165,7 @@ export default function DashboardSidebar() {
               href="/FAQ"
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-card border border-border shadow-sm hover:bg-card/90 transition-colors text-foreground"
             >
-              <Lightbulb className="size-4 shrink-0 text-muted-foreground" />
+              <HugeiconsIcon icon={BulbIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0 text-muted-foreground" />
               <span className="text-sm font-medium">Feedback</span>
             </Link>
 
@@ -186,7 +192,7 @@ export default function DashboardSidebar() {
                 className="flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 aria-label={item.label}
               >
-                <item.icon className="size-5" />
+                <HugeiconsIcon icon={item.icon} size={20} color="currentColor" strokeWidth={1.75} />
               </Link>
             ))}
           </div>
