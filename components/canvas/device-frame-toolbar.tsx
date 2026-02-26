@@ -7,16 +7,16 @@ import {
   GripVertical,
   MoreHorizontalIcon,
   Trash2Icon,
-  Trash2,
-  ReplaceIcon,
-  Redo2Icon,
-  RotateCwIcon,
-  Sparkles,
   Send,
   Wand2,
   Wand2Icon,
+  Sparkles,
+  Pencil,
+  Eye,
+  ChevronDown,
+  Share2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
@@ -25,11 +25,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "../ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Popover, PopoverContent, PopoverAnchor } from "../ui/popover";
 import { InputGroup, InputGroupAddon } from "../ui/input-group";
 import { Input } from "../ui/input";
-import { ButtonGroup } from "../ui/button-group";
 import {
   Tooltip,
   TooltipContent,
@@ -39,6 +41,8 @@ import {
 
 type PropsType = {
   title: string;
+  frameId: string;
+  projectId: string;
   isSelected?: boolean;
   disabled?: boolean;
   isDownloading: boolean;
@@ -87,6 +91,8 @@ function FigmaIcon({ className }: { className?: string }) {
 
 const DeviceFrameToolbar = ({
   title,
+  frameId,
+  projectId,
   isSelected,
   disabled,
   scale = 1.7,
@@ -101,26 +107,29 @@ const DeviceFrameToolbar = ({
   onPasteToFigma,
 }: PropsType) => {
   const [promptValue, setPromptValue] = useState("");
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [aiPopoverOpen, setAiPopoverOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleRegenerate = () => {
     if (promptValue.trim()) {
       onRegenerate?.(promptValue);
       setPromptValue("");
-      setIsPopoverOpen(false);
+      setAiPopoverOpen(false);
     }
   };
+
+  // Open popover directly from button click (no dropdown) so nothing steals focus
+  const openAiPopover = () => setAiPopoverOpen(true);
+
+  const previewUrl = `/project/${projectId}/preview${frameId ? `?screen=${encodeURIComponent(frameId)}` : ""}`;
+
   return (
     <div
       className={cn(
-        `absolute -mt-2 flex items-center justify-between gap-2 rounded-full z-50
-        `,
+        "absolute -mt-2 flex items-center justify-between gap-1 rounded-lg z-[110] border border-border bg-card shadow-sm",
         isSelected
-          ? `left-1/2 -translate-x-1/2 border bg-card
-            dark:bg-muted pl-2 py-1 shadown-sm
-            min-w-[260px] h-[35px]
-          `
-          : "w-[150px h-auto] left-10 "
+          ? "left-1/2 -translate-x-1/2 pl-2 pr-1 py-1.5 min-w-[320px] h-[38px]"
+          : "w-auto left-10 min-w-[140px] h-[32px] py-1 pl-2 pr-2",
       )}
       style={{
         top: isSelected ? "-70px" : "-38px",
@@ -128,125 +137,77 @@ const DeviceFrameToolbar = ({
         transform: `scale(${scale})`,
       }}
     >
+      {/* Screen name (left) - kept as-is */}
       <div
         role="button"
-        className="flex flex-1 cursor-grab items-center
-        justify-start gap-1.5 active:cursor-grabbing h-full
-        "
+        className="flex flex-1 cursor-grab items-center justify-start gap-1.5 active:cursor-grabbing h-full min-w-0"
       >
-        <GripVertical className="size-4 text-muted-foreground" />
-        <div
+        <GripVertical className="size-4 text-muted-foreground shrink-0" />
+        <span
           className={cn(
-            `min-w-20 font-medium text-sm
-           mx-px truncate mt-0.5
-          `,
-            isSelected && "w-[100px]"
+            "font-medium text-sm truncate",
+            isSelected ? "max-w-[120px]" : "max-w-[80px]",
           )}
+          title={title}
         >
           {title}
-        </div>
+        </span>
       </div>
 
       {isSelected && (
         <>
-          <Separator orientation="vertical" className="h-5! bg-border" />
-          <ButtonGroup className="gap-px! justify-end pr-2! h-full ">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    disabled={disabled}
-                    size="icon-xs"
-                    variant="ghost"
-                    className="rounded-full!"
-                    onClick={onOpenHtmlDialog}
-                  >
-                    <CodeIcon className="size-3.5! stroke-1.5! mt-px" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>View HTML</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <Separator orientation="vertical" className="h-5 bg-border mx-0.5" />
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    disabled={disabled || isDownloading}
-                    size="icon-xs"
-                    className="rounded-full!"
-                    variant="ghost"
-                    onClick={onDownloadPng}
-                  >
-                    {isDownloading ? (
-                      <Spinner />
-                    ) : (
-                      <DownloadIcon className="size-3.5! stroke-1.5!" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Download PNG</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    disabled={disabled || isCopyingToFigma}
-                    size="icon-xs"
-                    className="rounded-full!"
-                    variant="ghost"
-                    onClick={onPasteToFigma}
-                  >
-                    {isCopyingToFigma ? (
-                      <Spinner />
-                    ) : (
-                      <FigmaIcon className="size-3.5! stroke-0" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Copy to Figma</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <PopoverTrigger asChild>
-                      <Button
-                        disabled={disabled}
-                        size="icon-xs"
-                        className="rounded-full!"
-                        variant="ghost"
-                      >
-                        {isRegenerating ? (
-                          <Spinner className="size-3.5!" />
-                        ) : (
-                          <Wand2 className="size-3.5! stroke-1.5!" />
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>AI Regenerate</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <PopoverContent align="end" className="w-80 p-1! rounded-lg!">
+          <div className="flex items-center gap-0.5 relative">
+            {/* Generate & Modify open the same AI popover (no dropdown = no focus steal) */}
+            <Popover open={aiPopoverOpen} onOpenChange={setAiPopoverOpen}>
+              <PopoverAnchor asChild>
+                <span className="absolute left-0 top-0 w-1 h-7" aria-hidden />
+              </PopoverAnchor>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
+                disabled={disabled}
+                onClick={openAiPopover}
+              >
+                <Sparkles className="size-3.5" />
+                <span className="text-xs font-medium">Generate</span>
+                <ChevronDown className="size-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
+                disabled={disabled}
+                onClick={openAiPopover}
+              >
+                <Pencil className="size-3.5" />
+                <span className="text-xs font-medium">Modify</span>
+                <ChevronDown className="size-3" />
+              </Button>
+              <PopoverContent
+                align="start"
+                className="w-80 p-3 rounded-lg"
+                side="bottom"
+                sideOffset={4}
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault();
+                  inputRef.current?.focus();
+                }}
+              >
                 <div className="space-y-2">
-                  <InputGroup className="bg-transparent! border-0! shadow-none! ring-0! px-0!">
-                    <InputGroupAddon>
-                      <Wand2Icon />
-                    </InputGroupAddon>
+                  <p className="text-xs text-muted-foreground">
+                    Describe changes to regenerate this screen
+                  </p>
+                  <InputGroup className="bg-transparent border-0 shadow-none ring-0 px-0">
                     <Input
+                      ref={inputRef}
                       placeholder="Edit with AI..."
                       value={promptValue}
                       onChange={(e) => setPromptValue(e.target.value)}
-                      className="ring-0! border-0!  shadow-none! bg-transparent! "
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleRegenerate();
-                        }
-                      }}
+                      className="ring-0 border-0 shadow-none bg-transparent"
+                      onKeyDown={(e) => e.key === "Enter" && handleRegenerate()}
                     />
                     <InputGroupAddon align="inline-end">
                       <Button
@@ -255,7 +216,7 @@ const DeviceFrameToolbar = ({
                         onClick={handleRegenerate}
                       >
                         {isRegenerating ? (
-                          <Spinner className="size-3.5!" />
+                          <Spinner className="size-4" />
                         ) : (
                           <Send className="size-4" />
                         )}
@@ -266,6 +227,27 @@ const DeviceFrameToolbar = ({
               </PopoverContent>
             </Popover>
 
+            {/* Preview */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
+                    onClick={() => window.open(previewUrl, "_blank")}
+                  >
+                    <Eye className="size-3.5" />
+                    <span className="text-xs font-medium">Preview</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Open prototype preview in new tab
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* More dropdown */}
             <DropdownMenu>
               <TooltipProvider>
                 <Tooltip>
@@ -273,34 +255,87 @@ const DeviceFrameToolbar = ({
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="icon-xs"
-                        className="rounded-full!"
+                        size="sm"
+                        className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
                       >
-                        <MoreHorizontalIcon className=" mb-px size-3.5! stroke-1.5!" />
+                        <MoreHorizontalIcon className="size-3.5" />
+                        <span className="text-xs font-medium">More</span>
+                        <ChevronDown className="size-3" />
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
                   <TooltipContent>More options</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <DropdownMenuContent align="end" className="w-32 rounded-md p-0!">
+              <DropdownMenuContent align="end" className="w-52 rounded-lg p-1">
+                <DropdownMenuItem
+                  disabled={disabled}
+                  onClick={onOpenHtmlDialog}
+                  className="cursor-pointer gap-2"
+                >
+                  <CodeIcon className="size-4" />
+                  View code
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={disabled || isCopyingToFigma}
+                  onClick={onPasteToFigma}
+                  className="cursor-pointer gap-2"
+                >
+                  {isCopyingToFigma ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    <FigmaIcon className="size-4" />
+                  )}
+                  Copy to Figma
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="cursor-pointer gap-2">
+                    <Share2 className="size-4" />
+                    Export
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="rounded-lg">
+                    <DropdownMenuItem
+                      disabled={disabled || isDownloading}
+                      onClick={onDownloadPng}
+                      className="cursor-pointer gap-2"
+                    >
+                      {isDownloading ? (
+                        <Spinner className="size-4" />
+                      ) : (
+                        <DownloadIcon className="size-4" />
+                      )}
+                      Download as PNG
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuItem
+                  disabled={disabled || isDownloading}
+                  onClick={onDownloadPng}
+                  className="cursor-pointer gap-2"
+                >
+                  {isDownloading ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    <DownloadIcon className="size-4" />
+                  )}
+                  Download
+                </DropdownMenuItem>
+                <Separator className="my-1" />
                 <DropdownMenuItem
                   disabled={disabled || isDeleting}
                   onClick={onDeleteFrame}
-                  className="cursor-pointer"
+                  className="cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
                 >
                   {isDeleting ? (
-                    <Spinner />
+                    <Spinner className="size-4" />
                   ) : (
-                    <>
-                      <Trash2Icon className="size-4" />
-                      Delete
-                    </>
+                    <Trash2Icon className="size-4" />
                   )}
+                  Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </ButtonGroup>
+          </div>
         </>
       )}
     </div>

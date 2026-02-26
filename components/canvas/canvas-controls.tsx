@@ -1,7 +1,7 @@
 import { TOOL_MODE_ENUM, ToolModeType } from "@/constant/canvas";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
-import { HandIcon, MinusIcon, MousePointerIcon, PlusIcon } from "lucide-react";
+import { HandIcon, ImagePlusIcon, MinusIcon, MousePointerIcon, PlusIcon } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 type PropsType = {
@@ -10,6 +10,7 @@ type PropsType = {
   zoomPercent: number;
   toolMode: ToolModeType;
   setToolMode: (toolMode: ToolModeType) => void;
+  onInsertImage?: () => void;
 };
 const CanvasControls = ({
   zoomIn,
@@ -17,6 +18,7 @@ const CanvasControls = ({
   zoomPercent,
   toolMode,
   setToolMode,
+  onInsertImage,
 }: PropsType) => {
   return (
     <div
@@ -51,6 +53,21 @@ const CanvasControls = ({
           <HandIcon />
         </Button>
       </div>
+
+      {onInsertImage && (
+        <>
+          <Separator orientation="vertical" className="h-5! bg-white/30" />
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="rounded-full cursor-pointer hover:bg-white/20! text-black! dark:text-white!"
+            onClick={onInsertImage}
+            title="Add image"
+          >
+            <ImagePlusIcon />
+          </Button>
+        </>
+      )}
 
       <Separator orientation="vertical" className="h-5! bg-white/30" />
       <div className="flex items-center gap-1">

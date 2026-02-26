@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useGetProjectById } from "@/features/use-project-id";
 import { getHTMLWrapper } from "@/lib/frame-wrapper";
-import { THEME_LIST, parseThemeColors } from "@/lib/themes";
+import { THEME_LIST } from "@/lib/themes";
 import { DEFAULT_FONT, getFontById } from "@/constant/fonts";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,15 @@ import {
   ArrowLeft,
   ArrowRight,
   X,
+  Smartphone,
+  ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { INTERACTIVE_ELEMENT_SELECTORS } from "@/constant/canvas";
 import { PrototypeLink } from "@/context/prototype-context";
 import { FrameType } from "@/types/project";
@@ -20,14 +28,24 @@ import { FrameType } from "@/types/project";
 // Storage key for prototype links (shared with main editor)
 const getLinksStorageKey = (projectId: string) => `prototype-links-${projectId}`;
 
-// Width matches canvas (iPhone 16); height is content-driven, no fixed height (small floor only).
-const DEVICE_WIDTH = 393;
 const MIN_DEVICE_HEIGHT = 300;
+
+// 6 famous mobile sizes (viewport width in CSS px) – user can select any
+const PREVIEW_DEVICE_PRESETS = [
+  { id: "iphone-17-pro", name: "iPhone 17 Pro", width: 402 },
+  { id: "iphone-16-pro", name: "iPhone 16 Pro", width: 393 },
+  { id: "samsung-s24", name: "Samsung Galaxy S24", width: 360 },
+  { id: "samsung-s24-ultra", name: "Samsung Galaxy S24 Ultra", width: 412 },
+  { id: "pixel-9", name: "Google Pixel 9", width: 412 },
+  { id: "oneplus-12", name: "OnePlus 12", width: 412 },
+] as const;
 
 const PreviewPage = () => {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = params.id as string;
+  const screenParam = searchParams.get("screen");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const navigateToRef = useRef<(screenId: string) => void>(() => {});
 
@@ -35,57 +53,28 @@ const PreviewPage = () => {
   const frames = project?.frames || [];
   const theme = THEME_LIST.find((t) => t.id === project?.theme);
 
-  // Determine if theme is light or dark based on background color
-  const isDarkTheme = useMemo(() => {
-    if (!theme?.style) return true; // Default to dark
-    const colors = parseThemeColors(theme.style);
-    const bgColor = colors.background || "#fff";
-    
-    // Helper function to get RGB values from color string
-    const getRGB = (color: string): [number, number, number] => {
-      // Remove whitespace
-      color = color.trim();
-      
-      // Handle hex colors
-      if (color.startsWith("#")) {
-        const hex = color.replace("#", "");
-        if (hex.length === 3) {
-          // 3-digit hex
-          const r = parseInt(hex[0] + hex[0], 16);
-          const g = parseInt(hex[1] + hex[1], 16);
-          const b = parseInt(hex[2] + hex[2], 16);
-          return [r, g, b];
-        } else if (hex.length === 6) {
-          // 6-digit hex
-          const r = parseInt(hex.substr(0, 2), 16);
-          const g = parseInt(hex.substr(2, 2), 16);
-          const b = parseInt(hex.substr(4, 2), 16);
-          return [r, g, b];
-        }
-      }
-      
-      // Handle rgb/rgba
-      const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-      if (rgbMatch) {
-        return [parseInt(rgbMatch[1]), parseInt(rgbMatch[2]), parseInt(rgbMatch[3])];
-      }
-      
-      // Default to white if can't parse
-      return [255, 255, 255];
-    };
-    
-    const [r, g, b] = getRGB(bgColor);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    
-    return brightness < 128; // Dark if brightness is less than 128
-  }, [theme]);
-
   // Navigation state
   const [currentScreenId, setCurrentScreenId] = useState<string | null>(null);
   const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [iframeHeight, setIframeHeight] = useState<number>(MIN_DEVICE_HEIGHT);
   const [viewportHeight, setViewportHeight] = useState<number>(800);
+  const [viewportWidth, setViewportWidth] = useState<number>(400);
+  const [devicePresetId, setDevicePresetId] = useState<string>(PREVIEW_DEVICE_PRESETS[0].id);
+  const deviceWidth = PREVIEW_DEVICE_PRESETS.find((p) => p.id === devicePresetId)?.width ?? PREVIEW_DEVICE_PRESETS[0].width;
+
+  // Scale so device frame fits viewport (no overflow on mobile), max 1.35 on large screens
+  const previewScale = useMemo(() => {
+    const chrome = 48; // padding + notch + home indicator
+    const frameW = deviceWidth + 24;
+    const frameH = Math.min(iframeHeight, viewportHeight * 0.9) + chrome;
+    const availW = Math.max(0, viewportWidth - 48);
+    const availH = Math.max(0, viewportHeight - 88);
+    const scaleByW = availW / frameW;
+    const scaleByH = availH / frameH;
+    const fitScale = Math.min(scaleByW, scaleByH, 1.35);
+    return Math.max(0.3, Math.min(1.35, fitScale));
+  }, [deviceWidth, iframeHeight, viewportWidth, viewportHeight]);
 
   // Load prototype links from localStorage
   const [links, setLinks] = useState<PrototypeLink[]>([]);
@@ -107,24 +96,28 @@ const PreviewPage = () => {
     }
   }, [projectId]);
 
-  // Set initial screen
+  // Set initial screen (from ?screen=frameId or first frame)
   useEffect(() => {
     if (frames.length > 0 && !currentScreenId) {
-      const firstScreenId = frames[0].id;
-      setCurrentScreenId(firstScreenId);
-      setNavigationHistory([firstScreenId]);
+      const initialId =
+        screenParam && frames.some((f: FrameType) => f.id === screenParam)
+          ? screenParam
+          : frames[0].id;
+      setCurrentScreenId(initialId);
+      setNavigationHistory([initialId]);
       setHistoryIndex(0);
     }
-  }, [frames, currentScreenId]);
+  }, [frames, currentScreenId, screenParam]);
 
-  // Track viewport height
+  // Track viewport size (for responsive scale)
   useEffect(() => {
-    const updateViewportHeight = () => {
+    const updateViewport = () => {
+      setViewportWidth(window.innerWidth);
       setViewportHeight(window.innerHeight);
     };
-    updateViewportHeight();
-    window.addEventListener("resize", updateViewportHeight);
-    return () => window.removeEventListener("resize", updateViewportHeight);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
   }, []);
 
   // Get current frame
@@ -284,10 +277,10 @@ const PreviewPage = () => {
 
   if (isPending) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-white/70">Loading preview...</p>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground">Loading preview...</p>
         </div>
       </div>
     );
@@ -295,10 +288,10 @@ const PreviewPage = () => {
 
   if (!project || frames.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">No screens to preview</h1>
-          <p className="text-white/70 mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-4">No screens to preview</h1>
+          <p className="text-muted-foreground mb-6">
             Add some screens to your project and create prototype links first.
           </p>
           <Button onClick={() => router.push(`/project/${projectId}`)}>
@@ -314,107 +307,119 @@ const PreviewPage = () => {
     ? getHTMLWrapper(currentFrame.htmlContent, currentFrame.title, theme?.style, currentFrame.id, { previewMode: true, font: defaultFont })
     : "";
 
-  // Background classes based on theme
-  const backgroundClasses = isDarkTheme
-    ? "h-screen w-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden"
-    : "h-screen w-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 overflow-hidden";
-
-  // Button text color classes based on theme
-  const buttonTextClasses = isDarkTheme
-    ? "text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 rounded-full"
-    : "text-neutral-700 hover:text-neutral-900 hover:bg-gray-200/50 disabled:opacity-30 rounded-full";
+  // Use app theme (background from globals.css)
+  const buttonClasses = "text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 rounded-full";
 
   return (
-    <div className={backgroundClasses}>
-      {/* Simple Navigation Controls */}
-      <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between">
-        {/* Left: Cancel Button */}
+    <div className="h-screen w-screen bg-background overflow-hidden">
+      {/* Navigation + device selector */}
+      <div className="fixed top-4 left-4 right-4 z-50 flex items-center justify-between gap-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => router.push(`/project/${projectId}`)}
-          className={buttonTextClasses}
+          className={buttonClasses}
         >
           <X className="w-5 h-5" />
         </Button>
 
-        {/* Right: Navigation Arrows */}
+        {/* Device size dropdown - center */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 border-border bg-card text-foreground hover:bg-accent shrink-0"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span className="max-w-[160px] truncate">
+                {PREVIEW_DEVICE_PRESETS.find((p) => p.id === devicePresetId)?.name ?? "Device"}
+              </span>
+              <ChevronDown className="w-4 h-4 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="w-56 rounded-lg">
+            {PREVIEW_DEVICE_PRESETS.map((preset) => (
+              <DropdownMenuItem
+                key={preset.id}
+                onClick={() => setDevicePresetId(preset.id)}
+                className="cursor-pointer"
+              >
+                {preset.name}
+                <span className="ml-auto text-xs text-muted-foreground">{preset.width}px</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={goBack}
             disabled={historyIndex <= 0}
-            className={buttonTextClasses}
+            className={buttonClasses}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-
           <Button
             variant="ghost"
             size="icon"
             onClick={goForward}
             disabled={historyIndex >= navigationHistory.length - 1}
-            className={buttonTextClasses}
+            className={buttonClasses}
           >
             <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
       </div>
 
-      {/* Preview Content */}
-      <div 
-        className="fixed inset-0 flex items-center justify-center"
-        style={{ 
-          zIndex: 10,
-        }}
-      >
-        <div className="flex items-center justify-center">
-            {/* Device Frame - Portrait Mode */}
+      {/* Preview content - larger scale */}
+      <div className="fixed inset-0 flex items-center justify-center pt-14 pb-6" style={{ zIndex: 10 }}>
+        <div
+          className="flex items-center justify-center w-full h-full"
+          style={{
+            transform: `scale(${previewScale})`,
+            transformOrigin: "center center",
+          }}
+        >
+          <div
+            className={cn(
+              "relative bg-black rounded-[28px] p-2 shadow-2xl",
+              "ring-1 ring-border"
+            )}
+            style={{
+              boxShadow: "0 0 0 1px var(--border), 0 20px 40px -10px rgba(0,0,0,0.25)",
+            }}
+          >
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-b-xl z-10" />
             <div
-              className={cn(
-                "relative bg-black rounded-[28px] p-2 shadow-2xl",
-                "ring-1 ring-white/10"
-              )}
+              className="relative bg-white dark:bg-background rounded-[22px] overflow-hidden"
               style={{
-                boxShadow:
-                  "0 0 0 1px rgba(255,255,255,0.1), 0 20px 40px -10px rgba(0,0,0,0.5), 0 0 60px rgba(99, 102, 241, 0.15)",
+                width: `${deviceWidth}px`,
+                height: `${Math.min(iframeHeight, viewportHeight * 0.9)}px`,
+                maxHeight: "90vh",
               }}
             >
-              {/* Notch */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-b-xl z-10" />
-
-              {/* Screen Content - Responsive height with scrolling */}
-              <div 
-                className="relative bg-white rounded-[22px] overflow-hidden"
+              <iframe
+                ref={iframeRef}
+                srcDoc={fullHtml}
+                title={currentFrame?.title}
+                sandbox="allow-scripts allow-same-origin"
+                onLoad={handleIframeLoad}
                 style={{
-                  width: `${DEVICE_WIDTH}px`,
+                  width: `${deviceWidth}px`,
                   height: `${Math.min(iframeHeight, viewportHeight * 0.9)}px`,
-                  maxHeight: "90vh",
+                  minHeight: `${MIN_DEVICE_HEIGHT}px`,
+                  border: "none",
+                  display: "block",
+                  background: "white",
+                  pointerEvents: "auto",
                 }}
-              >
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={fullHtml}
-                  title={currentFrame?.title}
-                  sandbox="allow-scripts allow-same-origin"
-                  onLoad={handleIframeLoad}
-                  style={{
-                    width: `${DEVICE_WIDTH}px`,
-                    height: `${Math.min(iframeHeight, viewportHeight * 0.9)}px`,
-                    minHeight: `${MIN_DEVICE_HEIGHT}px`,
-                    border: "none",
-                    display: "block",
-                    background: "white",
-                    pointerEvents: "auto",
-                  }}
-                />
-              </div>
-
-              {/* Home Indicator */}
-              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/30 rounded-full" />
+              />
             </div>
-
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/30 rounded-full" />
+          </div>
         </div>
       </div>
     </div>

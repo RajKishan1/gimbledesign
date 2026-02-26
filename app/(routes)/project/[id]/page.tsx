@@ -8,7 +8,6 @@ import Canvas from "@/components/canvas";
 import { CanvasProvider } from "@/context/canvas-context";
 import { PrototypeProvider } from "@/context/prototype-context";
 import DesignSidebar from "@/components/canvas/design-sidebar";
-import ProjectsSidebar from "@/components/canvas/projects-sidebar";
 import { useGenerateDesignById } from "@/features/use-project-id";
 import { PENDING_SETUP_KEY } from "@/features/use-project";
 import { getGenerationModel } from "@/constant/models";
@@ -199,8 +198,6 @@ const PageContent = ({
             isPending={isPending}
           />
         </div>
-
-        <ProjectsSidebar />
       </div>
     </div>
   );

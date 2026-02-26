@@ -36,6 +36,7 @@ const Canvas = ({
     deviceType,
     customDimensions,
     wireframeKind,
+    updateFrame,
   } = useCanvas();
 
   // Web wireframe: one responsive frame shown at 3 viewport sizes (same HTML, different container widths)
@@ -66,9 +67,51 @@ const Canvas = ({
   const [openHtmlDialog, setOpenHtmlDialog] = useState(false);
   const [isScreenshotting, setIsScreenshotting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  /** Images placed on the canvas (not inside a frame) - visible and pan/zoom with canvas */
+  const [canvasImages, setCanvasImages] = useState<
+    { id: string; src: string; x: number; y: number; width: number; height: number }[]
+  >([]);
 
   const canvasRootRef = useRef<HTMLDivElement>(null);
+  const insertImageInputRef = useRef<HTMLInputElement>(null);
   const isPrototypeMode = mode === "prototype";
+
+  const handleInsertImageClick = useCallback(() => {
+    insertImageInputRef.current?.click();
+  }, []);
+
+  const handleInsertImageFile = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 280;
+          const maxH = 200;
+          let w = img.naturalWidth;
+          let h = img.naturalHeight;
+          if (w > maxW || h > maxH) {
+            const r = Math.min(maxW / w, maxH / h);
+            w = Math.round(w * r);
+            h = Math.round(h * r);
+          }
+          const id = `canvas-img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+          setCanvasImages((prev) => [
+            ...prev,
+            { id, src: dataUrl, x: 150, y: 150, width: w, height: h },
+          ]);
+          toast.success("Image added to canvas");
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    },
+    []
+  );
 
   // Handle mouse move for link dragging
   const handleMouseMove = useCallback(
@@ -225,15 +268,31 @@ const Canvas = ({
           initialPositionY={5}
           minScale={0.1}
           maxScale={3}
-          wheel={{ step: 0.1 }}
-          pinch={{ step: 0.1 }}
+          wheel={{
+            step: 0.15,
+            smoothStep: 0.008,
+            wheelDisabled: false,
+            touchPadDisabled: false,
+          }}
+          pinch={{
+            step: 0.02,
+          }}
           doubleClick={{ disabled: true }}
           centerZoomedOut={false}
           centerOnInit={false}
           smooth={true}
           limitToBounds={false}
           panning={{
-            disabled: toolMode !== TOOL_MODE_ENUM.HAND,
+            disabled: false,
+            allowLeftClickPan: toolMode === TOOL_MODE_ENUM.HAND,
+            wheelPanning: true,
+            velocityDisabled: false,
+          }}
+          velocityAnimation={{
+            disabled: false,
+            sensitivity: 1,
+            animationTime: 250,
+            animationType: "easeOutCubic",
           }}
           onTransformed={(ref) => {
             setZoomPercent(Math.round(ref.state.scale * 100));
@@ -364,6 +423,27 @@ const Canvas = ({
                           );
                         })}
 
+                    {/* Canvas-level images (inserted via Add image, pan/zoom with canvas) */}
+                    {canvasImages.map((img) => (
+                      <div
+                        key={img.id}
+                        className="absolute pointer-events-none"
+                        style={{
+                          left: img.x,
+                          top: img.y,
+                          width: img.width,
+                          height: img.height,
+                        }}
+                      >
+                        <img
+                          src={img.src}
+                          alt="Inserted"
+                          className="w-full h-full object-contain rounded shadow-md border border-black/10"
+                          draggable={false}
+                        />
+                      </div>
+                    ))}
+
                     {/* Prototype connector arrows layer - rendered on top */}
                     <PrototypeConnectors canvasScale={currentScale} />
                   </div>
@@ -383,12 +463,21 @@ const Canvas = ({
                 </TransformComponent>
               </div>
 
+              <input
+                ref={insertImageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                aria-hidden
+                onChange={handleInsertImageFile}
+              />
               <CanvasControls
                 zoomIn={zoomIn}
                 zoomOut={zoomOut}
                 zoomPercent={zoomPercent}
                 toolMode={toolMode}
                 setToolMode={setToolMode}
+                onInsertImage={handleInsertImageClick}
               />
             </>
           )}

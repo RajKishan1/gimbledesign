@@ -78,6 +78,7 @@ const CanvasFloatingToolbar = ({
       <ExportModal
         open={isExportModalOpen}
         onOpenChange={setIsExportModalOpen}
+        projectId={projectId}
       />
     </div>
   );

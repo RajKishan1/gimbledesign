@@ -326,11 +326,12 @@ const DeviceFrame = ({
         }
       }}
       className={cn(
-        "relative z-10",
+        "relative",
         isSelected &&
           toolMode !== TOOL_MODE_ENUM.HAND &&
-          !isPrototypeMode &&
-          "ring-3 ring-blue-400 ring-offset-1",
+          !isPrototypeMode
+          ? "z-[100] ring-3 ring-blue-400 ring-offset-1"
+          : "z-10",
         isPrototypeMode &&
           linkingState.isLinking &&
           linkingState.fromScreenId !== frameId &&
@@ -347,6 +348,8 @@ const DeviceFrame = ({
         {!isPrototypeMode && (
           <DeviceFrameToolbar
             title={title}
+            frameId={frameId}
+            projectId={projectId}
             isSelected={isSelected && toolMode !== TOOL_MODE_ENUM.HAND}
             disabled={
               isDownloading ||
