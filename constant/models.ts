@@ -22,7 +22,7 @@ export const AI_MODELS: ModelOption[] = [
     useCase: "analysis",
   },
   {
-    id: "google/gemini-3.1-pro-preview",
+    id: "google/gemini-3-pro-preview",
     name: "Gemini 3.1 Pro",
     provider: "Google",
     description: "Advanced Gemini Pro - balanced speed/quality",
@@ -43,7 +43,7 @@ export const SELECTABLE_MODELS: ModelOption[] = [
     useCase: "both",
   },
   {
-    id: "google/gemini-3.1-pro-preview",
+    id: "google/gemini-3-pro-preview",
     name: "Gemini 3 Pro",
     provider: "Google",
     description: "Great for creative layouts, exploring visual styles",
@@ -69,7 +69,7 @@ export const SELECTABLE_MODELS: ModelOption[] = [
 export const FAST_MODEL = "google/gemini-3-flash-preview";
 
 // Quality model for generation phase (creating HTML). Auto resolves to this.
-export const DEFAULT_MODEL = "google/gemini-3.1-pro-preview";
+export const DEFAULT_MODEL = "google/gemini-3-pro-preview";
 
 export const getModelName = (modelId: string): string => {
   if (modelId === AUTO_MODEL_ID) return "Auto";

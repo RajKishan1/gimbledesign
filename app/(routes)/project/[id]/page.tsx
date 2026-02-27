@@ -171,8 +171,8 @@ const PageContent = ({
     run();
   }, [projectId, generateDesign]);
 
-  const handleGenerate = (promptText: string) => {
-    generateDesign(promptText);
+  const handleGenerate = (promptText: string, model?: string) => {
+    generateDesign({ prompt: promptText, ...(model && { model }) });
   };
 
   return (

@@ -26,7 +26,7 @@ export const regenerateFrame = inngest.createFunction(
       allFrames, // Optional: all frames in the project for context
     } = event.data;
     const CHANNEL = `user:${userId}`;
-    const selectedModel = model || "google/gemini-3.1-pro-preview";
+    const selectedModel = model || "google/gemini-3-pro-preview";
 
     await publish({
       channel: CHANNEL,
@@ -91,6 +91,8 @@ Any changes should seamlessly blend with the app's established visual style.
           - Maintain the exact same HTML structure and CSS classes except for requested changes
         2. If Design DNA context is provided above, ensure changes maintain consistency with it
         3. Keep navigation components (bottom nav, sidebar) EXACTLY as they are unless explicitly requested to change
+        4. **BOTTOM NAV PRESERVATION (CRITICAL):** The bottom navigation bar must remain PIXEL-IDENTICAL to the original — same icons, same order, same styling, same dimensions. Do NOT alter it in any way unless the user explicitly asks.
+        5. **THEME PRESERVATION:** Keep the exact same theme colors, typography, and spacing. Do not introduce new colors or change the visual system.
 
         **OUTPUT RULES:**
         1. Generate ONLY raw HTML markup using Tailwind CSS

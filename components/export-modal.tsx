@@ -7,16 +7,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react";
 import {
-  Download01Icon,
   CodeIcon,
   DocumentCodeIcon,
   SparklesIcon,
   ArrowRight01Icon,
-  CheckmarkCircle01Icon,
 } from "@hugeicons/core-free-icons";
 import { useState, useCallback } from "react";
 import { useGetProjectById } from "@/features/use-project-id";
@@ -48,7 +45,7 @@ const EXPORT_FORMATS = [
     id: "build-with-ai",
     label: "Build with AI",
     description:
-      "Get a ready-to-use prompt with code and steps to continue in any AI builder.",
+      "Get a ready-to-use prompt with code and all steps to continue building in any AI tool.",
     icon: SparklesIcon,
     supported: true,
   },
@@ -62,27 +59,123 @@ interface ExportModalProps {
   projectId: string;
 }
 
-export function ExportModal({ open, onOpenChange, projectId }: ExportModalProps) {
-  const [selectedFormat, setSelectedFormat] = useState<FormatId>("code-to-clipboard");
+// Radio circle component
+function RadioDot({ selected }: { selected: boolean }) {
+  return (
+    <span
+      className={cn(
+        "flex h-[18px] w-[18px] shrink-0 rounded-full border-2 items-center justify-center transition-colors",
+        selected ? "border-primary" : "border-muted-foreground/50"
+      )}
+    >
+      {selected && (
+        <span className="h-2 w-2 rounded-full bg-primary block" />
+      )}
+    </span>
+  );
+}
+
+// Individual format option row
+function FormatOption({
+  id,
+  label,
+  description,
+  icon: Icon,
+  selected,
+  onSelect,
+}: {
+  id: string;
+  label: string;
+  description: string;
+  icon: IconSvgElement;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      key={id}
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "w-full flex items-start gap-3 px-4 py-3.5 text-left transition-colors group",
+        selected ? "bg-accent/60" : "hover:bg-accent/30"
+      )}
+    >
+      <RadioDot selected={selected} />
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <HugeiconsIcon
+            icon={Icon}
+            size={15}
+            color="currentColor"
+            strokeWidth={1.75}
+            className={cn(
+              "shrink-0 transition-colors",
+              selected ? "text-primary" : "text-muted-foreground"
+            )}
+          />
+          <span
+            className={cn(
+              "text-sm font-medium transition-colors",
+              selected ? "text-foreground" : "text-foreground/80"
+            )}
+          >
+            {label}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed pl-[19px]">
+          {description}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+// CTA button config per format
+const CTA_CONFIG: Record<
+  FormatId,
+  { label: string; icon: IconSvgElement; trailingIcon?: IconSvgElement }
+> = {
+  "code-to-clipboard": {
+    label: "Copy code to clipboard",
+    icon: CodeIcon,
+  },
+  "prompt-export": {
+    label: "Export prompt & code",
+    icon: DocumentCodeIcon,
+  },
+  "build-with-ai": {
+    label: "Build with AI",
+    icon: SparklesIcon,
+    trailingIcon: ArrowRight01Icon,
+  },
+};
+
+export function ExportModal({
+  open,
+  onOpenChange,
+  projectId,
+}: ExportModalProps) {
+  const [selectedFormat, setSelectedFormat] = useState<FormatId>(
+    "code-to-clipboard"
+  );
   const [description, setDescription] = useState("");
   const { data: project } = useGetProjectById(projectId);
   const { theme: themeId, font: canvasFont } = useCanvas();
   const theme = THEME_LIST.find((t) => t.id === (project?.theme ?? themeId));
   const font = canvasFont ?? getFontById(DEFAULT_FONT);
   const frames = project?.frames ?? [];
-  const initialPrompt = (project as { initialPrompt?: string | null })?.initialPrompt ?? "";
+  const initialPrompt =
+    (project as { initialPrompt?: string | null })?.initialPrompt ?? "";
 
-  const copyToClipboard = useCallback(
-    async (text: string) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        toast.success("Copied to clipboard");
-      } catch {
-        toast.error("Failed to copy");
-      }
-    },
-    []
-  );
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy");
+    }
+  }, []);
 
   const buildFullHtmlForFrame = useCallback(
     (html: string, title: string) => {
@@ -117,7 +210,9 @@ export function ExportModal({ open, onOpenChange, projectId }: ExportModalProps)
       `# ${projectName} – Prompt & Code Export`,
       "",
       "## Original prompt",
-      initialPrompt ? `\`\`\`\n${initialPrompt}\n\`\`\`` : "_No prompt stored._",
+      initialPrompt
+        ? `\`\`\`\n${initialPrompt}\n\`\`\``
+        : "_No prompt stored._",
       "",
       "## Screens & code",
       "",
@@ -130,10 +225,16 @@ export function ExportModal({ open, onOpenChange, projectId }: ExportModalProps)
       lines.push("```");
       lines.push("");
     });
-    const text = lines.join("\n");
-    copyToClipboard(text);
+    copyToClipboard(lines.join("\n"));
     onOpenChange(false);
-  }, [frames, project?.name, initialPrompt, buildFullHtmlForFrame, copyToClipboard, onOpenChange]);
+  }, [
+    frames,
+    project?.name,
+    initialPrompt,
+    buildFullHtmlForFrame,
+    copyToClipboard,
+    onOpenChange,
+  ]);
 
   const handleBuildWithAI = useCallback(() => {
     const projectName = project?.name ?? "Project";
@@ -162,121 +263,117 @@ export function ExportModal({ open, onOpenChange, projectId }: ExportModalProps)
     copyToClipboard(fullPrompt);
     toast.success("Ready-to-use prompt copied. Paste it into your AI builder.");
     onOpenChange(false);
-  }, [project?.name, initialPrompt, description, frames, buildFullHtmlForFrame, copyToClipboard, onOpenChange]);
+  }, [
+    project?.name,
+    initialPrompt,
+    description,
+    frames,
+    buildFullHtmlForFrame,
+    copyToClipboard,
+    onOpenChange,
+  ]);
 
   const handlePrimaryAction = useCallback(() => {
     if (selectedFormat === "code-to-clipboard") handleCodeToClipboard();
     else if (selectedFormat === "prompt-export") handlePromptExport();
     else if (selectedFormat === "build-with-ai") handleBuildWithAI();
-  }, [selectedFormat, handleCodeToClipboard, handlePromptExport, handleBuildWithAI]);
+  }, [
+    selectedFormat,
+    handleCodeToClipboard,
+    handlePromptExport,
+    handleBuildWithAI,
+  ]);
 
   const supportedFormats = EXPORT_FORMATS.filter((f) => f.supported);
-  const currentFormat = EXPORT_FORMATS.find((f) => f.id === selectedFormat);
+  const cta = CTA_CONFIG[selectedFormat];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex flex-col w-full sm:max-w-md gap-0 p-0 bg-card border-border text-card-foreground overflow-y-auto">
-        <SheetHeader className="p-6 pb-4 border-b border-border shrink-0">
-          <SheetTitle className="text-lg font-semibold text-foreground">
+      <SheetContent
+        side="right"
+        className="flex flex-col w-full sm:max-w-[320px] gap-0 p-0 bg-card border-l border-border text-card-foreground"
+      >
+        {/* Header */}
+        <SheetHeader className="px-5 pt-5 pb-4 shrink-0">
+          <SheetTitle className="text-base font-semibold text-foreground tracking-tight">
             Export
           </SheetTitle>
         </SheetHeader>
 
-        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-          {/* Format selection */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-foreground">Format</Label>
-            <div className="space-y-1">
-              {supportedFormats.map((format) => {
-                const Icon = format.icon;
-                const isSelected = selectedFormat === format.id;
-                return (
-                  <button
-                    key={format.id}
-                    type="button"
-                    onClick={() => setSelectedFormat(format.id)}
-                    className={cn(
-                      "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors",
-                      isSelected
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-background hover:bg-accent/50"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex h-4 w-4 shrink-0 rounded-full border-2 items-center justify-center",
-                        isSelected
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-muted-foreground"
-                      )}
-                    >
-                      {isSelected ? <HugeiconsIcon icon={CheckmarkCircle01Icon} size={10} color="currentColor" strokeWidth={1.75} /> : null}
-                    </span>
-                    <HugeiconsIcon icon={Icon} size={20} color="currentColor" strokeWidth={1.75} className="shrink-0 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">
-                      {format.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto flex flex-col">
+          {/* Format label */}
+          <p className="px-5 pb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Format
+          </p>
 
-          {/* Format description */}
-          {currentFormat && (
-            <p className="text-sm text-muted-foreground">
-              {currentFormat.description}
-            </p>
-          )}
+          {/* Options list */}
+          <div className="flex flex-col">
+            {supportedFormats.map((format) => (
+              <FormatOption
+                key={format.id}
+                id={format.id}
+                label={format.label}
+                description={format.description}
+                icon={format.icon}
+                selected={selectedFormat === format.id}
+                onSelect={() => setSelectedFormat(format.id)}
+              />
+            ))}
+          </div>
 
           {/* Build with AI: description field */}
           {selectedFormat === "build-with-ai" && (
-            <div className="space-y-2">
-              <Label htmlFor="export-desc" className="text-sm font-medium text-foreground">
+            <div className="px-5 pt-4 pb-2 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Description
-              </Label>
+              </p>
               <Textarea
-                id="export-desc"
-                placeholder="e.g. Make this real. / Add login flow. / Export for React."
+                placeholder="Make this real."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[80px] resize-none border-border bg-background text-foreground placeholder:text-muted-foreground"
-                rows={3}
+                className="min-h-[100px] resize-none border-border bg-background text-foreground placeholder:text-muted-foreground text-sm rounded-xl"
+                rows={4}
               />
             </div>
           )}
+        </div>
 
-          {/* Primary action */}
-          <div className="pt-2">
-            {selectedFormat === "code-to-clipboard" && (
-              <Button
-                className="w-full bg-primary text-primary-foreground hover:opacity-90"
-                onClick={handlePrimaryAction}
-              >
-                <HugeiconsIcon icon={Download01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2 shrink-0" />
-                Copy code to clipboard
-              </Button>
+        {/* Sticky footer */}
+        <div className="shrink-0 border-t border-border p-5 space-y-3">
+          {selectedFormat === "build-with-ai" && (
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Copies a fully-formed prompt—with your design's code and build
+              steps—ready to paste into any AI tool.
+            </p>
+          )}
+          <Button
+            className={cn(
+              "w-full font-medium gap-2",
+              selectedFormat === "build-with-ai"
+                ? "bg-primary text-primary-foreground hover:opacity-90"
+                : "bg-foreground text-background hover:opacity-90 dark:bg-primary dark:text-primary-foreground"
             )}
-            {selectedFormat === "prompt-export" && (
-              <Button
-                className="w-full bg-primary text-primary-foreground hover:opacity-90"
-                onClick={handlePrimaryAction}
-              >
-                <HugeiconsIcon icon={DocumentCodeIcon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2 shrink-0" />
-                Export prompt & code
-              </Button>
+            onClick={handlePrimaryAction}
+          >
+            <HugeiconsIcon
+              icon={cta.icon}
+              size={15}
+              color="currentColor"
+              strokeWidth={1.75}
+              className="shrink-0"
+            />
+            {cta.label}
+            {cta.trailingIcon && (
+              <HugeiconsIcon
+                icon={cta.trailingIcon}
+                size={15}
+                color="currentColor"
+                strokeWidth={1.75}
+                className="shrink-0 ml-auto"
+              />
             )}
-            {selectedFormat === "build-with-ai" && (
-              <Button
-                className="w-full bg-primary text-primary-foreground hover:opacity-90"
-                onClick={handlePrimaryAction}
-              >
-                <HugeiconsIcon icon={SparklesIcon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2 shrink-0" />
-                Build with AI
-                <HugeiconsIcon icon={ArrowRight01Icon} size={16} color="currentColor" strokeWidth={1.75} className="ml-2 shrink-0" />
-              </Button>
-            )}
-          </div>
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

@@ -77,7 +77,7 @@ const FlexibleAppSchema = z.object({
 
 // Fast model for analysis, quality model for generation
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+const QUALITY_MODEL = "google/gemini-3-pro-preview";
 
 export const generateScreens = inngest.createFunction(
   { id: "generate-ui-screens" },
@@ -119,25 +119,29 @@ export const generateScreens = inngest.createFunction(
         },
       });
 
-      // For existing generation, only use compact context, not full HTML
-      const contextSummary = isExistingGeneration
-        ? `Existing app with ${frames.length} screens. Theme: ${existingTheme}. 
-           Screen names: ${frames.map((f: FrameType) => f.title).join(", ")}.
-           Maintain exact same navigation, design patterns, and visual style.`
-        : "";
-
       const analysisPrompt = isExistingGeneration
         ? `
           USER REQUEST: ${prompt}
           SELECTED THEME: ${existingTheme}
 
-          ${contextSummary}
+          EXISTING SCREENS (already built — DO NOT include these in your output):
+          ${frames.map((f: FrameType, i: number) => `  ${i + 1}. ${f.title}`).join("\n")}
 
-         CRITICAL REQUIREMENTS - MAINTAIN DETAILED CONTEXT:
-          - Generate NEW screens that seamlessly blend with existing ones
-          - Match the navigation patterns and design system already established
-          - Context awareness: Each new screen must maintain consistency with ALL previous screens
-          - Design system: All screens must share the same design language and component patterns
+          ═══════════════════════════════════════════════════════════════
+          CRITICAL: OUTPUT ONLY THE SCREENS THE USER IS REQUESTING NOW
+          ═══════════════════════════════════════════════════════════════
+          - The existing screens above are ALREADY in the app. Do NOT re-list or regenerate them.
+          - ONLY output the NEW screens the user is asking for in this request.
+          - Set totalScreenCount to the number of NEW screens only (not the total app count).
+          - If the user asks for "login and signup", output exactly 2 screens.
+          - Match the navigation patterns, visual style, and design system of the existing screens.
+          ${
+            requestedScreenCount != null
+              ? `
+          MANDATORY: The user explicitly asked for exactly ${requestedScreenCount} screen(s). Output exactly ${requestedScreenCount} new screen(s). No more.
+          `
+              : ""
+          }
         `.trim()
         : `
           USER REQUEST: ${prompt}
@@ -145,29 +149,33 @@ export const generateScreens = inngest.createFunction(
           =====================================================
           CRITICAL: READ THE USER'S REQUEST CAREFULLY
           =====================================================
-          
+
           ANALYZE THE USER'S PROMPT TO DETERMINE:
-          1. How many screens they want (look for numbers like "4 screens", "12 screens", "6 screens", etc.)
-          2. What type of screens they need (specific features vs complete app)
-          3. Whether they mentioned onboarding, authentication, or specific flows
-          
+          1. How many screens they want (look for explicit numbers like "4 screens", "6 screens", etc.)
+          2. Whether they named specific screens or flows
+          3. Whether they explicitly asked for onboarding, login, signup, or auth flows
+
           RULES FOR SCREEN GENERATION:
-          - If user specifies a number (e.g., "4 screens", "12 screens"), generate EXACTLY that many
-          - If user asks for specific screens (e.g., "login and home screen"), generate only those
-          - If user asks for a "complete app" without specifying count, generate 12-18 screens with:
-            * Onboarding (2-3 screens) if appropriate for the app type
-            * Authentication (login, signup) if the app needs user accounts
-            * Core feature screens (the main functionality)
-            * Supporting screens (profile, settings) if relevant
+          - If user specifies an exact number (e.g., "4 screens", "6 screens"), generate EXACTLY that many
+          - If user names specific screens (e.g., "dashboard and profile"), generate only those
           - If user asks for "single screen" or "one screen", generate exactly 1 screen
-          
-          FLEXIBILITY IS KEY:
-          - NOT all apps need onboarding (e.g., utility apps, calculators)
-          - NOT all apps need authentication (e.g., weather apps, converters)
-          - Focus on what the user ACTUALLY requested
-          - Don't force a structure that doesn't fit the request
-          
-          Set totalScreenCount based on the user's actual request, not a predetermined formula.
+
+          DEFAULT (no count or specific screens mentioned): generate 3-4 CORE screens ONLY:
+            * Screen 1: The primary home / dashboard screen (the first screen users see after launch)
+            * Screen 2-3: The 2–3 screens reachable directly from the bottom navigation or primary nav
+            * Screen 4 (optional): One additional core-feature screen if clearly implied by the prompt
+            * STOP there — do NOT pad with extra screens
+
+          STRICT EXCLUSIONS (unless the user explicitly mentions them in the prompt):
+            ✗ NO onboarding screens
+            ✗ NO splash/welcome screens
+            ✗ NO login or signup screens
+            ✗ NO authentication flows
+            ✗ NO settings or profile screens
+            ✗ NO "supporting" or utility screens
+
+          Users can always generate additional screens later via the AI chat. Start lean.
+
           ${
             requestedScreenCount != null
               ? `
@@ -360,30 +368,40 @@ export const generateScreens = inngest.createFunction(
             i === 0
               ? `
           **FIRST SCREEN - ESTABLISH DESIGN DNA:**
-          You are creating the FOUNDATION for all subsequent screens. Every decision you make here will be replicated:
+          You are creating the FOUNDATION for all subsequent screens. Every decision you make here will be replicated EXACTLY:
           - Typography hierarchy (heading sizes, body text, captions)
           - Spacing system (padding, margins, gaps)
           - Component patterns (cards, buttons, inputs)
           - Navigation pattern (bottom nav for main screens - use 5 icons consistently)
           - Icon choices (these EXACT icons will be used on ALL screens)
           - Visual style (shadows, borders, glass effects)
-          
+
           Make deliberate, professional choices that will scale across 20+ screens.
           The navigation icons you choose here are LOCKED for the entire app.
+
+          **BOTTOM NAV CONTRACT (LOCKED AFTER THIS SCREEN):**
+          The bottom navigation bar you create here becomes the IMMUTABLE template.
+          - Choose exactly 5 icons with appropriate Hugeicons names
+          - Use: fixed bottom-6 left-6 right-6, h-16, z-30, rounded-full
+          - Background: bg-[var(--card)]/80 backdrop-blur-xl shadow-2xl border border-[var(--border)]/50
+          - Active: text-[var(--primary)] + drop-shadow-[0_0_4px_var(--primary)]
+          - Inactive: text-[var(--muted-foreground)]
+          - Every subsequent screen will copy this EXACTLY — only the active icon changes.
           `
               : `
           **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${analysisToUse.screens.length}):**
           This screen MUST be indistinguishable in style from previous screens.
-          
+
           MANDATORY REQUIREMENTS:
-          1. NAVIGATION: Copy EXACTLY from Component Registry - same icons, same order, same styling
+          1. BOTTOM NAV: Copy the EXACT same bottom navigation bar from Screen 1 — same icons, same order, same styling, same dimensions. ONLY change which icon is active for this screen.
           2. ICONS: Use ONLY the icons from Icon Lock - NO substitutions allowed
           3. TYPOGRAPHY: Same heading sizes, font weights, text colors
           4. SPACING: Same padding, margins, gaps as previous screens
           5. COMPONENTS: Same card, button, input styling
-          6. Only the CONTENT changes - the VISUAL FRAMEWORK stays IDENTICAL
-          
-          ⚠️ If you change navigation icons or styling, the app will look broken.
+          6. THEME: Same colors, same CSS variables usage — no alternate palettes or opacity changes
+          7. Only the CONTENT changes - the VISUAL FRAMEWORK stays IDENTICAL
+
+          ⚠️ If you change the bottom navigation bar (icons, order, style, layout) or the theme, the app will look broken. This is the #1 consistency rule.
           `
           }
 

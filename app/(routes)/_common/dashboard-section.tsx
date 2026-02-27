@@ -242,7 +242,8 @@ const DashboardSection = () => {
                   )}
                 >
                   Mobile App
-                </button>
+								</button>
+								
                 <button
                   type="button"
                   onClick={() => setDeviceType("web")}

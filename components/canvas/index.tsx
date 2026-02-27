@@ -269,30 +269,34 @@ const Canvas = ({
           minScale={0.1}
           maxScale={3}
           wheel={{
-            step: 0.15,
-            smoothStep: 0.008,
+            // Fine-grained step so trackpad zoom feels like Figma/Stitch (not jumpy)
+            step: 0.04,
+            smoothStep: 0.004,
             wheelDisabled: false,
             touchPadDisabled: false,
           }}
           pinch={{
-            step: 0.02,
+            // Higher step = more responsive pinch-to-zoom on trackpad/touch
+            step: 8,
           }}
           doubleClick={{ disabled: true }}
           centerZoomedOut={false}
           centerOnInit={false}
-          smooth={true}
+          smooth={false}
           limitToBounds={false}
           panning={{
             disabled: false,
+            // In SELECT mode: only trackpad two-finger pan (wheelPanning).
+            // In HAND mode: also allow click-drag.
             allowLeftClickPan: toolMode === TOOL_MODE_ENUM.HAND,
+            // Two-finger trackpad drag dispatches wheel events without ctrlKey → pan.
+            // Pinch / ctrl+wheel → zoom. This is the Figma/Stitch pattern.
             wheelPanning: true,
-            velocityDisabled: false,
+            // Disable momentum so the canvas stops the instant you lift fingers.
+            velocityDisabled: true,
           }}
           velocityAnimation={{
-            disabled: false,
-            sensitivity: 1,
-            animationTime: 250,
-            animationType: "easeOutCubic",
+            disabled: true,
           }}
           onTransformed={(ref) => {
             setZoomPercent(Math.round(ref.state.scale * 100));

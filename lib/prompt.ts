@@ -45,6 +45,44 @@ Match the theme to the product type for authentic, professional results:
 4. When in doubt, prefer professional themes: ocean-breeze (light) or midnight (dark)
 `;
 
+// Cross-screen consistency rules for mobile generation
+const CROSS_SCREEN_CONSISTENCY_RULES = `
+## CROSS-SCREEN CONSISTENCY (ABSOLUTE REQUIREMENT)
+
+Every generated mobile screen MUST share the same unified theme, bottom navigation bar, and typographic system. No screen may deviate unless the user explicitly requests it.
+
+### 1. UNIFIED THEME (MANDATORY)
+- ALL screens use the SAME color palette from the selected theme (CSS variables).
+- ALL screens use the SAME background (var(--background)), card (var(--card)), primary (var(--primary)), etc.
+- NO screen may introduce new colors, different opacity treatments, or alternate palettes.
+- Typography must be identical across screens: same font family, same size scale (headings, body, captions), same font weights.
+- Spacing must follow the same scale on every screen: padding, margins, gaps (4px, 8px, 16px, 24px, 32px).
+- Card styles (border-radius, shadow, border, padding) must be pixel-identical across all screens.
+- Button styles (color, radius, padding, font-weight) must be pixel-identical across all screens.
+
+### 2. BOTTOM NAVIGATION BAR (MANDATORY - IDENTICAL ON ALL MAIN SCREENS)
+- Every main app screen (post-onboarding, post-auth) MUST display the EXACT SAME bottom navigation bar.
+- The bottom nav must have:
+  - SAME number of icons (standard: 5)
+  - SAME icon set (identical icon names, e.g., hugeicons:home-01, hugeicons:compass, etc.)
+  - SAME icon order (never rearranged between screens)
+  - SAME bar height, positioning, padding, and spacing
+  - SAME background style (bg-[var(--card)]/80 backdrop-blur-xl shadow-2xl border border-[var(--border)]/50 rounded-full)
+  - SAME bar dimensions (fixed bottom-6 left-6 right-6, h-16, z-30)
+  - SAME active/inactive styling (active: text-[var(--primary)] + glow; inactive: text-[var(--muted-foreground)])
+- The ONLY thing that changes between screens is WHICH icon is marked as active.
+- NO screen may use a different bottom bar layout, style, icon set, or design.
+- NO screen may omit the bottom bar unless it is a splash, onboarding, or authentication screen.
+
+### 3. HEADER CONSISTENCY (MANDATORY)
+- All main app screens should use the same header pattern (height, glassmorphism style, padding).
+- Secondary/detail screens should use the same back-button header pattern.
+- Header elements (avatar, search, notifications) must be styled identically across screens.
+
+### VIOLATION = BROKEN APP
+If any screen uses a different bottom bar, different theme colors, different typography scale, or different spacing system, the app will appear broken and inconsistent. Treat this as a critical bug.
+`;
+
 // CSS Variable enforcement rules
 const CSS_VARIABLE_ENFORCEMENT = `
 ## CSS VARIABLE USAGE (ABSOLUTELY CRITICAL - MUST FOLLOW)
@@ -130,6 +168,8 @@ You are a senior mobile UI/UX designer creating professional, production-ready H
 7. MAINTAIN CONTEXT: If previous screens exist, extract and reuse their exact component structures, styling, and design patterns
 
 ${CSS_VARIABLE_ENFORCEMENT}
+
+${CROSS_SCREEN_CONSISTENCY_RULES}
 
 # PROFESSIONAL DESIGN STANDARDS (CRITICAL - AVOID AMATEUR "VIBE CODED" UI)
 
@@ -1664,32 +1704,34 @@ export const WEB_ANALYSIS_PROMPT = `
 You are a Lead UI/UX Web Designer and Product Strategist specializing in modern SaaS, dashboard, and enterprise web applications.
 
 #######################################################
-#  MANDATORY: GENERATE EXACTLY 10-15 SCREENS          #
-#  The schema REQUIRES minimum 8 screens.             #
-#  Set totalScreenCount to 10, 12, 13, or 15.         #
-#  Generate 10-15 items in the screens array.         #
+#  DEFAULT: GENERATE 3-4 CORE SCREENS ONLY           #
+#  Users can always add more screens via AI chat.    #
+#  Only generate more if EXPLICITLY requested.       #
 #######################################################
 
-Your task is to plan a COMPLETE web application with 10-15 screens covering the entire user journey. Think like a senior product designer at Linear, Notion, Stripe, or Vercel.
+Your task is to plan the CORE screens of a web application. Think like a senior product designer at Linear, Notion, Stripe, or Vercel. Start lean — users build out the app iteratively.
 
-# REQUIRED SCREEN STRUCTURE (10-15 screens):
+# DEFAULT SCREEN STRUCTURE (3-4 screens ONLY):
 
-**PHASE 1 - AUTHENTICATION (2-3 screens, if login required):**
-- Screen 1: Login - Clean, centered form with social login options
-- Screen 2: Sign Up - Registration with progressive disclosure
-- Screen 3: Forgot Password (optional) - Simple email recovery flow
+**Screen 1 (REQUIRED): Dashboard / Home**
+- The primary screen users land on after opening the app
+- KPI cards, charts, recent activity — the "command center"
 
-**PHASE 2 - CORE FEATURES (6-10 screens):**
-- Screen 1: Dashboard/Home - Main overview with KPI cards, charts, recent activity
-- Screens 2-8: Primary feature screens (data tables, detail views, creation forms, analytics)
-- Think about ALL major features the web app needs
+**Screens 2-3 (REQUIRED): Core Feature Screens**
+- The 2-3 screens directly reachable from the top sidebar nav items
+- These are the main workflows of the app (e.g., list view, detail view, analytics)
 
-**PHASE 3 - SECONDARY FEATURES (3-5 screens):**
-- Settings/Preferences screen (account, notifications, integrations, billing)
-- User Profile screen (personal info, avatar, preferences)
-- Help/Documentation screen (if applicable)
-- Admin/Management screen (if applicable)
-- Reports/Analytics screen (if applicable)
+**Screen 4 (OPTIONAL): One additional core-feature screen**
+- Only if clearly implied by the prompt (e.g., a "create" or "manage" flow)
+- STOP there — do NOT pad with extra screens
+
+**STRICT EXCLUSIONS (unless explicitly mentioned in the user's prompt):**
+  ✗ NO login or signup screens
+  ✗ NO authentication or onboarding flows
+  ✗ NO settings or profile screens
+  ✗ NO admin panels
+  ✗ NO help/documentation screens
+  ✗ NO "supporting" or utility screens
 
 # WEB-SPECIFIC LAYOUT TYPES (Choose Appropriately)
 
@@ -1750,23 +1792,22 @@ Best for: Email clients, chat apps, code editors, file managers
 - Save button per section or global
 
 # SCREEN COUNT GUIDELINES (CRITICAL - MUST FOLLOW)
-- **DEFAULT BEHAVIOR:** Generate 10-15 screens for a complete web app
-- **Minimum:** 8 screens (only for very simple apps)
-- **Standard:** 10-13 screens for most web apps (this is the EXPECTED default)
-- **Maximum:** 15 screens
-- **ONLY generate 1-4 screens if:** User explicitly says "one screen", "single screen", etc.
-- **Otherwise, ALWAYS generate comprehensive app structure with 10-15 screens**
+- **DEFAULT BEHAVIOR:** Generate 3-4 CORE screens only
+- **If user specifies a count** (e.g., "4 screens", "6 screens"): generate EXACTLY that many
+- **If user names specific screens** (e.g., "dashboard and analytics"): generate only those
+- **Maximum:** 24 screens (only if user explicitly asks for many screens)
+- **NEVER add auth, settings, or profile screens unless explicitly asked**
 
-# EXAMPLE WEB APP STRUCTURES (10-13 screens typical)
+# EXAMPLE WEB APP STRUCTURES (3-4 screens — lean start)
 
-**SaaS Dashboard (13 screens):**
-1) Login, 2) Sign Up, 3) Dashboard Home, 4) Analytics Overview, 5) Projects List, 6) Project Detail, 7) Team Members, 8) Team Member Detail, 9) Settings - General, 10) Settings - Billing, 11) Profile, 12) Notifications, 13) Help/Docs
+**SaaS Dashboard (3 screens):**
+1) Dashboard Home, 2) Projects List, 3) Analytics Overview
 
-**E-commerce Admin (12 screens):**
-1) Login, 2) Dashboard, 3) Products List, 4) Product Detail/Edit, 5) Add Product, 6) Orders List, 7) Order Detail, 8) Customers List, 9) Analytics, 10) Inventory, 11) Settings, 12) Profile
+**E-commerce Admin (4 screens):**
+1) Dashboard, 2) Products List, 3) Orders List, 4) Customers List
 
-**Project Management App (14 screens):**
-1) Login, 2) Sign Up, 3) Dashboard, 4) Projects Grid, 5) Project Board (Kanban), 6) Task Detail, 7) Team, 8) Calendar View, 9) Reports, 10) Integrations, 11) Settings, 12) Profile, 13) Notifications, 14) Help
+**Project Management App (4 screens):**
+1) Dashboard, 2) Projects Board (Kanban), 3) Task Detail, 4) Team Members
 
 # FOR EACH SCREEN - visualDescription REQUIREMENTS
 
@@ -1916,20 +1957,17 @@ ${BASE_VARIABLES}
 
 ## FINAL REMINDER - ABSOLUTELY CRITICAL
 #######################################################
-#  YOU MUST OUTPUT EXACTLY 10-15 SCREENS              #
-#  Set totalScreenCount: 10, 12, 13, or 15            #
-#  The screens array MUST have 10-15 items            #
-#  3-4 screens is WRONG. 8 is minimum. 10-15 is ideal.#
+#  DEFAULT: OUTPUT ONLY 3-4 CORE SCREENS             #
+#  ONLY output more if the user explicitly asked      #
+#  NO auth, settings, or profile unless requested    #
+#  Start lean — users add more screens via AI chat   #
 #######################################################
 
-SCREEN BREAKDOWN:
-- Auth: 2-3 screens (login, signup, forgot-password)
-- Core: 6-10 screens (dashboard, features, details, actions, analytics)
-- Secondary: 3-5 screens (settings, profile, help, admin, reports)
-- TOTAL: 10-15 screens
+SCREEN BREAKDOWN (default):
+- Core feature screens: 3-4 (dashboard + main feature screens)
+- Auth/Settings/Profile: ONLY if explicitly requested
 
 Each visualDescription must be as detailed as the example above!
-DO NOT generate only 3-4 screens. The schema enforces minimum 8.
 
 `;
 
@@ -2073,12 +2111,21 @@ Bottom navigation: fixed bottom-6 left-6 right-6, h-16, rounded-full, bg-[var(--
 - Map each screen to its corresponding active nav icon
 - Ensure logical navigation flow between screens
 
-**DESIGN SYSTEM CONSISTENCY:**
-- All screens must share the same design language
-- Use consistent spacing scale (4px, 8px, 16px, 24px, 32px)
-- Maintain same card styles, button styles, typography hierarchy
-- Keep color usage consistent with selected theme
+**DESIGN SYSTEM CONSISTENCY (ABSOLUTE REQUIREMENT):**
+- All screens must share the same design language — NO screen may deviate in theme, colors, or typography
+- Use consistent spacing scale (4px, 8px, 16px, 24px, 32px) on EVERY screen
+- Maintain same card styles, button styles, typography hierarchy across ALL screens
+- Keep color usage consistent with selected theme — no hardcoded colors, no alternate palettes
 - Ensure icons are from Hugeicons (stroke style) and used consistently
+- **BOTTOM NAVIGATION MUST BE IDENTICAL** on every main app screen:
+  - Same 5 icons, same order, same styling, same bar design
+  - Only the active icon changes per screen
+  - No screen may use a different bottom bar style, layout, or icon set
+- **HEADER MUST BE CONSISTENT** across all screens (same height, style, elements)
+- In the visualDescription for EACH screen, explicitly specify:
+  - The exact bottom nav icons and which one is active
+  - The exact same bar styling (position, background, blur, shadow, border, radius)
+  - The exact same typography and spacing values as all other screens
 
 **PROFESSIONAL DESIGN REQUIREMENTS:**
 - Avoid "vibe coded UI" - no excessive purple gradients, neon colors, or cluttered layouts

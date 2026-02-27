@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     if (!prompt) throw new Error("Missing Prompt");
 
     const userId = user.id;
-    const selectedModel = model || "google/gemini-3.1-pro-preview";
+    const selectedModel = model || "google/gemini-3-pro-preview";
 
     // Check and deduct credits (1 credit for landing page submit)
     const creditCost = 1.0;

@@ -50,7 +50,7 @@ const DesignTreeAnalysisSchema = z.object({
 
 // Fast model for analysis, quality model for generation
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+const QUALITY_MODEL = "google/gemini-3-pro-preview";
 
 /**
  * Add required properties and IDs to a node recursively
@@ -381,6 +381,8 @@ export const generateDesignTree = inngest.createFunction(
             - Spacing: Use 4/8/12/16/24/32 scale consistently
             - Colors: Use CSS variables from theme
             - Layout patterns: Establish navigation and component patterns
+            - Bottom navigation: Choose exactly 5 icons — these become LOCKED for all screens
+            - The bottom nav bar style, icon set, and layout you create here is IMMUTABLE
             `
                 : `
             **MAINTAIN DESIGN DNA (CRITICAL):**
@@ -390,7 +392,10 @@ export const generateDesignTree = inngest.createFunction(
             - Spacing scale
             - Color usage patterns
             - Component styles (buttons, cards, inputs)
-            - Navigation structure (if applicable)
+            - Navigation structure: EXACT same bottom nav bar — same icons, same order, same style. Only change the active icon.
+            - Theme colors: same palette, same CSS variables — no deviation
+
+            ⚠️ Changing the bottom navigation bar or theme between screens = broken app design.
             `
             }
 
@@ -575,6 +580,8 @@ export const regenerateDesignTreeFrame = inngest.createFunction(
           1. PRESERVE the overall structure - ONLY modify what the user explicitly requested
           2. Keep all existing components that are NOT mentioned in the user request
           3. Maintain the exact same design patterns and styling
+          4. BOTTOM NAV PRESERVATION: The bottom navigation bar must remain IDENTICAL — same icons, same order, same style. Do NOT alter it unless the user explicitly asks.
+          5. THEME PRESERVATION: Keep the exact same theme colors, typography, and spacing throughout.
 
           Generate the updated Design Tree JSON.
           Output ONLY valid JSON, starting with { and ending with }.

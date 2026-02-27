@@ -15,7 +15,7 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const { frameId, prompt } = await request.json();
+    const { frameId, prompt, model } = await request.json();
 
     if (!frameId || !prompt) {
       return NextResponse.json(
@@ -28,19 +28,14 @@ export async function POST(
         id: projectId,
         userId: user.id,
       },
+      include: { frames: true },
     });
 
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    const frame = await prisma.frame.findFirst({
-      where: {
-        id: frameId,
-        projectId: projectId,
-      },
-    });
-
+    const frame = project.frames.find((f) => f.id === frameId);
     if (!frame) {
       return NextResponse.json({ error: "Frame not found" }, { status: 404 });
     }
@@ -90,6 +85,8 @@ export async function POST(
         prompt: prompt,
         theme: project.theme,
         frame: frame,
+        allFrames: project.frames,
+        ...(model && { model }),
       },
     });
 

@@ -39,7 +39,7 @@ export const useCreateProject = () => {
         .post("/api/project", {
           prompt: data.prompt,
           model:
-            getGenerationModel(data.model) || "google/gemini-3.1-pro-preview",
+            getGenerationModel(data.model) || "google/gemini-3-pro-preview",
           deviceType: data.deviceType || "mobile",
           wireframeKind:
             data.deviceType === "wireframe"

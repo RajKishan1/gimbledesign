@@ -993,7 +993,7 @@ export async function POST(request: Request) {
       : userText;
     originalPrompt = combinedInput;
 
-    const selectedModel = model || "google/gemini-3.1-pro-preview";
+    const selectedModel = model || "google/gemini-3-pro-preview";
 
     // Get the appropriate enhancement prompt based on design type
     const enhancementPrompt = getEnhancementPrompt(designType);

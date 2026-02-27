@@ -83,7 +83,7 @@ const InspirationAnalysisSchema = z.object({
 });
 
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+const QUALITY_MODEL = "google/gemini-3-pro-preview";
 
 export const generateInspirationVariations = inngest.createFunction(
   { id: "generate-inspiration-variations" },

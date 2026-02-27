@@ -64,22 +64,22 @@ const FlexibleAppSchema = z.object({
   totalScreenCount: z
     .number()
     .min(1)
-    .max(20)
+    .max(24)
     .describe(
-      "Exact number of screens requested by user or appropriate for the app scope.",
+      "Number of screens to generate. Default is 3-4 unless user explicitly requested more.",
     ),
   screens: z
     .array(ScreenSchema)
     .min(1)
-    .max(20)
+    .max(24)
     .describe(
-      "Screens matching the user's request. Generate the exact number and types of screens they asked for.",
+      "Screens to generate. Default 3-4 core screens only. Generate more ONLY if user explicitly requested a specific count or named specific screens.",
     ),
 });
 
 // Fast model for analysis, quality model for generation
 const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+const QUALITY_MODEL = "google/gemini-3-pro-preview";
 
 export const generateWebScreens = inngest.createFunction(
   { id: "generate-web-screens" },
@@ -121,24 +121,29 @@ export const generateWebScreens = inngest.createFunction(
         },
       });
 
-      const contextSummary = isExistingGeneration
-        ? `Existing web app with ${frames.length} screens. Theme: ${existingTheme}. 
-           Screen names: ${frames.map((f: FrameType) => f.title).join(", ")}.
-           Maintain exact same sidebar, navigation, design patterns, and visual style.`
-        : "";
-
       const analysisPrompt = isExistingGeneration
         ? `
           USER REQUEST: ${prompt}
           SELECTED THEME: ${existingTheme}
 
-          ${contextSummary}
+          EXISTING SCREENS (already built — DO NOT include these in your output):
+          ${frames.map((f: FrameType, i: number) => `  ${i + 1}. ${f.title}`).join("\n")}
 
-         CRITICAL REQUIREMENTS - MAINTAIN DETAILED CONTEXT:
-          - Generate NEW screens that seamlessly blend with existing ones
-          - Match the sidebar navigation and design system already established
-          - Context awareness: Each new screen must maintain consistency with ALL previous screens
-          - Design system: All screens must share the same design language and component patterns
+          ═══════════════════════════════════════════════════════════════
+          CRITICAL: OUTPUT ONLY THE SCREENS THE USER IS REQUESTING NOW
+          ═══════════════════════════════════════════════════════════════
+          - The existing screens above are ALREADY in the app. Do NOT re-list or regenerate them.
+          - ONLY output the NEW screens the user is asking for in this request.
+          - Set totalScreenCount to the number of NEW screens only (not the total app count).
+          - If the user asks for "login and signup", output exactly 2 screens.
+          - Match the sidebar navigation, visual style, and design system of the existing screens.
+          ${
+            requestedScreenCount != null
+              ? `
+          MANDATORY: The user explicitly asked for exactly ${requestedScreenCount} screen(s). Output exactly ${requestedScreenCount} new screen(s). No more.
+          `
+              : ""
+          }
         `.trim()
         : `
           USER REQUEST: ${prompt}
@@ -146,29 +151,32 @@ export const generateWebScreens = inngest.createFunction(
           =====================================================
           CRITICAL: READ THE USER'S REQUEST CAREFULLY
           =====================================================
-          
+
           ANALYZE THE USER'S PROMPT TO DETERMINE:
-          1. How many screens they want (look for numbers like "4 screens", "12 screens", "6 screens", etc.)
-          2. What type of screens they need (specific features vs complete app)
-          3. Whether they mentioned authentication, dashboard, or specific flows
-          
+          1. How many screens they want (look for explicit numbers like "4 screens", "6 screens", etc.)
+          2. Whether they named specific screens or sections
+          3. Whether they explicitly asked for login, signup, or auth flows
+
           RULES FOR SCREEN GENERATION:
-          - If user specifies a number (e.g., "4 screens", "12 screens"), generate EXACTLY that many
-          - If user asks for specific screens (e.g., "dashboard and analytics"), generate only those
-          - If user asks for a "complete web app" without specifying count, generate 8-15 screens with:
-            * Authentication (login, signup) if the app needs user accounts
-            * Dashboard/Home as the main screen
-            * Core feature screens (the main functionality)
-            * Supporting screens (settings, profile, admin) if relevant
+          - If user specifies an exact number (e.g., "4 screens", "6 screens"), generate EXACTLY that many
+          - If user names specific screens (e.g., "dashboard and analytics"), generate only those
           - If user asks for "single screen" or "one screen", generate exactly 1 screen
-          
-          FLEXIBILITY IS KEY:
-          - NOT all web apps need authentication (e.g., landing pages, documentation sites)
-          - NOT all web apps need admin panels
-          - Focus on what the user ACTUALLY requested
-          - Don't force a structure that doesn't fit the request
-          
-          Set totalScreenCount based on the user's actual request, not a predetermined formula.
+
+          DEFAULT (no count or specific screens mentioned): generate 3-4 CORE screens ONLY:
+            * Screen 1: The primary dashboard / home screen (the main view users land on)
+            * Screen 2-3: The 2–3 screens directly reachable from the top navbar or sidebar nav
+            * Screen 4 (optional): One additional core-feature screen if clearly implied by the prompt
+            * STOP there — do NOT pad with extra screens
+
+          STRICT EXCLUSIONS (unless the user explicitly mentions them in the prompt):
+            ✗ NO login or signup screens
+            ✗ NO authentication or onboarding flows
+            ✗ NO admin panels (unless explicitly requested)
+            ✗ NO settings or profile screens
+            ✗ NO "supporting" or utility screens
+
+          Users can always generate additional screens later via the AI chat. Start lean.
+
           ${
             requestedScreenCount != null
               ? `
