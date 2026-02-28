@@ -9,16 +9,10 @@ import {
 } from "./ui/input-group";
 import {
   ChevronDownIcon,
-  Smartphone,
-  Globe,
-  Sparkles,
   Paperclip,
   Check,
   Zap,
-  Lightbulb,
-  ArrowUp,
   ArrowRight,
-  Layout,
 } from "lucide-react";
 import { Spinner } from "./ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -32,25 +26,6 @@ import { useState, useRef } from "react";
 export type DeviceType = "mobile" | "web" | "inspirations" | "wireframe";
 
 export type WireframeKind = "web" | "mobile";
-
-const DESIGN_TYPES: {
-  value: DeviceType;
-  label: string;
-  icon: React.ReactNode;
-}[] = [
-  { value: "mobile", label: "Mobile", icon: <Smartphone className="size-4" /> },
-  { value: "web", label: "Website", icon: <Globe className="size-4" /> },
-  {
-    value: "inspirations",
-    label: "Inspirations",
-    icon: <Lightbulb className="size-4" />,
-  },
-  {
-    value: "wireframe",
-    label: "Wireframe",
-    icon: <Layout className="size-4" />,
-  },
-];
 
 interface PropsType {
   promptText: string;
@@ -106,24 +81,7 @@ const PromptInput = ({
     onModelChange?.(modelId);
   };
 
-  const handleTypeSelect = (type: DeviceType) => {
-    onDeviceTypeChange?.(type);
-  };
-
-  const handleWireframeKindSelect = (kind: WireframeKind) => {
-    onWireframeKindChange?.(kind);
-  };
-
-  const handleInspirationKindSelect = (kind: WireframeKind) => {
-    onInspirationKindChange?.(kind);
-  };
-
   const selectedModelName = getModelName(selectedModel);
-  const selectedTypeLabel =
-    DESIGN_TYPES.find((t) => t.value === deviceType)?.label ?? "Mobile";
-  const selectedTypeIcon = DESIGN_TYPES.find(
-    (t) => t.value === deviceType
-  )?.icon;
 
   const handleAttachClick = () => {
     fileInputRef.current?.click();
@@ -197,7 +155,7 @@ const PromptInput = ({
               </button>
             )}
 
-            {/* Type + Model popover (filter) */}
+            {/* Model-only popover */}
             <Popover
               open={isFilterOpen}
               onOpenChange={(open) => {
@@ -210,125 +168,12 @@ const PromptInput = ({
                   type="button"
                   className="flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md border border-transparent hover:border-border transition-colors"
                 >
-                  <span className="flex items-center gap-1.5">
-                    {selectedTypeIcon}
-                    <span>{selectedTypeLabel}</span>
-                  </span>
-                  <span className="text-muted-foreground/70">·</span>
-                  <span className="flex items-center gap-1.5">
-                    <Zap className="size-4" />
-                    <span>{selectedModelName}</span>
-                  </span>
+                  <Zap className="size-4" />
+                  <span>{selectedModelName}</span>
                   <ChevronDownIcon className="size-4" />
                 </button>
               </PopoverTrigger>
               <PopoverContent align="start" className="w-72 p-0" sideOffset={8}>
-                <div className="p-3 border-b border-border">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Type
-                  </p>
-                  <div className="mt-2 space-y-0.5">
-                    {DESIGN_TYPES.map((type) => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => handleTypeSelect(type.value)}
-                        className={cn(
-                          "w-full flex items-center gap-2 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
-                          deviceType === type.value
-                            ? "bg-accent text-accent-foreground"
-                            : "hover:bg-accent text-foreground"
-                        )}
-                      >
-                        {type.icon}
-                        <span>{type.label}</span>
-                        {deviceType === type.value && (
-                          <Check className="size-4 ml-auto text-primary" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  {deviceType === "wireframe" && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        Wireframe
-                      </p>
-                      <div className="flex gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleWireframeKindSelect("web")}
-                          className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
-                            wireframeKind === "web"
-                              ? "bg-accent text-accent-foreground"
-                              : "hover:bg-accent text-foreground"
-                          )}
-                        >
-                          <Globe className="size-4" />
-                          Web
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleWireframeKindSelect("mobile")}
-                          className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
-                            wireframeKind === "mobile"
-                              ? "bg-accent text-accent-foreground"
-                              : "hover:bg-accent text-foreground"
-                          )}
-                        >
-                          <Smartphone className="size-4" />
-                          Mobile
-                        </button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1.5">
-                        {wireframeKind === "web"
-                          ? "One responsive design shown at 3 sizes"
-                          : "One mobile-only screen"}
-                      </p>
-                    </div>
-                  )}
-                  {deviceType === "inspirations" && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                        Inspiration
-                      </p>
-                      <div className="flex gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleInspirationKindSelect("web")}
-                          className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
-                            inspirationKind === "web"
-                              ? "bg-accent text-accent-foreground"
-                              : "hover:bg-accent text-foreground"
-                          )}
-                        >
-                          <Globe className="size-4" />
-                          Web
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleInspirationKindSelect("mobile")}
-                          className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 text-sm font-medium rounded-md transition-colors",
-                            inspirationKind === "mobile"
-                              ? "bg-accent text-accent-foreground"
-                              : "hover:bg-accent text-foreground"
-                          )}
-                        >
-                          <Smartphone className="size-4" />
-                          Mobile
-                        </button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1.5">
-                        {inspirationKind === "web"
-                          ? "Four variations at web size (1440×900)"
-                          : "Four variations at mobile size (393×852)"}
-                      </p>
-                    </div>
-                  )}
-                </div>
                 <div className="p-3">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <Zap className="size-3.5" />

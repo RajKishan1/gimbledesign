@@ -609,7 +609,33 @@ const LandingSection = () => {
                 className="flex w-full flex-col
             item-center gap-8 relative "
               >
-                <div className="w-full mt-6.5">
+                <div className="w-full mt-6.5 flex flex-col items-center gap-3">
+                  <div className="flex rounded-lg bg-muted p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setDeviceType("mobile")}
+                      className={cn(
+                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                        deviceType === "mobile"
+                          ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Mobile
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeviceType("web")}
+                      className={cn(
+                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                        deviceType === "web"
+                          ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Web
+                    </button>
+                  </div>
                   <PromptInput
                     className=""
                     promptText={promptText}

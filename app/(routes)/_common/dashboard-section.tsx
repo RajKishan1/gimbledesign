@@ -22,7 +22,7 @@ import { useGetProfile } from "@/features/use-profile";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   FolderOpenDotIcon,
   MoreVertical,
@@ -85,6 +85,7 @@ const DashboardSection = () => {
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("auto");
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
@@ -98,6 +99,13 @@ const DashboardSection = () => {
     "all"
   );
   const userId = user?.id;
+
+  // When arriving from Mini Tools (?mini=wireframe or ?mini=inspirations), set device type
+  React.useEffect(() => {
+    const mini = searchParams.get("mini");
+    if (mini === "wireframe") setDeviceType("wireframe");
+    else if (mini === "inspirations") setDeviceType("inspirations");
+  }, [searchParams]);
 
   const {
     data: projects,
@@ -235,33 +243,89 @@ const DashboardSection = () => {
                 Bring Your <span className="text-foreground/90">Ideas</span> to
                 Life
               </h1>
-              <div className="flex justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDeviceType("mobile")}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                    deviceType === "mobile"
-                      ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                >
-                  Mobile App
-								</button>
-								
-                <button
-                  type="button"
-                  onClick={() => setDeviceType("web")}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                    deviceType === "web"
-                      ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground bg-accent"
-                  )}
-                >
-                  Web Platform
-                </button>
-              </div>
+              {(deviceType === "wireframe" || deviceType === "inspirations") ? (
+                <div className="w-full max-w-156 mx-auto mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-foreground">
+                      {deviceType === "wireframe" ? "Wireframe" : "Reimagine"}
+                    </span>
+                    <div className="flex rounded-lg bg-muted p-0.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deviceType === "wireframe"
+                            ? setWireframeKind("web")
+                            : setInspirationKind("web")
+                        }
+                        className={cn(
+                          "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
+                          (deviceType === "wireframe"
+                            ? wireframeKind
+                            : inspirationKind) === "web"
+                            ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Web
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deviceType === "wireframe"
+                            ? setWireframeKind("mobile")
+                            : setInspirationKind("mobile")
+                        }
+                        className={cn(
+                          "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
+                          (deviceType === "wireframe"
+                            ? wireframeKind
+                            : inspirationKind) === "mobile"
+                            ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Mobile
+                      </button>
+                    </div>
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    onClick={(e) => {
+                      setDeviceType("mobile");
+                    }}
+                    className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    ← Back to main
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeviceType("mobile")}
+                    className={cn(
+                      "px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                      deviceType === "mobile"
+                        ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground hover:bg-accent"
+                    )}
+                  >
+                    Mobile App
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeviceType("web")}
+                    className={cn(
+                      "px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                      deviceType === "web"
+                        ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground hover:bg-accent"
+                    )}
+                  >
+                    Web Platform
+                  </button>
+                </div>
+              )}
               <div className="w-full">
                 <PromptInput
                   promptText={promptText}

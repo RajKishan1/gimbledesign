@@ -17,6 +17,7 @@ import {
   CompassIcon,
   Brain01Icon,
   Logout01Icon,
+  MagicWand01Icon,
 } from "@hugeicons/core-free-icons";
 import { useGetProfile } from "@/features/use-profile";
 import {
@@ -33,6 +34,7 @@ import { authClient } from "@/lib/auth-client";
 /* Button-style nav items (white/dark rounded blocks) */
 const buttonNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home01Icon, isHugeicon: true },
+  { href: "/mini-tools", label: "Mini Tools", icon: MagicWand01Icon, isHugeicon: true },
   { href: "/explore", label: "Explore", icon: CompassIcon, isHugeicon: true },
   { href: "/profile", label: "Settings", icon: Settings01Icon, isHugeicon: true },
 ];
@@ -56,6 +58,7 @@ export default function DashboardSidebar() {
   const userEmail = user?.email ?? "";
 
   const isDashboardActive = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  const isMiniToolsActive = pathname === "/mini-tools" || pathname.startsWith("/mini-tools/");
   const isExploreActive = pathname === "/explore" || pathname.startsWith("/explore/");
   const isProfileActive = pathname === "/profile" || pathname.startsWith("/profile/");
   const isProjectsActive = pathname === "/projects" || pathname.startsWith("/projects/");
@@ -106,6 +109,8 @@ export default function DashboardSidebar() {
           const isActive =
             item.href === "/dashboard"
               ? isDashboardActive && item.label === "Dashboard"
+              : item.href === "/mini-tools"
+              ? isMiniToolsActive
               : item.href === "/explore"
               ? isExploreActive
               : item.href === "/profile"
