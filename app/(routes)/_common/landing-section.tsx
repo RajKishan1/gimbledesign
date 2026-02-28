@@ -385,6 +385,7 @@ import WhatYouGet from "@/components/landing/WhatYouGet";
 import { getGenerationModel } from "@/constant/models";
 import Lines from "@/components/landing/atoms/Lines";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // Loading state type for the design process
 type LoadingState = "idle" | "enhancing" | "designing";
