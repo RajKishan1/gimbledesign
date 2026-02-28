@@ -12,6 +12,7 @@ import {
   TypeCursorIcon,
   Add01Icon,
   Layers01Icon,
+  Link01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -30,6 +31,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type SetupStatus = "reading" | "enhancing" | "generating" | null;
 
@@ -310,6 +316,9 @@ const DesignSidebar = ({
   const [selectedModel, setSelectedModel] = useState<string>("auto");
   const [variationCount, setVariationCount] = useState<1 | 2 | 3>(1);
   const [attachedImage, setAttachedImage] = useState<{ dataUrl: string; name: string } | null>(null);
+  const [attachedUrl, setAttachedUrl] = useState<string | null>(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlInputValue, setUrlInputValue] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const queryClient = useQueryClient();
@@ -333,6 +342,26 @@ const DesignSidebar = ({
 
   const handleAttachClick = useCallback(() => {
     imageInputRef.current?.click();
+  }, []);
+
+  const handleAddUrl = useCallback(() => {
+    const trimmed = urlInputValue.trim();
+    if (trimmed) {
+      try {
+        new URL(trimmed);
+        setAttachedUrl(trimmed);
+        setUrlInputValue("");
+        setShowUrlInput(false);
+      } catch {
+        // invalid URL, ignore or could toast
+      }
+    }
+  }, [urlInputValue]);
+
+  const clearAttachedUrl = useCallback(() => {
+    setAttachedUrl(null);
+    setShowUrlInput(false);
+    setUrlInputValue("");
   }, []);
 
   const handleImageFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -371,6 +400,7 @@ const DesignSidebar = ({
     const text = promptText.trim();
     setPromptText("");
     setAttachedImage(null);
+    setAttachedUrl(null);
 
     if (selectedFrame) {
       const screenName = `@${selectedFrame.title}`;
@@ -456,22 +486,73 @@ const DesignSidebar = ({
                 />
               </div>
 
-              {/* Input card */}
+              {/* Input card — reference: glowing border, dark card, aligned toolbar */}
               <div className="px-3 pb-3 shrink-0">
-                <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+                <div
+                  className={cn(
+                    "rounded-xl overflow-hidden",
+                    "bg-card border border-border",
+                    "ring-1 ring-pink-500/25 dark:ring-pink-500/40",
+                    "shadow-[0_0_0_1px_rgba(236,72,153,0.12)] dark:shadow-[0_0_0_1px_rgba(236,72,153,0.25)]",
+                    "shadow-lg dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),0_0_20px_rgba(236,72,153,0.08)]"
+                  )}
+                >
                   {/* Attached image preview */}
                   {attachedImage && (
                     <div className="px-3 pt-2.5 flex items-center gap-2">
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-border flex-shrink-0">
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border-2 border-green-500/60 dark:border-green-400/50 shrink-0">
                         <img src={attachedImage.dataUrl} alt="Attachment" className="w-full h-full object-cover" />
                         <button
-                          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity"
+                          className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white hover:bg-black/90 transition-colors"
                           onClick={() => setAttachedImage(null)}
+                          aria-label="Remove attachment"
                         >
-                          <HugeiconsIcon icon={Delete01Icon} size={12} color="white" strokeWidth={2} />
+                          <span className="text-[10px] font-bold leading-none">×</span>
                         </button>
                       </div>
                       <span className="text-xs text-muted-foreground truncate flex-1">{attachedImage.name}</span>
+                    </div>
+                  )}
+
+                  {/* Attached URL chip */}
+                  {attachedUrl && !showUrlInput && (
+                    <div className="px-3 pt-2 flex items-center gap-2">
+                      <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted/80 border border-border max-w-full">
+                        <HugeiconsIcon icon={Link01Icon} size={12} color="currentColor" strokeWidth={1.75} className="text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground truncate flex-1" title={attachedUrl}>{attachedUrl}</span>
+                        <button
+                          type="button"
+                          onClick={clearAttachedUrl}
+                          className="rounded p-0.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
+                          aria-label="Remove URL"
+                        >
+                          <HugeiconsIcon icon={Delete01Icon} size={12} color="currentColor" strokeWidth={2} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* URL input row (when "Add URL" was chosen) */}
+                  {showUrlInput && (
+                    <div className="px-3 pt-2 flex items-center gap-2">
+                      <input
+                        type="url"
+                        placeholder="Paste website URL..."
+                        value={urlInputValue}
+                        onChange={(e) => setUrlInputValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") { e.preventDefault(); handleAddUrl(); }
+                          if (e.key === "Escape") setShowUrlInput(false);
+                        }}
+                        className="flex-1 min-w-0 h-8 rounded-lg border border-border bg-background px-2.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        autoFocus
+                      />
+                      <button type="button" onClick={handleAddUrl} className="h-8 px-2.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:opacity-90">
+                        Add
+                      </button>
+                      <button type="button" onClick={() => { setShowUrlInput(false); setUrlInputValue(""); }} className="h-8 px-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
+                        Cancel
+                      </button>
                     </div>
                   )}
 
@@ -480,7 +561,7 @@ const DesignSidebar = ({
                     placeholder={
                       selectedFrame
                         ? `@${selectedFrame.title} describe changes…`
-                        : "Describe your design…"
+                        : "Describe your design"
                     }
                     value={promptText}
                     onChange={(e) => setPromptText(e.target.value)}
@@ -490,54 +571,82 @@ const DesignSidebar = ({
                         handleGenerate();
                       }
                     }}
-                    className="min-h-[72px] max-h-40 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60 text-sm px-3 pt-3 pb-1"
+                    className="min-h-[72px] max-h-40 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 text-sm px-3 pt-3 pb-1"
                   />
 
-                  {/* Bottom toolbar */}
-                  <div className="flex items-center gap-1.5 px-2 py-2">
-                    {/* + attach */}
-                    <button
-                      type="button"
-                      title="Attach image"
-                      onClick={handleAttachClick}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                    >
-                      <HugeiconsIcon icon={Add01Icon} size={16} color="currentColor" strokeWidth={2} />
-                    </button>
-
-                    {/* Variation count */}
-                    <button
-                      type="button"
-                      title="Variation count"
-                      onClick={cycleVariations}
-                      className="h-7 px-2 rounded-lg flex items-center gap-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                    >
-                      <HugeiconsIcon icon={ImageUpload01Icon} size={13} color="currentColor" strokeWidth={1.75} />
-                      <span className="text-xs font-medium">{variationCount}x</span>
-                    </button>
+                  {/* Bottom toolbar — "+" (left), model (right), send (far right) */}
+                  <div className="flex items-center gap-2 px-3 py-2.5 border-t border-border/80">
+                    {/* "+" attach button with menu (reference: circular, dark, tooltip) */}
+                    <DropdownMenu onOpenChange={(open) => { if (!open) setShowUrlInput(false); }}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted transition-colors border border-transparent hover:border-border shadow-sm"
+                            >
+                              <HugeiconsIcon icon={Add01Icon} size={18} color="currentColor" strokeWidth={2} />
+                            </button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="bg-popover text-popover-foreground border border-border">
+                          Attach a screenshot, sketch or visual inspiration
+                        </TooltipContent>
+                      </Tooltip>
+                      <DropdownMenuContent
+                        align="start"
+                        side="top"
+                        sideOffset={8}
+                        className="w-52 rounded-xl border border-border bg-popover p-1.5 shadow-xl dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+                      >
+                        <DropdownMenuItem
+                          onClick={() => { imageInputRef.current?.click(); }}
+                          className="flex items-center gap-2.5 rounded-lg py-2.5 px-2.5 text-sm cursor-pointer"
+                        >
+                          <HugeiconsIcon icon={ImageUpload01Icon} size={18} color="currentColor" strokeWidth={1.75} />
+                          Upload Files
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setShowUrlInput(true)}
+                          className="flex items-center gap-2.5 rounded-lg py-2.5 px-2.5 text-sm cursor-pointer"
+                        >
+                          <HugeiconsIcon icon={Link01Icon} size={18} color="currentColor" strokeWidth={1.75} />
+                          Website URL
+                        </DropdownMenuItem>
+                        <div className="my-1 h-px bg-border" />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); cycleVariations(); }}
+                          className="w-full flex items-center gap-2.5 rounded-lg py-2.5 px-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        >
+                          <HugeiconsIcon icon={ImageUpload01Icon} size={16} color="currentColor" strokeWidth={1.75} />
+                          <span>Variations: {variationCount}x</span>
+                        </button>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
                     {/* Spacer */}
-                    <div className="flex-1" />
+                    <div className="flex-1 min-w-0" />
 
                     {/* Model selector */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          className="h-7 px-2.5 rounded-lg flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border"
+                          className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border bg-muted/40"
                         >
-                          {currentModelLabel}
-                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-60">
+                          <span className="flex items-center gap-1 truncate">{currentModelLabel}</span>
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-60 shrink-0">
                             <path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuContent align="end" className="w-44 rounded-xl border border-border shadow-xl">
                         {SELECTABLE_MODELS.map((m) => (
                           <DropdownMenuItem
                             key={m.id}
                             onClick={() => handleModelChange(m.id)}
-                            className={cn("text-xs", selectedModel === m.id && "text-primary font-medium")}
+                            className={cn("text-xs rounded-lg", selectedModel === m.id && "text-primary font-medium")}
                           >
                             <span className="flex-1">{m.name}</span>
                             {selectedModel === m.id && (
@@ -548,16 +657,18 @@ const DesignSidebar = ({
                       </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {/* Send button */}
+                    {/* Send / Generate button — subtle 3D raised effect */}
                     <button
                       type="button"
                       disabled={isLoading || !promptText.trim()}
                       onClick={handleGenerate}
                       className={cn(
-                        "w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
+                        "w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0",
+                        "border border-white/10 dark:border-white/5",
+                        "shadow-md hover:shadow-lg active:shadow-sm active:scale-[0.98]",
                         isLoading || !promptText.trim()
-                          ? "bg-muted text-muted-foreground cursor-not-allowed"
-                          : "bg-foreground text-background hover:opacity-85 dark:bg-primary dark:text-primary-foreground"
+                          ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none"
+                          : "bg-foreground text-background hover:opacity-90 dark:bg-primary dark:text-primary-foreground dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
                       )}
                     >
                       {isLoading ? (

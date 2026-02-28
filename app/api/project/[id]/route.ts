@@ -209,21 +209,22 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
-    const { themeId, name } = body;
+    const { themeId, name, isFavorite } = body;
     const session = await getSession(await headers());
     const user = session?.user;
 
     if (!user) throw new Error("Unauthorized");
-    if (!themeId && name === undefined)
+    if (themeId === undefined && name === undefined && isFavorite === undefined)
       return NextResponse.json(
-        { error: "Missing themeId or name" },
+        { error: "Missing themeId, name, or isFavorite" },
         { status: 400 }
       );
 
     const userId = user.id;
-    const data: { theme?: string; name?: string } = {};
+    const data: { theme?: string; name?: string; isFavorite?: boolean } = {};
     if (themeId != null) data.theme = themeId;
     if (typeof name === "string" && name.trim()) data.name = name.trim();
+    if (typeof isFavorite === "boolean") data.isFavorite = isFavorite;
 
     const project = await prisma.project.update({
       where: { id, userId },

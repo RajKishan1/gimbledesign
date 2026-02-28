@@ -150,14 +150,14 @@ const PromptInput = ({
         aria-hidden
         onChange={handleFileChange}
       />
-      <InputGroup
+        <InputGroup
         className={cn(
-          "min-h-39 bg-card rounded-2xl border border-border shadow-sm p-2.5",
+          "min-h-39 max-h-[min(16rem,50vh)] bg-card rounded-2xl border border-border shadow-sm p-2.5 flex flex-col",
           className && className
         )}
       >
         <InputGroupTextarea
-          className="text-base! py-2.5! "
+          className="text-base! py-2.5! min-h-12 max-h-[min(12rem,40vh)] overflow-y-auto"
           placeholder="Describe your design vision..."
           value={promptText}
           onChange={(e) => {

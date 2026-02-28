@@ -28,6 +28,7 @@ model Project {
   height        Int?     // Custom height for inspirations / variable-size designs
   initialPrompt String?  // User's original prompt, shown in design sidebar
   isExplore     Boolean  @default(false) // When true, project is shown on Explore (set by admin only)
+  isFavorite    Boolean  @default(false) // User favorite for quick access
   frames        Frame[]
   chatMessages  ChatMessage[]
 

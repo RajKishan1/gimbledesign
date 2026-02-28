@@ -16,8 +16,17 @@ import {
   Home01Icon,
   CompassIcon,
   Brain01Icon,
+  Logout01Icon,
 } from "@hugeicons/core-free-icons";
 import { useGetProfile } from "@/features/use-profile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGetCredits } from "@/features/use-credits";
 import { authClient } from "@/lib/auth-client";
 
@@ -30,7 +39,7 @@ const buttonNavItems = [
 
 /* Text-only links (no button background) */
 const linkNavItems = [
-  { href: "/dashboard", label: "Projects", icon: FolderOpenIcon, isHugeicon: true },
+  { href: "/projects", label: "Projects", icon: FolderOpenIcon, isHugeicon: true },
   { href: "/FAQ", label: "Support", icon: Message01Icon, isHugeicon: true },
 ];
 
@@ -49,6 +58,7 @@ export default function DashboardSidebar() {
   const isDashboardActive = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const isExploreActive = pathname === "/explore" || pathname.startsWith("/explore/");
   const isProfileActive = pathname === "/profile" || pathname.startsWith("/profile/");
+  const isProjectsActive = pathname === "/projects" || pathname.startsWith("/projects/");
 
   return (
     <aside
@@ -122,24 +132,38 @@ export default function DashboardSidebar() {
         {/* Text-only links */}
         {!isCollapsed && (
           <div className="pt-2 space-y-0.5">
-            {linkNavItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <HugeiconsIcon icon={item.icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            ))}
+            {linkNavItems.map((item) => {
+              const isActive = item.href === "/projects" ? isProjectsActive : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <HugeiconsIcon icon={item.icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
           </div>
         )}
       </nav>
 
-      {/* Bottom: Plan card, Feedback, Account, black bar */}
+      {/* Bottom: Upgrade CTA, Plan card, Feedback, Profile dropdown, black bar */}
       {!isCollapsed && (
         <>
           <div className="border-t border-border px-3 py-4 space-y-2">
+            {/* Upgrade CTA — prominent above plan */}
+            <Link
+              href="/Pricing"
+              className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl font-semibold text-sm bg-primary text-primary-foreground hover:opacity-90 transition-opacity shadow-sm border border-primary/20"
+            >
+              Upgrade
+            </Link>
+
             {/* Plan / Credits card */}
             <Link
               href="/Pricing"
@@ -169,11 +193,60 @@ export default function DashboardSidebar() {
               <span className="text-sm font-medium">Feedback</span>
             </Link>
 
-            {/* Account */}
-            <Link href="/profile" className="block px-3 pt-1 pb-0 rounded-lg hover:bg-accent/50 transition-colors">
-              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Account</p>
-              <p className="text-sm text-muted-foreground truncate mt-0.5">{userEmail || displayName || "Signed in"}</p>
-            </Link>
+            {/* Profile dropdown — like reference: avatar + name, menu with Account, Upgrade, Log out */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-3 w-full p-2.5 rounded-xl bg-card border border-border shadow-sm hover:bg-card/90 transition-colors text-left"
+                >
+                  <Avatar className="h-8 w-8 rounded-full shrink-0 border border-border">
+                    <AvatarImage src={profilePicture} alt={displayName} />
+                    <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                      {displayName ? displayName.slice(0, 2).toUpperCase() : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">
+                    {displayName || "Account"}
+                  </span>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-muted-foreground" aria-hidden>
+                    <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                side="top"
+                sideOffset={8}
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-[240px] rounded-xl border border-border bg-popover p-0 shadow-lg"
+              >
+                <div className="px-3 pt-3 pb-2">
+                  <p className="text-sm font-semibold text-foreground truncate">{displayName || "Account"}</p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{userEmail || "Signed in"}</p>
+                </div>
+                <Link
+                  href="/Pricing"
+                  className="mx-2 mb-2 flex items-center justify-center py-2.5 rounded-lg font-semibold text-sm bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                >
+                  Upgrade
+                </Link>
+                <DropdownMenuSeparator className="my-1" />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                    <HugeiconsIcon icon={Settings01Icon} size={16} color="currentColor" strokeWidth={1.75} />
+                    Account / Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => authClient.signOut()}
+                >
+                  <HugeiconsIcon icon={Logout01Icon} size={16} color="currentColor" strokeWidth={1.75} />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Black footer bar */}
@@ -181,7 +254,7 @@ export default function DashboardSidebar() {
         </>
       )}
 
-      {/* Collapsed: only icons + footer bar */}
+      {/* Collapsed: only icons + profile dropdown + footer bar */}
       {isCollapsed && (
         <>
           <div className="mt-auto pt-2 px-2 space-y-1">
@@ -195,6 +268,54 @@ export default function DashboardSidebar() {
                 <HugeiconsIcon icon={item.icon} size={20} color="currentColor" strokeWidth={1.75} />
               </Link>
             ))}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center justify-center w-full p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  aria-label="Account menu"
+                >
+                  <Avatar className="h-8 w-8 rounded-full border border-border">
+                    <AvatarImage src={profilePicture} alt={displayName} />
+                    <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-medium">
+                      {displayName ? displayName.slice(0, 2).toUpperCase() : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                side="right"
+                sideOffset={8}
+                className="min-w-[240px] rounded-xl border border-border bg-popover p-0 shadow-lg"
+              >
+                <div className="px-3 pt-3 pb-2">
+                  <p className="text-sm font-semibold text-foreground truncate">{displayName || "Account"}</p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{userEmail || "Signed in"}</p>
+                </div>
+                <Link
+                  href="/Pricing"
+                  className="mx-2 mb-2 flex items-center justify-center py-2.5 rounded-lg font-semibold text-sm bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                >
+                  Upgrade
+                </Link>
+                <DropdownMenuSeparator className="my-1" />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                    <HugeiconsIcon icon={Settings01Icon} size={16} color="currentColor" strokeWidth={1.75} />
+                    Account / Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => authClient.signOut()}
+                >
+                  <HugeiconsIcon icon={Logout01Icon} size={16} color="currentColor" strokeWidth={1.75} />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="h-1.5 bg-foreground shrink-0" aria-hidden />
         </>

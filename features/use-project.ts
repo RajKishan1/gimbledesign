@@ -87,11 +87,18 @@ export const useCreateProject = () => {
   });
 };
 
-export const useGetProjects = (userId?: string, limit?: number) => {
+export const useGetProjects = (
+  userId?: string,
+  limit?: number,
+  favoritesOnly?: boolean
+) => {
   return useQuery({
-    queryKey: ["projects", limit ?? "all"],
+    queryKey: ["projects", limit ?? "all", favoritesOnly ?? false],
     queryFn: async () => {
-      const url = limit ? `/api/project?limit=${limit}` : "/api/project";
+      const params = new URLSearchParams();
+      if (limit) params.set("limit", String(limit));
+      if (favoritesOnly) params.set("favorites", "true");
+      const url = `/api/project${params.toString() ? `?${params.toString()}` : ""}`;
       const res = await axios.get(url);
       return res.data.data;
     },
@@ -157,6 +164,33 @@ export const useDuplicateProject = () => {
     onError: (error: any) => {
       const msg = error?.response?.data?.error || "Failed to duplicate project";
       toast.error(msg);
+    },
+  });
+};
+
+export const useSetProjectFavorite = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      isFavorite,
+    }: {
+      projectId: string;
+      isFavorite: boolean;
+    }) => {
+      const res = await axios.patch(`/api/project/${projectId}`, {
+        isFavorite,
+      });
+      return res.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success(
+        variables.isFavorite ? "Added to favorites" : "Removed from favorites"
+      );
+    },
+    onError: () => {
+      toast.error("Failed to update favorite");
     },
   });
 };

@@ -12,6 +12,7 @@ import {
   useRenameProject,
   useDeleteProject,
   useDuplicateProject,
+  useSetProjectFavorite,
 } from "@/features/use-project";
 import {
   useExploreProjects,
@@ -31,6 +32,7 @@ import {
   Users,
   ArrowRight,
   Compass,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useInView, Variants } from "framer-motion";
@@ -86,7 +88,6 @@ const DashboardSection = () => {
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("auto");
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
-  const [showAllProjects, setShowAllProjects] = useState(false);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
   const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
   const [wireframeKind, setWireframeKind] = useState<"web" | "mobile">("web");
@@ -102,7 +103,11 @@ const DashboardSection = () => {
     data: projects,
     isLoading,
     isError,
-  } = useGetProjects(userId, showAllProjects ? undefined : 10);
+  } = useGetProjects(
+    userId,
+    10,
+    projectsFilter === "favorites"
+  );
   const { mutate, isPending } = useCreateProject();
   const { data: profile } = useGetProfile();
   const { data: exploreProjects = [], isLoading: exploreLoading } =
@@ -389,14 +394,11 @@ const DashboardSection = () => {
                     </button>
                   </div>
                   <Link
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowAllProjects(true);
-                    }}
-                    className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+                    href="/projects"
+                    className="text-sm font-medium text-foreground hover:text-primary transition-colors shrink-0 flex items-center gap-1"
                   >
                     Browse All
+                    <ArrowRight className="size-4" />
                   </Link>
                 </div>
               </div>
@@ -408,8 +410,7 @@ const DashboardSection = () => {
                 <>
                   <div className="mt-3">
                     {(() => {
-                      const list =
-                        projectsFilter === "favorites" ? [] : projects ?? [];
+                      const list = projects ?? [];
                       if (projectsFilter === "favorites" && list.length === 0) {
                         return (
                           <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
@@ -428,42 +429,16 @@ const DashboardSection = () => {
                           </div>
                         );
                       }
-                      return list.length <= 10 ? (
+                      return (
                         <ProjectsGrid
                           projects={list}
                           isAdmin={isAdmin}
                           onMoveToExplore={moveToExplore.mutate}
                           isMovingToExplore={moveToExplore.isPending}
                         />
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-auto max-h-[80vh]">
-                          {list.map((project: ProjectType) => (
-                            <ProjectCard
-                              key={project.id}
-                              project={project}
-                              isAdmin={isAdmin}
-                              onMoveToExplore={moveToExplore.mutate}
-                              isMovingToExplore={moveToExplore.isPending}
-                            />
-                          ))}
-                        </div>
                       );
                     })()}
                   </div>
-                  {projectsFilter === "all" &&
-                    !showAllProjects &&
-                    projects &&
-                    projects.length >= 9 && (
-                      <div className="flex justify-center mt-6">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowAllProjects(true)}
-                          className="px-6 rounded-xl"
-                        >
-                          Show All Projects
-                        </Button>
-                      </div>
-                    )}
                 </>
               )}
               {isError && (
@@ -493,7 +468,9 @@ const cardVariants: Variants = {
   }),
 };
 
-const ProjectsGrid = ({
+const INITIAL_VISIBLE_COUNT = 15; /* at least 3 rows (e.g. 5 cols × 3) */
+
+export const ProjectsGrid = ({
   projects,
   isAdmin,
   onMoveToExplore,
@@ -516,7 +493,7 @@ const ProjectsGrid = ({
           key={project.id}
           custom={index}
           initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
+          animate={index < INITIAL_VISIBLE_COUNT || isInView ? "visible" : "hidden"}
           variants={cardVariants}
           whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
         >
@@ -532,7 +509,7 @@ const ProjectsGrid = ({
   );
 };
 
-const ProjectCard = memo(
+export const ProjectCard = memo(
   ({
     project,
     isAdmin,
@@ -553,6 +530,8 @@ onMoveToExplore?: (args: { projectId: string; isExplore: boolean }) => void;
     const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
     const { mutate: duplicateProject, isPending: isDuplicating } =
       useDuplicateProject();
+    const { mutate: setFavorite, isPending: isTogglingFavorite } =
+      useSetProjectFavorite();
 
     const timeAgo = formatDistanceToNow(new Date(project.createdAt), {
       addSuffix: true,
@@ -622,6 +601,23 @@ onMoveToExplore?: (args: { projectId: string; isExplore: boolean }) => void;
                   align="end"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setFavorite({
+                        projectId: project.id,
+                        isFavorite: !project.isFavorite,
+                      });
+                    }}
+                    disabled={isTogglingFavorite}
+                  >
+                    <Star
+                      className={cn("size-4", project.isFavorite && "fill-current")}
+                    />
+                    {project.isFavorite
+                      ? "Remove from Favorites"
+                      : "Add to Favorites"}
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.preventDefault();

@@ -14,15 +14,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get limit from query parameters
+    // Get limit and favorites from query parameters
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+    const favoritesOnly = searchParams.get("favorites") === "true";
 
     try {
       const projects = await prisma.project.findMany({
         where: {
           userId: user.id,
+          ...(favoritesOnly && { isFavorite: true }),
         },
         ...(limit && { take: limit }),
         orderBy: { createdAt: "desc" },
