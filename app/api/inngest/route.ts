@@ -5,6 +5,7 @@ import { generateScreens } from "@/inngest/functions/generateScreens";
 import { generateWebScreens } from "@/inngest/functions/generateWebScreens";
 import { generateWireframeScreens } from "@/inngest/functions/generateWireframeScreens";
 import { regenerateFrame } from "@/inngest/functions/regenerateFrame";
+import { generateFrameVariations } from "@/inngest/functions/generateFrameVariations";
 import { generateInspirationVariations } from "@/inngest/functions/generateInspirationVariations";
 
 // The serve() function automatically:
@@ -19,6 +20,7 @@ export const { GET, POST, PUT } = serve({
     generateWebScreens,
     generateWireframeScreens,
     regenerateFrame,
+    generateFrameVariations,
     generateInspirationVariations,
   ],
   // Optional: Explicitly set signing key (if not using INNGEST_SIGNING_KEY env var)

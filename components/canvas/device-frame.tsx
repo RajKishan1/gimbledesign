@@ -57,6 +57,8 @@ const DeviceFrame = ({
     updateFrame,
     deviceType,
     customDimensions,
+    setVariationsPanelOpen,
+    setVariationsFrameId,
   } = useCanvas();
   const {
     mode,
@@ -107,6 +109,8 @@ const DeviceFrame = ({
   const rndRef = useRef<Rnd>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Cache figma clipboard result keyed by html+width so repeated clicks don't re-hit the API
+  const figmaClipboardCache = useRef<Map<string, string>>(new Map());
 
   const { font } = useCanvas();
   const isSelected = selectedFrameId === frameId;
@@ -229,20 +233,25 @@ const DeviceFrame = ({
     if (isCopyingToFigma) return;
     setIsCopyingToFigma(true);
     try {
-      const res = await fetch("/api/figma-clipboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          html: fullHtml,
-          width: DEVICE_WIDTH,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Request failed" }));
-        toast.error(err.error || "Failed to prepare for Figma");
-        return;
+      const cacheKey = `${DEVICE_WIDTH}:${fullHtml}`;
+      let clipboardHtml = figmaClipboardCache.current.get(cacheKey);
+      if (!clipboardHtml) {
+        const res = await fetch("/api/figma-clipboard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            html: fullHtml,
+            width: DEVICE_WIDTH,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Request failed" }));
+          toast.error(err.error || "Failed to prepare for Figma");
+          return;
+        }
+        clipboardHtml = await res.text();
+        figmaClipboardCache.current.set(cacheKey, clipboardHtml);
       }
-      const clipboardHtml = await res.text();
       // Prefer Clipboard API (works after async; no 5s user-gesture limit). Fallback to copy event + execCommand.
       const blob = new Blob([clipboardHtml], { type: "text/html" });
       if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
@@ -367,6 +376,10 @@ const DeviceFrame = ({
             onDeleteFrame={handleDeleteFrame}
             onPasteToFigma={handlePasteToFigma}
             onOpenHtmlDialog={onOpenHtmlDialog}
+            onOpenVariations={() => {
+              setVariationsFrameId(frameId);
+              setVariationsPanelOpen(true);
+            }}
           />
         )}
 
@@ -454,6 +467,7 @@ const DeviceFrame = ({
           </div>
         </div>
       </div>
+
     </Rnd>
   );
 };

@@ -14,6 +14,10 @@ import {
   EyeIcon,
   ArrowDown01Icon,
   Share01Icon,
+  Copy01Icon,
+  RefreshIcon,
+  DashboardCircleIcon,
+  AnalyticsUpIcon,
 } from "@hugeicons/core-free-icons";
 import { useState, useRef } from "react";
 import { Separator } from "../ui/separator";
@@ -54,6 +58,7 @@ type PropsType = {
   onRegenerate?: (prompt: string) => void;
   onDeleteFrame?: () => void;
   onPasteToFigma?: () => void;
+  onOpenVariations?: () => void;
 };
 
 function FigmaIcon({ className }: { className?: string }) {
@@ -104,6 +109,7 @@ const DeviceFrameToolbar = ({
   onRegenerate,
   onDeleteFrame,
   onPasteToFigma,
+  onOpenVariations,
 }: PropsType) => {
   const [promptValue, setPromptValue] = useState("");
   const [aiPopoverOpen, setAiPopoverOpen] = useState(false);
@@ -158,22 +164,57 @@ const DeviceFrameToolbar = ({
           <Separator orientation="vertical" className="h-5 bg-border mx-0.5" />
 
           <div className="flex items-center gap-0.5 relative">
-            {/* Generate & Modify open the same AI popover (no dropdown = no focus steal) */}
+            {/* Generate dropdown with menu items */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
+                  disabled={disabled}
+                >
+                  <HugeiconsIcon icon={SparklesIcon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  <span className="text-xs font-medium">Generate</span>
+                  <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 rounded-lg p-1" sideOffset={4}>
+                <DropdownMenuItem
+                  onClick={onOpenVariations}
+                  className="cursor-pointer gap-2"
+                >
+                  <HugeiconsIcon icon={Copy01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  Variations
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled
+                  className="cursor-pointer gap-2"
+                >
+                  <HugeiconsIcon icon={DashboardCircleIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  Prototype (select &gt;1 screens)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onRegenerate?.("Regenerate this screen with a fresh design approach while keeping the same purpose and content")}
+                  className="cursor-pointer gap-2"
+                >
+                  <HugeiconsIcon icon={RefreshIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  Regenerate
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled
+                  className="cursor-pointer gap-2"
+                >
+                  <HugeiconsIcon icon={AnalyticsUpIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  Predictive Heatmap
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Modify button opens AI input popover */}
             <Popover open={aiPopoverOpen} onOpenChange={setAiPopoverOpen}>
               <PopoverAnchor asChild>
                 <span className="absolute left-0 top-0 w-1 h-7" aria-hidden />
               </PopoverAnchor>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
-                disabled={disabled}
-                onClick={openAiPopover}
-              >
-                <HugeiconsIcon icon={SparklesIcon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                <span className="text-xs font-medium">Generate</span>
-                <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-              </Button>
               <Button
                 variant="ghost"
                 size="sm"

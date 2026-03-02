@@ -93,6 +93,7 @@ Any changes should seamlessly blend with the app's established visual style.
         3. Keep navigation components (bottom nav, sidebar) EXACTLY as they are unless explicitly requested to change
         4. **BOTTOM NAV PRESERVATION (CRITICAL):** The bottom navigation bar must remain PIXEL-IDENTICAL to the original — same icons, same order, same styling, same dimensions. Do NOT alter it in any way unless the user explicitly asks.
         5. **THEME PRESERVATION:** Keep the exact same theme colors, typography, and spacing. Do not introduce new colors or change the visual system.
+        6. **COPY QUALITY:** Any new or modified text must be domain-appropriate, specific, and human-sounding. Avoid generic AI filler ("Unlock your potential", "Elevate your experience"). Use clear, benefit-driven language that matches the app's domain and existing tone.
 
         **OUTPUT RULES:**
         1. Generate ONLY raw HTML markup using Tailwind CSS

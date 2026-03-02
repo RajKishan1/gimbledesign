@@ -50,6 +50,12 @@ interface CanvasContextType {
   customDimensions?: CustomDimensions;
   /** When deviceType is "wireframe": "web" = one responsive frame shown at 3 sizes, "mobile" = one mobile frame. null = legacy 3 separate frames */
   wireframeKind: "web" | "mobile" | null;
+
+  variationsPanelOpen: boolean;
+  setVariationsPanelOpen: (open: boolean) => void;
+  /** The frameId for which variations are being generated */
+  variationsFrameId: string | null;
+  setVariationsFrameId: (id: string | null) => void;
 }
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -90,6 +96,8 @@ export const CanvasProvider = ({
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatusType | null>(
     null
   );
+  const [variationsPanelOpen, setVariationsPanelOpen] = useState(false);
+  const [variationsFrameId, setVariationsFrameId] = useState<string | null>(null);
 
   const [prevProjectId, setPrevProjectId] = useState(projectId);
   if (projectId !== prevProjectId) {
@@ -221,6 +229,10 @@ export const CanvasProvider = ({
         deviceType,
         customDimensions,
         wireframeKind,
+        variationsPanelOpen,
+        setVariationsPanelOpen,
+        variationsFrameId,
+        setVariationsFrameId,
       }}
     >
       {children}

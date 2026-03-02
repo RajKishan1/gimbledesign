@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useGetProjectById } from "@/features/use-project-id";
 import { useParams } from "next/navigation";
 import Header from "./_common/header";
@@ -8,7 +8,10 @@ import Canvas from "@/components/canvas";
 import { CanvasProvider } from "@/context/canvas-context";
 import { PrototypeProvider } from "@/context/prototype-context";
 import DesignSidebar from "@/components/canvas/design-sidebar";
+import GenerateVariationsPanel, { type VariationsConfig } from "@/components/canvas/generate-variations-panel";
 import { useGenerateDesignById } from "@/features/use-project-id";
+import { useGenerateVariations } from "@/features/use-frame";
+import { useCanvas } from "@/context/canvas-context";
 import { PENDING_SETUP_KEY } from "@/features/use-project";
 import { getGenerationModel } from "@/constant/models";
 import { toast } from "sonner";
@@ -175,6 +178,33 @@ const PageContent = ({
     generateDesign({ prompt: promptText, ...(model && { model }) });
   };
 
+  const {
+    variationsPanelOpen,
+    setVariationsPanelOpen,
+    variationsFrameId,
+    setVariationsFrameId,
+  } = useCanvas();
+
+  const variationsMutation = useGenerateVariations(projectId);
+
+  const handleGenerateVariations = useCallback(
+    (config: VariationsConfig) => {
+      if (!variationsFrameId) return;
+
+      variationsMutation.mutate({
+        frameId: variationsFrameId,
+        numberOfOptions: config.numberOfOptions,
+        creativeRange: config.creativeRange,
+        customInstructions: config.customInstructions,
+        aspectsToVary: config.aspectsToVary,
+      });
+
+      setVariationsPanelOpen(false);
+      setVariationsFrameId(null);
+    },
+    [variationsFrameId, variationsMutation, setVariationsPanelOpen, setVariationsFrameId],
+  );
+
   return (
     <div
       className="relative h-screen w-full
@@ -199,6 +229,17 @@ const PageContent = ({
           />
         </div>
       </div>
+
+      {/* Generate Variations Panel - slides in from the right of the app */}
+      <GenerateVariationsPanel
+        open={variationsPanelOpen}
+        onClose={() => {
+          setVariationsPanelOpen(false);
+          setVariationsFrameId(null);
+        }}
+        onGenerate={handleGenerateVariations}
+        isGenerating={variationsMutation.isPending}
+      />
     </div>
   );
 };

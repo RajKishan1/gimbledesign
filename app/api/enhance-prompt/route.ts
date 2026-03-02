@@ -462,6 +462,7 @@ The enhanced prompt should:
 10. Define semantic colors for feedback states
 11. Describe the emotional tone and brand personality
 12. Ensure accessibility requirements (contrast, touch targets)
+13. **Define the content tone and copy style** — specify the voice (professional, friendly, concise, etc.) and provide example microcopy for key screens (headings, CTAs, section labels). Copy must feel domain-appropriate and human-written, NOT generic AI filler. Avoid phrases like "Unlock your potential", "Elevate your experience", "Seamlessly manage". Use direct, benefit-driven language a real product team would ship.
 
 ---
 
@@ -637,6 +638,7 @@ The enhanced prompt should:
 8. Apply relevant UX laws
 9. Include component specifications (tables, forms, cards)
 10. Define semantic colors for feedback states
+11. **Define the content tone and provide example copy** — specify the voice (professional, concise, etc.) and example headings, labels, and CTAs for each screen. Copy must be domain-appropriate and human-written. Avoid AI filler like "Seamlessly manage", "Elevate your workflow". Use direct, specific language.
 
 ---
 
@@ -848,12 +850,12 @@ Return ONLY the enhanced prompt. No explanations, no markdown, no meta-commentar
 The enhanced prompt should:
 1. Clearly describe the creative type and purpose
 2. List all frames/screenshots to generate (typically 5-8 for App Store)
-3. Define each frame's headline and visual focus
+3. Define each frame's headline and visual focus — headlines must be punchy, benefit-driven, and human-sounding (e.g., "Track every rep" not "Unlock your fitness potential")
 4. Specify the color palette and background style
 5. Include device mockup requirements
 6. Describe typography approach
 7. Define the emotional tone and brand personality
-8. Include anti-patterns to avoid
+8. Include anti-patterns to avoid (including generic AI marketing-speak like "Revolutionary", "Seamlessly", "Elevate")
 
 ---
 

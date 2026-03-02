@@ -35,6 +35,53 @@ export const useRegenerateFrame = (projectId: string) => {
   });
 };
 
+export const useGenerateVariations = (projectId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      frameId,
+      numberOfOptions,
+      creativeRange,
+      customInstructions,
+      aspectsToVary,
+      model,
+    }: {
+      frameId: string;
+      numberOfOptions: number;
+      creativeRange: string;
+      customInstructions: string;
+      aspectsToVary: Record<string, boolean>;
+      model?: string;
+    }) => {
+      const res = await axios.post(
+        `/api/project/${projectId}/frame/generate-variations`,
+        {
+          frameId,
+          numberOfOptions,
+          creativeRange,
+          customInstructions,
+          aspectsToVary,
+          ...(model && { model }),
+        }
+      );
+      return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["credits"] });
+      toast.success(
+        `Generating ${variables.numberOfOptions} variation${variables.numberOfOptions > 1 ? "s" : ""}...`
+      );
+    },
+    onError: (error: any) => {
+      if (error?.response?.status === 402) {
+        toast.error(error?.response?.data?.error || "Insufficient credits");
+      } else {
+        toast.error("Failed to generate variations");
+      }
+    },
+  });
+};
+
 export const useDeleteFrame = (projectId: string) => {
   return useMutation({
     mutationFn: async (frameId: string) => {

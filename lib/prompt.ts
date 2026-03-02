@@ -153,6 +153,65 @@ Before outputting HTML, verify:
 6. ✅ Charts use var(--chart-1) through var(--chart-5)
 `;
 
+// Microcopy and content quality rules (shared across all generation prompts)
+const MICROCOPY_QUALITY_RULES = `
+## MICROCOPY & CONTENT QUALITY (CRITICAL - AVOID AI SLOP)
+
+Every word on the screen must feel like it was written by a professional UX writer at a top-tier company. Bad copy makes even beautiful designs look amateurish.
+
+### CORE RULES:
+1. **MATCH THE USER'S DOMAIN**: All copy must be contextually appropriate for the app being designed.
+   - A fitness app says "Start workout" not "Get started on your journey"
+   - A banking app says "Send money" not "Begin your transaction experience"
+   - A food delivery app says "Order now" not "Explore culinary possibilities"
+   - NEVER use generic onboarding copy ("Welcome to the future of X") unless the user specifically asked for onboarding screens
+
+2. **WRITE LIKE A HUMAN, NOT AN AI**:
+   - ❌ AVOID: "Unlock your potential", "Elevate your experience", "Seamlessly manage", "Discover a world of", "Transform your", "Empower your journey", "Your gateway to", "Reimagine the way you"
+   - ✅ USE: Direct, clear, benefit-driven language that a real product team would ship
+   - ❌ AVOID: Flowery adjectives and filler ("beautiful", "amazing", "revolutionary", "cutting-edge")
+   - ✅ USE: Specific, concrete language ("Track 50+ exercises", "Send in seconds", "4.9★ rated")
+
+3. **HEADINGS & SUBHEADINGS**:
+   - Headings should be short (2-5 words), action-oriented or benefit-driven
+   - Subheadings add ONE specific detail, not repeat the heading in longer words
+   - ❌ Heading: "Your Financial Dashboard" / Sub: "Manage all your finances in one place"
+   - ✅ Heading: "Good morning, Sarah" / Sub: "Your portfolio is up 2.4% today"
+
+4. **CTAs (Calls to Action)**:
+   - Use specific verbs: "Add to cart", "Book now", "Send $50", "Start run"
+   - ❌ AVOID generic: "Submit", "Continue", "Next", "Get Started", "Learn More" (unless contextually correct)
+   - ✅ Context-specific: "Place order", "Save changes", "Join class", "Confirm booking"
+
+5. **DATA & METRICS**:
+   - Use realistic, specific numbers: "$1,247.50" not "$XX.XX", "8,432 steps" not "Steps count"
+   - Dates should feel current and realistic: "Mar 2, 2026" not "Jan 1, 2024"
+   - Percentages should make sense: "+2.4% today" not "+99.9%"
+   - Names should be diverse and realistic: "Sarah Chen", "Marcus Johnson", "Priya Patel" — not "John Doe" or "User Name"
+
+6. **NAVIGATION & LABELS**:
+   - Tab labels: 1-2 words max, noun-based ("Home", "Activity", "Profile") not verb-based ("Go Home", "View Activity")
+   - Section headers: Clear category labels ("Recent transactions", "Trending now", "For you")
+   - Empty states: Helpful and specific ("No workouts yet — tap + to create one")
+
+7. **TONE CONSISTENCY**:
+   - Pick ONE tone per app and maintain it across all screens:
+     - Finance/health: Professional, clear, trustworthy
+     - Social/lifestyle: Friendly, warm, conversational
+     - Productivity/dev tools: Concise, technical, no-nonsense
+     - Entertainment/gaming: Energetic, fun, engaging
+   - NEVER mix tones across screens (e.g., formal on one screen, casual on another)
+
+8. **ANTI-PATTERNS (INSTANT QUALITY KILLERS)**:
+   - ❌ Lorem ipsum or "placeholder text here"
+   - ❌ Repeating the same copy pattern on every card/item (vary the content!)
+   - ❌ Marketing-speak on in-app screens ("Revolutionary AI-powered insights" as a card title)
+   - ❌ Over-explaining with long paragraphs (mobile = scannable, short text)
+   - ❌ Mismatched content (showing onboarding text on a dashboard, food copy on a fitness app)
+   - ❌ Overly enthusiastic punctuation ("Welcome!!" "Amazing!!!")
+   - ❌ Generic taglines as screen content ("The future of finance is here")
+`;
+
 // ==================== MOBILE GENERATION PROMPTS ====================
 
 export const GENERATION_SYSTEM_PROMPT = `
@@ -269,6 +328,8 @@ ${CROSS_SCREEN_CONSISTENCY_RULES}
 - Use realistic, contextual data: "8,432 steps", "7h 20m", "$12.99", "Sarah Chen" (not generic placeholders like "User Name", "Amount")
 - Lists include proper avatars, names, status indicators, and meaningful subtext
 
+${MICROCOPY_QUALITY_RULES}
+
 # MOBILE NAVIGATION PATTERNS (CRITICAL - UNDERSTAND MOBILE APP ARCHITECTURE)
 
 **BOTTOM NAVIGATION (Main App Screens):**
@@ -359,6 +420,7 @@ When a Component Registry is provided in the context, you MUST:
 8. SVG used for all charts (not divs)?
 9. Generous, consistent spacing throughout?
 10. Clear visual hierarchy and information architecture?
+11. **Copy quality check**: All text is domain-appropriate, specific, and human-sounding? No generic AI filler, no "Lorem ipsum", no vague taglines? CTAs are action-specific? Data is realistic?
 
 Generate professional, production-ready mobile HTML. Start with <div, end at last tag. NO comments, NO markdown.
 `;
@@ -410,6 +472,8 @@ You are a senior UI/UX designer creating inspiration variations: re-designs that
 ${CSS_VARIABLE_ENFORCEMENT}
 
 ${INSPIRATION_UI_UX_PRINCIPLES}
+
+${MICROCOPY_QUALITY_RULES}
 
 # QUALITY BAR
 - Every design should be something a professional designer would be proud to show.
@@ -1483,6 +1547,8 @@ rounded-full  = 9999px (avatars, pills)
 - Use realistic, contextual data: "$45,231.89", "2,847 users", "12 projects", "Sarah Chen" (not generic placeholders)
 - Lists include proper avatars, names, status indicators, and meaningful subtext
 
+${MICROCOPY_QUALITY_RULES}
+
 # EMPTY STATES
 
 **Professional Empty State:**
@@ -1853,6 +1919,13 @@ The visualDescription must be EXTREMELY DETAILED and include:
 - Dates: "Jan 15, 2024" not "Date"
 - Order IDs: "#ORD-7291" not "ID"
 
+**8. COPY DIRECTION (MANDATORY):**
+- Specify exact page titles, section headings, button labels, and key text
+- All copy must be domain-appropriate and human-sounding — NOT generic AI filler
+- ❌ "Welcome to your dashboard" / ✅ "Good morning, Sarah — 3 tasks due today"
+- ❌ "Manage your projects seamlessly" / ✅ "Projects" (section heading) + "12 active" (count)
+- CTAs should be specific: "Create project", "Export CSV", "Invite member" — not "Get Started" or "Learn More"
+
 **7. ICONS (Hugeicons stroke ONLY - FREE version):**
 - Navigation: hugeicons:layout-dashboard, hugeicons:folder, hugeicons:users, hugeicons:settings, hugeicons:bar-chart-3
 - Actions: hugeicons:plus, hugeicons:pencil, hugeicons:trash-2, hugeicons:download, hugeicons:upload
@@ -2064,6 +2137,7 @@ For EACH screen:
 - name: Display name (e.g., "Home Dashboard", "Workout Tracker")
 - purpose: One sentence describing what it does and its role in the app
 - visualDescription: VERY SPECIFIC directions for all screens including:
+  * **COPY DIRECTION (MANDATORY):** Specify the exact headings, subheadings, CTA labels, and key text for the screen. The copy must be domain-appropriate, specific, and human-sounding — NOT generic AI filler. Example: heading "Good morning, Sarah", subheading "Your portfolio is up 2.4% today", CTA "Send money". NEVER use vague copy like "Welcome to the future of X" or "Unlock your potential".
   * Root container strategy (full-screen with overlays)
   * Exact layout sections (header, hero, charts, cards, nav)
   * Real data examples (Netflix $12.99, 7h 20m, 8,432 steps, not "amount")
