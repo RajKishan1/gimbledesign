@@ -605,14 +605,13 @@ Users expect web app patterns:
 - Hybrid (sidebar + top bar)
 - Plan 5-8 primary navigation items
 
-## 3. Specify Screen Types (10-15 screens typical)
-- Authentication: Login, Signup, Forgot Password
-- Dashboard/Home: Overview with key metrics
-- List Views: Tables, cards, or grids of items
-- Detail Views: Single item with full information
-- Create/Edit: Forms for data entry
-- Settings: User preferences, account settings
-- Profile: User information, activity
+## 3. Specify Screen Types (3-4 CORE screens only)
+- Dashboard/Home: Overview with key metrics (ALWAYS first)
+- List/Table View: Primary data or content listing
+- Detail View: Single item with full information
+- One additional core screen if clearly implied by the prompt
+
+**NEVER include:** Authentication, onboarding, login, signup, settings, profile, admin panels, or help screens unless the user explicitly asks for them.
 
 ## 4. Apply Web-Specific Guidelines
 - 1440px width optimization
@@ -629,7 +628,7 @@ Return ONLY the enhanced prompt. No explanations, no markdown, no meta-commentar
 
 The enhanced prompt should:
 1. Clearly describe the web application and its purpose
-2. List all necessary screens (10-15 for complete apps)
+2. Name only the 3-4 core screens (dashboard + main feature screens); DO NOT list auth, settings, or profile
 3. Define the visual aesthetic with specific direction
 4. Specify sidebar vs top navigation
 5. Apply 60-30-10 color rule
@@ -645,7 +644,7 @@ The enhanced prompt should:
 
 **Input**: "I want a project management dashboard"
 
-**Output**: "Professional project management dashboard for teams. Design a complete web application (1440px width) with: authentication screens (login with email/password and SSO options, signup with team invitation flow), main dashboard showing project overview (active projects count, tasks due today, team activity, upcoming deadlines in card grid), projects list view (filterable table with project name, status, progress bar, team members, due date), project detail view (kanban board or list view toggle, task cards with assignees, comments section), task detail modal (description, subtasks, attachments, activity log), team members view (grid of member cards with roles and project assignments), calendar view (monthly view with deadline markers), settings (workspace, notifications, integrations), and user profile.
+**Output**: "Professional project management dashboard for teams. Design a focused web application (1440px width) with 3-4 core screens: main dashboard showing project overview (active projects count, tasks due today, team activity, upcoming deadlines in card grid), projects list view (filterable table with project name, status, progress bar, team members, due date), and project detail view (kanban board or list view toggle, task cards with assignees, comments section).
 
 Visual Direction: Clean, professional, and efficient. Think Linear meets Notion - focused on productivity, minimal visual noise, information-dense but scannable.
 
@@ -665,7 +664,7 @@ States: Hover states for all clickable elements, Loading skeletons for data, Emp
 
 The design should feel like it was crafted by a senior product designer who understands team productivity - efficient without being cold, feature-rich without being overwhelming. Every screen should help users focus on their work. Absolutely avoid the typical AI-generated look of excessive gradients and neon colors."
 
-Remember: Web apps need desktop-optimized layouts. Think horizontally, use multi-column grids, include proper data tables, and ensure all interactive elements have hover states.`;
+Remember: Web apps need desktop-optimized layouts. Think horizontally, use multi-column grids, include proper data tables, and ensure all interactive elements have hover states. Keep the screen list to 3-4 CORE screens — no auth, no settings, no onboarding unless explicitly requested.`;
 
 // ==================== CREATIVE DESIGN ENHANCEMENT PROMPT ====================
 const CREATIVE_ENHANCEMENT_PROMPT = `You are a world-class Creative Director and Visual Designer with 20+ years of experience creating stunning App Store screenshots, marketing visuals, and promotional materials. You've led creative campaigns for Apple, Google, Spotify, and Airbnb. You specialize in designs that convert viewers into users.

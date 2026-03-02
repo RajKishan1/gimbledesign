@@ -15,6 +15,8 @@ import {
   Cancel01Icon,
   SmartPhone01Icon,
   ArrowDown01Icon,
+  Tablet01Icon,
+  LaptopIcon,
 } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
@@ -41,6 +43,15 @@ const PREVIEW_DEVICE_PRESETS = [
   { id: "oneplus-12", name: "OnePlus 12", width: 412 },
 ] as const;
 
+// Web responsive breakpoints
+type WebViewport = "mobile" | "tablet" | "desktop";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const WEB_VIEWPORTS: { id: WebViewport; label: string; width: number; icon: any }[] = [
+  { id: "mobile", label: "Mobile", width: 390, icon: SmartPhone01Icon },
+  { id: "tablet", label: "Tablet", width: 768, icon: Tablet01Icon },
+  { id: "desktop", label: "Desktop", width: 1440, icon: LaptopIcon },
+];
+
 const PreviewPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -62,10 +73,22 @@ const PreviewPage = () => {
   const [viewportHeight, setViewportHeight] = useState<number>(800);
   const [viewportWidth, setViewportWidth] = useState<number>(400);
   const [devicePresetId, setDevicePresetId] = useState<string>(PREVIEW_DEVICE_PRESETS[0].id);
-  const deviceWidth = PREVIEW_DEVICE_PRESETS.find((p) => p.id === devicePresetId)?.width ?? PREVIEW_DEVICE_PRESETS[0].width;
+  const [webViewport, setWebViewport] = useState<WebViewport>("desktop");
+
+  const isWebProject = project?.deviceType === "web";
+  const deviceWidth = isWebProject
+    ? WEB_VIEWPORTS.find((v) => v.id === webViewport)?.width ?? 1440
+    : PREVIEW_DEVICE_PRESETS.find((p) => p.id === devicePresetId)?.width ?? PREVIEW_DEVICE_PRESETS[0].width;
 
   // Scale so device frame fits viewport (no overflow on mobile), max 1.35 on large screens
   const previewScale = useMemo(() => {
+    if (isWebProject) {
+      // For web: scale to fit width, no phone chrome overhead
+      const availW = Math.max(0, viewportWidth - 48);
+      const scaleByW = availW / deviceWidth;
+      // Desktop at 1440px almost always needs to scale down; cap at 1.0 for web
+      return Math.max(0.2, Math.min(1.0, scaleByW));
+    }
     const chrome = 48; // padding + notch + home indicator
     const frameW = deviceWidth + 24;
     const frameH = Math.min(iframeHeight, viewportHeight * 0.9) + chrome;
@@ -75,7 +98,7 @@ const PreviewPage = () => {
     const scaleByH = availH / frameH;
     const fitScale = Math.min(scaleByW, scaleByH, 1.35);
     return Math.max(0.3, Math.min(1.35, fitScale));
-  }, [deviceWidth, iframeHeight, viewportWidth, viewportHeight]);
+  }, [isWebProject, deviceWidth, iframeHeight, viewportWidth, viewportHeight]);
 
   // Load prototype links from localStorage
   const [links, setLinks] = useState<PrototypeLink[]>([]);
@@ -324,34 +347,57 @@ const PreviewPage = () => {
           <HugeiconsIcon icon={Cancel01Icon} size={20} color="currentColor" strokeWidth={1.75} />
         </Button>
 
-        {/* Device size dropdown - center */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 border-border bg-card text-foreground hover:bg-accent shrink-0"
-            >
-              <HugeiconsIcon icon={SmartPhone01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-              <span className="max-w-[160px] truncate">
-                {PREVIEW_DEVICE_PRESETS.find((p) => p.id === devicePresetId)?.name ?? "Device"}
-              </span>
-              <HugeiconsIcon icon={ArrowDown01Icon} size={16} color="currentColor" strokeWidth={1.75} className="opacity-70 shrink-0" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-56 rounded-lg">
-            {PREVIEW_DEVICE_PRESETS.map((preset) => (
-              <DropdownMenuItem
-                key={preset.id}
-                onClick={() => setDevicePresetId(preset.id)}
-                className="cursor-pointer"
+        {/* Center: web viewport tabs OR mobile device dropdown */}
+        {isWebProject ? (
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-sm">
+            {WEB_VIEWPORTS.map((vp) => (
+              <Button
+                key={vp.id}
+                variant={webViewport === vp.id ? "secondary" : "ghost"}
+                size="sm"
+                className={cn(
+                  "h-7 px-3 gap-1.5 rounded-md text-xs font-medium transition-colors",
+                  webViewport === vp.id
+                    ? "bg-accent text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                )}
+                onClick={() => setWebViewport(vp.id)}
               >
-                {preset.name}
-                <span className="ml-auto text-xs text-muted-foreground">{preset.width}px</span>
-              </DropdownMenuItem>
+                <HugeiconsIcon icon={vp.icon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                {vp.label}
+                <span className="text-muted-foreground font-normal">{vp.width}px</span>
+              </Button>
             ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </div>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 border-border bg-card text-foreground hover:bg-accent shrink-0"
+              >
+                <HugeiconsIcon icon={SmartPhone01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                <span className="max-w-[160px] truncate">
+                  {PREVIEW_DEVICE_PRESETS.find((p) => p.id === devicePresetId)?.name ?? "Device"}
+                </span>
+                <HugeiconsIcon icon={ArrowDown01Icon} size={16} color="currentColor" strokeWidth={1.75} className="opacity-70 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-56 rounded-lg">
+              {PREVIEW_DEVICE_PRESETS.map((preset) => (
+                <DropdownMenuItem
+                  key={preset.id}
+                  onClick={() => setDevicePresetId(preset.id)}
+                  className="cursor-pointer"
+                >
+                  {preset.name}
+                  <span className="ml-auto text-xs text-muted-foreground">{preset.width}px</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         <div className="flex items-center gap-2">
           <Button
@@ -375,53 +421,106 @@ const PreviewPage = () => {
         </div>
       </div>
 
-      {/* Preview content - larger scale */}
+      {/* Preview content */}
       <div className="fixed inset-0 flex items-center justify-center pt-14 pb-6" style={{ zIndex: 10 }}>
-        <div
-          className="flex items-center justify-center w-full h-full"
-          style={{
-            transform: `scale(${previewScale})`,
-            transformOrigin: "center center",
-          }}
-        >
+        {isWebProject ? (
+          /* Web: browser chrome with scrollable content, scaled to fit */
           <div
-            className={cn(
-              "relative bg-black rounded-[28px] p-2 shadow-2xl",
-              "ring-1 ring-border"
-            )}
+            className="flex items-start justify-center w-full h-full overflow-hidden"
             style={{
-              boxShadow: "0 0 0 1px var(--border), 0 20px 40px -10px rgba(0,0,0,0.25)",
+              transform: `scale(${previewScale})`,
+              transformOrigin: "top center",
             }}
           >
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-b-xl z-10" />
             <div
-              className="relative bg-white dark:bg-background rounded-[22px] overflow-hidden"
+              className="flex flex-col rounded-xl overflow-hidden shadow-2xl ring-1 ring-border bg-card"
+              style={{ width: `${deviceWidth}px` }}
+            >
+              {/* Browser chrome */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                  <div className="w-3 h-3 rounded-full bg-green-400/80" />
+                </div>
+                <div className="flex-1 mx-2 h-6 bg-background rounded-md border border-border flex items-center px-2">
+                  <span className="text-xs text-muted-foreground truncate">
+                    {currentFrame?.title ?? "Preview"}
+                  </span>
+                </div>
+              </div>
+              {/* Page content */}
+              <div
+                className="overflow-auto bg-white"
+                style={{ height: `${Math.min(iframeHeight, viewportHeight * 0.85)}px`, maxHeight: "85vh" }}
+              >
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={fullHtml}
+                  title={currentFrame?.title}
+                  sandbox="allow-scripts allow-same-origin"
+                  onLoad={handleIframeLoad}
+                  style={{
+                    width: `${deviceWidth}px`,
+                    height: `${iframeHeight}px`,
+                    minHeight: `${MIN_DEVICE_HEIGHT}px`,
+                    border: "none",
+                    display: "block",
+                    background: "white",
+                    pointerEvents: "auto",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Mobile: phone mockup */
+          <div
+            className="flex items-center justify-center w-full h-full"
+            style={{
+              transform: `scale(${previewScale})`,
+              transformOrigin: "center center",
+            }}
+          >
+            <div
+              className={cn(
+                "relative bg-black rounded-[28px] p-2 shadow-2xl",
+                "ring-1 ring-border"
+              )}
               style={{
-                width: `${deviceWidth}px`,
-                height: `${Math.min(iframeHeight, viewportHeight * 0.9)}px`,
-                maxHeight: "90vh",
+                boxShadow: "0 0 0 1px var(--border), 0 20px 40px -10px rgba(0,0,0,0.25)",
               }}
             >
-              <iframe
-                ref={iframeRef}
-                srcDoc={fullHtml}
-                title={currentFrame?.title}
-                sandbox="allow-scripts allow-same-origin"
-                onLoad={handleIframeLoad}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-b-xl z-10" />
+              <div
+                className="relative bg-white dark:bg-background rounded-[22px] overflow-hidden"
                 style={{
                   width: `${deviceWidth}px`,
                   height: `${Math.min(iframeHeight, viewportHeight * 0.9)}px`,
-                  minHeight: `${MIN_DEVICE_HEIGHT}px`,
-                  border: "none",
-                  display: "block",
-                  background: "white",
-                  pointerEvents: "auto",
+                  maxHeight: "90vh",
                 }}
-              />
+              >
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={fullHtml}
+                  title={currentFrame?.title}
+                  sandbox="allow-scripts allow-same-origin"
+                  onLoad={handleIframeLoad}
+                  style={{
+                    width: `${deviceWidth}px`,
+                    height: `${Math.min(iframeHeight, viewportHeight * 0.9)}px`,
+                    minHeight: `${MIN_DEVICE_HEIGHT}px`,
+                    border: "none",
+                    display: "block",
+                    background: "white",
+                    pointerEvents: "auto",
+                  }}
+                />
+              </div>
+              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/30 rounded-full" />
             </div>
-            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/30 rounded-full" />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

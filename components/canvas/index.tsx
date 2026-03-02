@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { LoadingStatusType, useCanvas } from "@/context/canvas-context";
 import { usePrototype } from "@/context/prototype-context";
 import { cn } from "@/lib/utils";
@@ -11,11 +10,7 @@ import DeviceFrame from "./device-frame";
 import HtmlDialog from "./html-dialog";
 import PrototypeConnectors from "./prototype-connectors";
 import { toast } from "sonner";
-
-const DEMO_HTML = `
-<div class=\"flex flex-col w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans pt-12 pb-24 px-6 overflow-y-auto relative\">\n \n <!-- Header -->\n <header class=\"flex justify-between items-center mb-8\">\n <div>\n <p class=\"text-[var(--muted-foreground)] text-xs uppercase tracking-widest font-semibold mb-1\">Welcome Back</p>\n <h1 class=\"text-2xl font-bold tracking-tight text-[var(--foreground)]\">Alex Runner</h1>\n </div>\n <div class=\"h-12 w-12 rounded-full border-2 border-[var(--primary)] p-1 overflow-hidden shadow-[0_0_10px_var(--primary)]\">\n <img src=\"https://i.pravatar.cc/150?img=11\" alt=\"User\" class=\"w-full h-full object-cover rounded-full\" />\n </div>\n </header>\n\n <!-- Central Circular Progress -->\n <div class=\"relative flex items-center justify-center mb-10\">\n <!-- Glow Effect -->\n <div class=\"absolute inset-0 bg-[var(--primary)] opacity-20 blur-3xl rounded-full transform scale-75\"></div>\n \n <div class=\"relative w-64 h-64\">\n <svg class=\"w-full h-full transform -rotate-90\">\n <!-- Background Circle -->\n <circle cx=\"128\" cy=\"128\" r=\"120\" stroke=\"var(--muted)\" stroke-width=\"8\" fill=\"transparent\" />\n <!-- Progress Circle (Steps) -->\n <circle cx=\"128\" cy=\"128\" r=\"120\" stroke=\"var(--primary)\" stroke-width=\"8\" fill=\"transparent\" \n stroke-dasharray=\"753.6\" stroke-dashoffset=\"188\" stroke-linecap=\"round\" \n class=\"drop-shadow-[0_0_8px_var(--primary)]\" />\n <!-- Inner Progress (Calories) -->\n <circle cx=\"128\" cy=\"128\" r=\"100\" stroke=\"var(--muted)\" stroke-width=\"6\" fill=\"transparent\" />\n <circle cx=\"128\" cy=\"128\" r=\"100\" stroke=\"var(--accent)\" stroke-width=\"6\" fill=\"transparent\" \n stroke-dasharray=\"628\" stroke-dashoffset=\"200\" stroke-linecap=\"round\" \n class=\"drop-shadow-[0_0_8px_var(--accent)]\" />\n </svg>\n \n <!-- Center Text -->\n <div class=\"absolute inset-0 flex flex-col items-center justify-center\">\n <iconify-icon icon=\"lucide:footprints\" class=\"text-[var(--primary)] text-3xl mb-1\"></iconify-icon>\n <span class=\"text-5xl font-black italic tracking-tighter text-[var(--foreground)]\">8,432</span>\n <span class=\"text-[var(--muted-foreground)] text-sm font-medium uppercase tracking-widest\">Steps</span>\n <div class=\"mt-2 flex items-center gap-1 text-[var(--accent)]\">\n <iconify-icon icon=\"lucide:flame\" width=\"14\"></iconify-icon>\n <span class=\"text-sm font-bold\">420 kcal</span>\n </div>\n </div>\n </div>\n </div>\n\n <!-- Heart Rate Graph -->\n <div class=\"mb-6\">\n <div class=\"flex justify-between items-end mb-4\">\n <h2 class=\"text-lg font-bold flex items-center gap-2\">\n <iconify-icon icon=\"lucide:activity\" class=\"text-[var(--accent)]\"></iconify-icon>\n Heart Rate\n </h2>\n <span class=\"text-[var(--accent)] font-mono font-bold text-xl drop-shadow-[0_0_5px_var(--accent)]\">112 BPM</span>\n </div>\n <div class=\"h-32 w-full bg-[var(--card)] rounded-[var(--radius)] border border-[var(--muted)] relative overflow-hidden p-4 flex items-end\">\n <!-- Grid Lines -->\n <div class=\"absolute inset-0 grid grid-rows-4 w-full h-full opacity-10 pointer-events-none\">\n <div class=\"border-b border-[var(--foreground)]\"></div>\n <div class=\"border-b border-[var(--foreground)]\"></div>\n <div class=\"border-b border-[var(--foreground)]\"></div>\n </div>\n <!-- Graph Line (SVG representation) -->\n <svg class=\"w-full h-full overflow-visible\" preserveAspectRatio=\"none\">\n <path d=\"M0,80 C20,80 40,50 60,60 S100,20 120,40 S160,80 180,70 S220,10 240,30 S280,60 350,50\" \n fill=\"none\" stroke=\"var(--accent)\" stroke-width=\"3\" \n class=\"drop-shadow-[0_0_6px_var(--accent)]\" />\n <!-- Area under curve -->\n <path d=\"M0,80 C20,80 40,50 60,60 S100,20 120,40 S160,80 180,70 S220,10 240,30 S280,60 350,50 V150 H0 Z\" \n fill=\"var(--accent)\" fill-opacity=\"0.1\" />\n </svg>\n </div>\n </div>\n\n <!-- Metrics Grid -->\n <div class=\"grid grid-cols-2 gap-4\">\n <!-- Sleep Card -->\n <button class=\"bg-[var(--card)] p-5 rounded-[var(--radius)] border border-[var(--muted)] flex flex-col items-start active:scale-95 transition-transform\">\n <div class=\"bg-[var(--muted)] p-2 rounded-full mb-3 text-[var(--primary)]\">\n <iconify-icon icon=\"lucide:moon\" width=\"24\" height=\"24\"></iconify-icon>\n </div>\n <span class=\"text-[var(--muted-foreground)] text-xs font-bold uppercase\">Sleep</span>\n <span class=\"text-xl font-bold text-[var(--foreground)]\">7h 20m</span>\n </button>\n\n <!-- Water Card -->\n <button class=\"bg-[var(--card)] p-5 rounded-[var(--radius)] border border-[var(--muted)] flex flex-col items-start active:scale-95 transition-transform\">\n <div class=\"bg-[var(--muted)] p-2 rounded-full mb-3 text-[var(--accent)]\">\n <iconify-icon icon=\"lucide:droplets\" width=\"24\" height=\"24\"></iconify-icon>\n </div>\n <span class=\"text-[var(--muted-foreground)] text-xs font-bold uppercase\">Water</span>\n <span class=\"text-xl font-bold text-[var(--foreground)]\">1,250ml</span>\n </button>\n\n <!-- SpO2 Card -->\n <button class=\"col-span-2 bg-[var(--card)] p-4 rounded-[var(--radius)] border border-[var(--muted)] flex items-center justify-between active:scale-95 transition-transform\">\n <div class=\"flex items-center gap-4\">\n <div class=\"bg-[var(--muted)] p-2 rounded-full text-white\">\n <iconify-icon icon=\"lucide:wind\" width=\"24\" height=\"24\"></iconify-icon>\n </div>\n <div class=\"flex flex-col text-left\">\n <span class=\"text-[var(--muted-foreground)] text-xs font-bold uppercase\">SpO2 Levels</span>\n <span class=\"text-lg font-bold text-[var(--foreground)]\">98% Normal</span>\n </div>\n </div>\n <div class=\"h-2 w-24 bg-[var(--muted)] rounded-full overflow-hidden\">\n <div class=\"h-full w-[98%] bg-gradient-to-r from-[var(--primary)] to-[var(--accent)]\"></div>\n </div>\n </button>\n </div>\n\n <!-- Bottom Navigation (Fixed) -->\n <nav class=\"mobile-bottom-nav\">\n <a href=\"#\" class=\"mobile-bottom-nav-item active\">\n <iconify-icon icon=\"lucide:home\"></iconify-icon>\n <span>Home</span>\n <div class=\"nav-indicator\"></div>\n </a>\n <a href=\"#\" class=\"mobile-bottom-nav-item\">\n <iconify-icon icon=\"lucide:activity\"></iconify-icon>\n <span>Stats</span>\n <div class=\"nav-indicator\"></div>\n </a>\n <a href=\"#\" class=\"mobile-bottom-nav-item\">\n <iconify-icon icon=\"lucide:dumbbell\"></iconify-icon>\n <span>Gym</span>\n <div class=\"nav-indicator\"></div>\n </a>\n <a href=\"#\" class=\"mobile-bottom-nav-item\">\n <iconify-icon icon=\"lucide:user\"></iconify-icon>\n <span>Profile</span>\n <div class=\"nav-indicator\"></div>\n </a>\n </nav>\n\n</div>
-
-`;
+import { useCanvasTransform } from "@/hooks/use-canvas-transform";
 
 const Canvas = ({
   projectId,
@@ -62,20 +57,97 @@ const Canvas = ({
   } = usePrototype();
 
   const [toolMode, setToolMode] = useState<ToolModeType>(TOOL_MODE_ENUM.SELECT);
-  const [zoomPercent, setZoomPercent] = useState<number>(53);
-  const [currentScale, setCurrentScale] = useState<number>(0.53);
   const [openHtmlDialog, setOpenHtmlDialog] = useState(false);
   const [isScreenshotting, setIsScreenshotting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  /** Images placed on the canvas (not inside a frame) - visible and pan/zoom with canvas */
   const [canvasImages, setCanvasImages] = useState<
     { id: string; src: string; x: number; y: number; width: number; height: number }[]
   >([]);
 
   const canvasRootRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const insertImageInputRef = useRef<HTMLInputElement>(null);
   const isPrototypeMode = mode === "prototype";
 
+  // ── Custom canvas transform (pan + zoom) ──────────────────────────────
+  const {
+    transform,
+    attachWheelListener,
+    startDrag,
+    updateDrag,
+    endDrag,
+    zoomIn,
+    zoomOut,
+    cssTransform,
+    zoomPercent,
+  } = useCanvasTransform({
+    initialScale: 0.53,
+    initialX: 40,
+    initialY: 5,
+    minScale: 0.05,
+    maxScale: 4,
+  });
+
+  // Attach the non-passive wheel listener to the container so we can preventDefault
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const cleanup = attachWheelListener(el);
+    return cleanup;
+  }, [attachWheelListener]);
+
+  // ── Pointer drag pan (HAND mode) ─────────────────────────────────────
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (toolMode !== TOOL_MODE_ENUM.HAND) return;
+      if (e.button !== 0) return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      startDrag(e.clientX, e.clientY);
+    },
+    [toolMode, startDrag]
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      // Prototype linking mouse tracking (uses clientX/Y directly, no transform needed)
+      if (linkingState.isLinking) {
+        updateLinkingPosition(e.clientX, e.clientY);
+      }
+      updateDrag(e.clientX, e.clientY);
+    },
+    [linkingState.isLinking, updateLinkingPosition, updateDrag]
+  );
+
+  const handlePointerUp = useCallback(
+    (_e: React.PointerEvent) => {
+      endDrag();
+    },
+    [endDrag]
+  );
+
+  // ── Canvas click (cancel linking / deselect) ──────────────────────────
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (linkingState.isLinking) {
+        cancelLinking();
+      }
+      setSelectedLinkId(null);
+    },
+    [linkingState.isLinking, cancelLinking, setSelectedLinkId]
+  );
+
+  // ── Keyboard shortcuts ────────────────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && linkingState.isLinking) {
+        cancelLinking();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [linkingState.isLinking, cancelLinking]);
+
+  // ── Image insert ──────────────────────────────────────────────────────
   const handleInsertImageClick = useCallback(() => {
     insertImageInputRef.current?.click();
   }, []);
@@ -113,39 +185,7 @@ const Canvas = ({
     []
   );
 
-  // Handle mouse move for link dragging
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (linkingState.isLinking) {
-        updateLinkingPosition(e.clientX, e.clientY);
-      }
-    },
-    [linkingState.isLinking, updateLinkingPosition]
-  );
-
-  // Handle canvas click to cancel linking or deselect link
-  const handleCanvasClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (linkingState.isLinking) {
-        cancelLinking();
-      }
-      setSelectedLinkId(null);
-    },
-    [linkingState.isLinking, cancelLinking, setSelectedLinkId]
-  );
-
-  // Handle escape key to cancel linking
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && linkingState.isLinking) {
-        cancelLinking();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [linkingState.isLinking, cancelLinking]);
-
+  // ── Thumbnail / screenshot ────────────────────────────────────────────
   const saveThumbnailToProject = useCallback(
     async (projectId: string | null) => {
       try {
@@ -179,9 +219,7 @@ const Canvas = ({
     }
   }, [loadingStatus, projectId, saveThumbnailToProject]);
 
-  const onOpenHtmlDialog = () => {
-    setOpenHtmlDialog(true);
-  };
+  const onOpenHtmlDialog = () => setOpenHtmlDialog(true);
 
   function getCanvasHtmlContent() {
     const el = canvasRootRef.current;
@@ -195,19 +233,9 @@ const Canvas = ({
         for (const rule of sheet.cssRules) styles += rule.cssText;
       } catch {}
     }
-
     return {
       element: el,
-      html: `
-         <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <style>body{margin:0}*{box-sizing:border-box}${styles}</style>
-          </head>
-          <body>${el.outerHTML}</body>
-          </html>
-      `,
+      html: `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0}*{box-sizing:border-box}${styles}</style></head><body>${el.outerHTML}</body></html>`,
     };
   }
 
@@ -220,31 +248,22 @@ const Canvas = ({
       }
       setSelectedFrameId(null);
       setIsScreenshotting(true);
-
       const response = await axios.post(
         "/api/screenshot",
-        {
-          html: result.html,
-          width: result.element.scrollWidth,
-          height: 700,
-        },
-        {
-          responseType: "blob",
-          validateStatus: (s) => (s >= 200 && s < 300) || s === 304,
-        }
+        { html: result.html, width: result.element.scrollWidth, height: 700 },
+        { responseType: "blob", validateStatus: (s) => (s >= 200 && s < 300) || s === 304 }
       );
       const title = projectName || "Canvas";
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${title.replace(/\s+/g, "-").toLowerCase()}
-      -${Date.now()}.png`;
+      link.download = `${title.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}.png`;
       link.click();
       window.URL.revokeObjectURL(url);
       toast.success("Screenshot downloaded");
     } catch (error) {
       console.log(error);
-      toast.error("Failed to screenshot canvs");
+      toast.error("Failed to screenshot canvas");
     } finally {
       setIsScreenshotting(false);
     }
@@ -257,235 +276,169 @@ const Canvas = ({
     : loadingStatus !== "idle" && loadingStatus !== "completed"
     ? loadingStatus
     : null;
+
   return (
     <>
       <div className="relative w-full h-full overflow-hidden">
         {currentStatus && <CanvasLoader status={currentStatus} />}
 
-        <TransformWrapper
-          initialScale={0.53}
-          initialPositionX={40}
-          initialPositionY={5}
-          minScale={0.1}
-          maxScale={3}
-          wheel={{
-            // Fine-grained step so trackpad zoom feels like Figma/Stitch (not jumpy)
-            step: 0.04,
-            smoothStep: 0.004,
-            wheelDisabled: false,
-            touchPadDisabled: false,
-          }}
-          pinch={{
-            // Higher step = more responsive pinch-to-zoom on trackpad/touch
-            step: 8,
-          }}
-          doubleClick={{ disabled: true }}
-          centerZoomedOut={false}
-          centerOnInit={false}
-          smooth={false}
-          limitToBounds={false}
-          panning={{
-            disabled: false,
-            // In SELECT mode: only trackpad two-finger pan (wheelPanning).
-            // In HAND mode: also allow click-drag.
-            allowLeftClickPan: toolMode === TOOL_MODE_ENUM.HAND,
-            // Two-finger trackpad drag dispatches wheel events without ctrlKey → pan.
-            // Pinch / ctrl+wheel → zoom. This is the Figma/Stitch pattern.
-            wheelPanning: true,
-            // Disable momentum so the canvas stops the instant you lift fingers.
-            velocityDisabled: true,
-          }}
-          velocityAnimation={{
-            disabled: true,
-          }}
-          onTransformed={(ref) => {
-            setZoomPercent(Math.round(ref.state.scale * 100));
-            setCurrentScale(ref.state.scale);
-          }}
-        >
-          {({ zoomIn, zoomOut }) => (
-            <>
-              <div
-                ref={canvasRootRef}
-                className={cn(
-                  `absolute inset-0 w-full h-full bg-muted p-3
-              `,
-                  toolMode === TOOL_MODE_ENUM.HAND
-                    ? "cursor-grab active:cursor-grabbing"
-                    : linkingState.isLinking
-                    ? "cursor-crosshair"
-                    : "cursor-default",
-                  isPrototypeMode && "bg-accent/30"
-                )}
-                style={{
-                  backgroundImage: isPrototypeMode
-                    ? "radial-gradient(circle, var(--grid-color) 1px, transparent 1px), linear-gradient(135deg, rgba(99, 102, 241, 0.02) 25%, transparent 25%)"
-                    : "radial-gradient(circle, var(--grid-color) 1px, transparent 1px)",
-                  backgroundSize: "20px 20px",
-                }}
-                onMouseMove={handleMouseMove}
-                onClick={handleCanvasClick}
-              >
-                <TransformComponent
-                  wrapperStyle={{
-                    width: "100%",
-                    height: "100%",
-                    overflow: "unset",
-                  }}
-                  contentStyle={{
-                    width: "100%",
-                    height: "100%",
-                    position: "relative",
-                  }}
-                >
-                  <div
-                    className="relative"
-                    style={{
-                      width: "4000px",
-                      height: "3000px",
-                      position: "relative",
-                    }}
-                  >
-                    {/* Device Frames */}
-                    {isWireframeWebResponsive
-                      ? wireframeWebViewports.map((vp, index) => {
-                          const frame = frames[0];
-                          const baseX =
-                            100 +
-                            wireframeWebViewports
-                              .slice(0, index)
-                              .reduce((acc, w) => acc + w.width + GAP, 0);
-                          const y = 100;
-                          return (
-                            <DeviceFrame
-                              key={`${frame.id}-${vp.id}`}
-                              frameId={frame.id}
-                              projectId={projectId}
-                              title={vp.title}
-                              html={frame.htmlContent}
-                              isLoading={frame.isLoading}
-                              scale={currentScale}
-                              initialPosition={{ x: baseX, y }}
-                              toolMode={toolMode}
-                              theme_style={theme?.style}
-                              onOpenHtmlDialog={onOpenHtmlDialog}
-                              overrideWidth={vp.width}
-                              overrideMinHeight={vp.minHeight}
-                              heightMessageId={`${frame.id}-${vp.id}`}
-                            />
-                          );
-                        })
-                      : (frames ?? []).map((frame, index: number) => {
-                          const isWireframe = deviceType === "wireframe";
-                          // Mobile wireframe: single frame at 393px (iPhone 16). Legacy: 3 frames at 1440, 768, 393.
-                          const wireframeIndex =
-                            isWireframe &&
-                            wireframeKind === "mobile" &&
-                            (frames?.length ?? 0) === 1
-                              ? 2
-                              : index;
-                          const frameWidth = isWireframe
-                            ? wireframeWidths[wireframeIndex] ?? 393
-                            : undefined;
-                          const frameMinHeight = isWireframe
-                            ? wireframeMinHeights[wireframeIndex] ?? 852
-                            : undefined;
-
-                          let baseX: number;
-                          if (isWireframe && frameWidth != null) {
-                            baseX =
-                              100 +
-                              wireframeWidths
-                                .slice(0, index)
-                                .reduce((acc, w) => acc + w + GAP, 0);
-                          } else {
-                            const frameSpacing = customDimensions?.width
-                              ? customDimensions.width + GAP
-                              : deviceType === "web"
-                              ? 1500
-                              : 393 + GAP;
-                            baseX = 100 + index * frameSpacing;
-                          }
-                          const y = 100;
-
-                          return (
-                            <DeviceFrame
-                              key={frame.id}
-                              frameId={frame.id}
-                              projectId={projectId}
-                              title={frame.title}
-                              html={frame.htmlContent}
-                              isLoading={frame.isLoading}
-                              scale={currentScale}
-                              initialPosition={{ x: baseX, y }}
-                              toolMode={toolMode}
-                              theme_style={theme?.style}
-                              onOpenHtmlDialog={onOpenHtmlDialog}
-                              overrideWidth={frameWidth}
-                              overrideMinHeight={frameMinHeight}
-                            />
-                          );
-                        })}
-
-                    {/* Canvas-level images (inserted via Add image, pan/zoom with canvas) */}
-                    {canvasImages.map((img) => (
-                      <div
-                        key={img.id}
-                        className="absolute pointer-events-none"
-                        style={{
-                          left: img.x,
-                          top: img.y,
-                          width: img.width,
-                          height: img.height,
-                        }}
-                      >
-                        <img
-                          src={img.src}
-                          alt="Inserted"
-                          className="w-full h-full object-contain rounded shadow-md border border-black/10"
-                          draggable={false}
-                        />
-                      </div>
-                    ))}
-
-                    {/* Prototype connector arrows layer - rendered on top */}
-                    <PrototypeConnectors canvasScale={currentScale} />
-                  </div>
-                  {/* <DeviceFrame
-                    frameId="demo"
-                    title="Demo Screen"
-                    html={DEMO_HTML}
-                    scale={currentScale}
-                    initialPosition={{
-                      x: 1000,
-                      y: 100,
-                    }}
-                    toolMode={toolMode}
-                    theme_style={theme?.style}
-                    onOpenHtmlDialog={onOpenHtmlDialog}
-                  /> */}
-                </TransformComponent>
-              </div>
-
-              <input
-                ref={insertImageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                aria-hidden
-                onChange={handleInsertImageFile}
-              />
-              <CanvasControls
-                zoomIn={zoomIn}
-                zoomOut={zoomOut}
-                zoomPercent={zoomPercent}
-                toolMode={toolMode}
-                setToolMode={setToolMode}
-                onInsertImage={handleInsertImageClick}
-              />
-            </>
+        {/* Canvas container — captures all pointer and wheel events */}
+        <div
+          ref={containerRef}
+          className={cn(
+            "absolute inset-0 w-full h-full bg-muted",
+            toolMode === TOOL_MODE_ENUM.HAND
+              ? "cursor-grab active:cursor-grabbing"
+              : linkingState.isLinking
+              ? "cursor-crosshair"
+              : "cursor-default",
+            isPrototypeMode && "bg-accent/30"
           )}
-        </TransformWrapper>
+          style={{
+            backgroundImage: isPrototypeMode
+              ? "radial-gradient(circle, var(--grid-color) 1px, transparent 1px), linear-gradient(135deg, rgba(99, 102, 241, 0.02) 25%, transparent 25%)"
+              : "radial-gradient(circle, var(--grid-color) 1px, transparent 1px)",
+            backgroundSize: "20px 20px",
+            // Prevent browser's own pan/zoom so our handler is the sole authority
+            touchAction: "none",
+          }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          onClick={handleCanvasClick}
+        >
+          {/* The single transformed layer — GPU-composited via transform */}
+          <div
+            ref={canvasRootRef}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "4000px",
+              height: "3000px",
+              transform: cssTransform,
+              transformOrigin: "0 0",
+              // Use will-change so the browser promotes this to its own GPU layer
+              willChange: "transform",
+            }}
+          >
+            {/* Device Frames */}
+            {isWireframeWebResponsive
+              ? wireframeWebViewports.map((vp, index) => {
+                  const frame = frames[0];
+                  const baseX =
+                    100 +
+                    wireframeWebViewports
+                      .slice(0, index)
+                      .reduce((acc, w) => acc + w.width + GAP, 0);
+                  return (
+                    <DeviceFrame
+                      key={`${frame.id}-${vp.id}`}
+                      frameId={frame.id}
+                      projectId={projectId}
+                      title={vp.title}
+                      html={frame.htmlContent}
+                      isLoading={frame.isLoading}
+                      scale={transform.scale}
+                      initialPosition={{ x: baseX, y: 100 }}
+                      toolMode={toolMode}
+                      theme_style={theme?.style}
+                      onOpenHtmlDialog={onOpenHtmlDialog}
+                      overrideWidth={vp.width}
+                      overrideMinHeight={vp.minHeight}
+                      heightMessageId={`${frame.id}-${vp.id}`}
+                    />
+                  );
+                })
+              : (frames ?? []).map((frame, index: number) => {
+                  const isWireframe = deviceType === "wireframe";
+                  const wireframeIndex =
+                    isWireframe &&
+                    wireframeKind === "mobile" &&
+                    (frames?.length ?? 0) === 1
+                      ? 2
+                      : index;
+                  const frameWidth = isWireframe
+                    ? wireframeWidths[wireframeIndex] ?? 393
+                    : undefined;
+                  const frameMinHeight = isWireframe
+                    ? wireframeMinHeights[wireframeIndex] ?? 852
+                    : undefined;
+
+                  let baseX: number;
+                  if (isWireframe && frameWidth != null) {
+                    baseX =
+                      100 +
+                      wireframeWidths
+                        .slice(0, index)
+                        .reduce((acc, w) => acc + w + GAP, 0);
+                  } else {
+                    const frameSpacing = customDimensions?.width
+                      ? customDimensions.width + GAP
+                      : deviceType === "web"
+                      ? 1500
+                      : 393 + GAP;
+                    baseX = 100 + index * frameSpacing;
+                  }
+
+                  return (
+                    <DeviceFrame
+                      key={frame.id}
+                      frameId={frame.id}
+                      projectId={projectId}
+                      title={frame.title}
+                      html={frame.htmlContent}
+                      isLoading={frame.isLoading}
+                      scale={transform.scale}
+                      initialPosition={{ x: baseX, y: 100 }}
+                      toolMode={toolMode}
+                      theme_style={theme?.style}
+                      onOpenHtmlDialog={onOpenHtmlDialog}
+                      overrideWidth={frameWidth}
+                      overrideMinHeight={frameMinHeight}
+                    />
+                  );
+                })}
+
+            {/* Canvas-level images */}
+            {canvasImages.map((img) => (
+              <div
+                key={img.id}
+                className="absolute pointer-events-none"
+                style={{ left: img.x, top: img.y, width: img.width, height: img.height }}
+              >
+                <img
+                  src={img.src}
+                  alt="Inserted"
+                  className="w-full h-full object-contain rounded shadow-md border border-black/10"
+                  draggable={false}
+                />
+              </div>
+            ))}
+
+            {/* Prototype connector arrows layer */}
+            <PrototypeConnectors canvasScale={transform.scale} />
+          </div>
+        </div>
+
+        <input
+          ref={insertImageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          aria-hidden
+          onChange={handleInsertImageFile}
+        />
+
+        <CanvasControls
+          zoomIn={zoomIn}
+          zoomOut={zoomOut}
+          zoomPercent={zoomPercent}
+          toolMode={toolMode}
+          setToolMode={setToolMode}
+          onInsertImage={handleInsertImageClick}
+        />
       </div>
 
       <HtmlDialog
