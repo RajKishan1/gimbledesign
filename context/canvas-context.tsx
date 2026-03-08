@@ -59,6 +59,9 @@ interface CanvasContextType {
 
   /** Project-level app shell (header/nav etc.). Used by frames that are composed with shell. */
   appShell: AppShellType | undefined;
+
+  /** When true (e.g. public share view), hide edit toolbar and actions. */
+  readOnly?: boolean;
 }
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -73,6 +76,7 @@ export const CanvasProvider = ({
   initialAppShell,
   hasInitialData,
   projectId,
+  readOnly = false,
 }: {
   children: ReactNode;
   initialFrames: FrameType[];
@@ -86,6 +90,8 @@ export const CanvasProvider = ({
   initialAppShell?: AppShellType;
   hasInitialData: boolean;
   projectId: string | null;
+  /** When true, hide edit toolbar and actions (e.g. public share view). */
+  readOnly?: boolean;
 }) => {
   const [themeId, setThemeId] = useState<string>(
     initialThemeId || THEME_LIST[0].id
@@ -242,6 +248,7 @@ export const CanvasProvider = ({
         variationsFrameId,
         setVariationsFrameId,
         appShell,
+        readOnly,
       }}
     >
       {children}

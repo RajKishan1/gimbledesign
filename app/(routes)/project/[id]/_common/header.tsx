@@ -8,6 +8,7 @@ import { ArrowLeft01Icon, Moon01Icon, Sun01Icon } from "@hugeicons/core-free-ico
 import { cn } from "@/lib/utils";
 import CanvasFloatingToolbar from "@/components/canvas/canvas-floating-toolbar";
 import ModeToggle from "@/components/canvas/mode-toggle";
+import { ShareButton } from "@/components/canvas/share-button";
 
 const Header = ({
   projectName,
@@ -50,6 +51,7 @@ const Header = ({
           </div>
           <ModeToggle projectId={projectId} />
           <div className="flex items-center gap-4">
+            <ShareButton projectId={projectId} />
             <CanvasFloatingToolbar
               projectId={projectId}
               isScreenshotting={isScreenshotting || false}

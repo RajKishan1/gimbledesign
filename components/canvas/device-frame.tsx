@@ -61,6 +61,7 @@ const DeviceFrame = ({
     setVariationsFrameId,
     appShell,
     frames,
+    readOnly,
   } = useCanvas();
   const currentFrame = frames.find((f) => f.id === frameId);
   const isShellComposed = currentFrame?.isShellComposed ?? false;
@@ -358,8 +359,8 @@ const DeviceFrame = ({
       )}
     >
       <div className="w-full h-full" ref={containerRef}>
-        {/* Show toolbar only in design mode */}
-        {!isPrototypeMode && (
+        {/* Show toolbar only in design mode and when not read-only (e.g. share view) */}
+        {!isPrototypeMode && !readOnly && (
           <DeviceFrameToolbar
             title={title}
             frameId={frameId}
