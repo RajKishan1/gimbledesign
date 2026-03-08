@@ -2,7 +2,7 @@
 import { useInngestSubscription } from "@inngest/realtime/hooks";
 import { fetchRealtimeSubscriptionToken } from "@/app/action/realtime";
 import { THEME_LIST, ThemeType } from "@/lib/themes";
-import { FrameType } from "@/types/project";
+import { AppShellType, FrameType } from "@/types/project";
 import { POPULAR_FONTS, FontOption, DEFAULT_FONT } from "@/constant/fonts";
 import {
   createContext,
@@ -56,6 +56,9 @@ interface CanvasContextType {
   /** The frameId for which variations are being generated */
   variationsFrameId: string | null;
   setVariationsFrameId: (id: string | null) => void;
+
+  /** Project-level app shell (header/nav etc.). Used by frames that are composed with shell. */
+  appShell: AppShellType | undefined;
 }
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -67,6 +70,7 @@ export const CanvasProvider = ({
   initialDeviceType = "mobile",
   initialDimensions,
   initialWireframeKind,
+  initialAppShell,
   hasInitialData,
   projectId,
 }: {
@@ -78,6 +82,8 @@ export const CanvasProvider = ({
   initialDimensions?: CustomDimensions;
   /** When deviceType is wireframe: "web" | "mobile" | null (legacy 3 frames) */
   initialWireframeKind?: "web" | "mobile" | null;
+  /** Project-level app shell for composed frames */
+  initialAppShell?: AppShellType;
   hasInitialData: boolean;
   projectId: string | null;
 }) => {
@@ -100,6 +106,8 @@ export const CanvasProvider = ({
   const [variationsFrameId, setVariationsFrameId] = useState<string | null>(null);
 
   const [prevProjectId, setPrevProjectId] = useState(projectId);
+  const appShell = initialAppShell;
+
   if (projectId !== prevProjectId) {
     setPrevProjectId(projectId);
     setLoadingStatus(hasInitialData ? "idle" : "running");
@@ -233,6 +241,7 @@ export const CanvasProvider = ({
         setVariationsPanelOpen,
         variationsFrameId,
         setVariationsFrameId,
+        appShell,
       }}
     >
       {children}

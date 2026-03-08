@@ -49,6 +49,17 @@ const Page = () => {
       ? project.wireframeKind
       : null;
 
+  const initialAppShell =
+    project?.appShellHtml != null &&
+    project?.appShellType != null &&
+    project?.appShellMeta != null
+      ? {
+          html: project.appShellHtml,
+          type: project.appShellType as "sidebar" | "bottom-nav",
+          meta: project.appShellMeta,
+        }
+      : undefined;
+
   return (
     <CanvasProvider
       initialFrames={project?.frames}
@@ -56,6 +67,7 @@ const Page = () => {
       initialDeviceType={initialDeviceType}
       initialDimensions={initialDimensions}
       initialWireframeKind={initialWireframeKind}
+      initialAppShell={initialAppShell}
       hasInitialData={hasInitialData}
       projectId={project?.id}
     >

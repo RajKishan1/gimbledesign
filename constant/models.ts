@@ -28,6 +28,20 @@ export const AI_MODELS: ModelOption[] = [
     description: "Advanced Gemini Pro - balanced speed/quality",
     useCase: "both",
   },
+  {
+    id: "moonshotai/kimi-k2.5",
+    name: "Kimi 2.5",
+    provider: "Moonshot AI",
+    description: "Strong reasoning, vision, and tool-calling",
+    useCase: "both",
+  },
+  {
+    id: "qwen/qwen3.5-plus-02-15",
+    name: "Qwen 3.5 Plus",
+    provider: "Qwen",
+    description: "Vision-language model, great for multimodal tasks",
+    useCase: "both",
+  },
 ];
 
 // Auto = use Gemini 3 Pro by default (no GPT or others)
@@ -62,6 +76,20 @@ export const SELECTABLE_MODELS: ModelOption[] = [
     provider: "Anthropic",
     description: "Latest Claude Sonnet - high quality",
     useCase: "generation",
+  },
+  {
+    id: "moonshotai/kimi-k2.5",
+    name: "Kimi 2.5",
+    provider: "Moonshot AI",
+    description: "Strong reasoning, vision, and tool-calling",
+    useCase: "both",
+  },
+  {
+    id: "qwen/qwen3.5-plus-02-15",
+    name: "Qwen 3.5 Plus",
+    provider: "Qwen",
+    description: "Vision-language model, great for multimodal tasks",
+    useCase: "both",
   },
 ];
 

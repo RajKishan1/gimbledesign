@@ -59,7 +59,11 @@ const DeviceFrame = ({
     customDimensions,
     setVariationsPanelOpen,
     setVariationsFrameId,
+    appShell,
+    frames,
   } = useCanvas();
+  const currentFrame = frames.find((f) => f.id === frameId);
+  const isShellComposed = currentFrame?.isShellComposed ?? false;
   const {
     mode,
     updateScreenPosition,
@@ -118,6 +122,7 @@ const DeviceFrame = ({
   const fullHtml = getHTMLWrapper(html, title, theme_style, frameId, {
     font,
     ...(heightMessageId != null && { heightMessageId }),
+    ...(isShellComposed && appShell && { appShell }),
   });
 
   // Update screen position for connector drawing

@@ -327,8 +327,23 @@ const PreviewPage = () => {
   }
 
   const defaultFont = getFontById(DEFAULT_FONT);
+  const appShellData =
+    project?.appShellHtml != null &&
+    project?.appShellType != null &&
+    project?.appShellMeta != null
+      ? {
+          html: project.appShellHtml as string,
+          type: project.appShellType as "sidebar" | "bottom-nav",
+          meta: project.appShellMeta,
+        }
+      : null;
+  const isShellComposed = currentFrame?.isShellComposed ?? false;
   const fullHtml = currentFrame
-    ? getHTMLWrapper(currentFrame.htmlContent, currentFrame.title, theme?.style, currentFrame.id, { previewMode: true, font: defaultFont })
+    ? getHTMLWrapper(currentFrame.htmlContent, currentFrame.title, theme?.style, currentFrame.id, {
+        previewMode: true,
+        font: defaultFont,
+        ...(isShellComposed && appShellData && { appShell: appShellData }),
+      })
     : "";
 
   // Use app theme (background from globals.css)

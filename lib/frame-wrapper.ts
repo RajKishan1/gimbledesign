@@ -1,5 +1,6 @@
 import { BASE_VARIABLES, OCEAN_BREEZE_THEME } from "./themes";
 import { FontOption, DEFAULT_FONT, getFontById } from "@/constant/fonts";
+import type { AppShellType } from "@/types/project";
 
 export function getHTMLWrapper(
   html: string,
@@ -10,12 +11,19 @@ export function getHTMLWrapper(
     previewMode?: boolean;
     font?: FontOption /** When same frame is shown in multiple viewports (e.g. responsive wireframe), use a unique id so each viewport's height is applied only to that instance */;
     heightMessageId?: string;
+    /** When provided, frame content is composed inside the shell (e.g. shell contains {{content}} placeholder). */
+    appShell?: AppShellType;
   }
 ) {
   const finalTheme = theme_style || OCEAN_BREEZE_THEME;
   const isPreview = options?.previewMode || false;
   const selectedFont = options?.font || getFontById(DEFAULT_FONT);
   const heightId = options?.heightMessageId ?? frameId ?? "";
+  const appShell = options?.appShell;
+  const frameContent =
+    appShell?.html != null && appShell.html !== ""
+      ? appShell.html.replace(/\{\{\s*content\s*\}\}/gi, html)
+      : html;
 
   // For preview mode, allow natural content flow and scrolling
   const previewStyles = isPreview
@@ -79,7 +87,7 @@ ${
 <body>
   <div id="root">
   <div class="relative">
-    ${html}
+    ${frameContent}
   </div>
   <script>
     (()=>{
