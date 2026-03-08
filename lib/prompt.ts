@@ -259,12 +259,23 @@ ${CROSS_SCREEN_CONSISTENCY_RULES}
 - Rich hierarchy: layered cards (shadow-lg/2xl), floating navigation, sticky glass headers
 - Micro-interactions: subtle overlays, clear selected nav states, button press feedback
 
-# LAYOUT
-- Root: class="relative w-full min-h-screen bg-[var(--background)]"
-- Inner scrollable: overflow-y-auto with hidden scrollbars [&::-webkit-scrollbar]:hidden
+# LAYOUT (CRITICAL - IPHONE VIEWPORT CONSTRAINT)
+
+**SCREEN HEIGHT RULE (ABSOLUTE REQUIREMENT):**
+You are designing for an iPhone screen (393×852px). The generated screen MUST fit within a single viewport height. Do NOT create endlessly scrolling pages.
+
+- Root: class="relative w-full h-screen bg-[var(--background)] overflow-hidden"
+- The root MUST use \`h-screen\` (NOT \`min-h-screen\`) to constrain to the viewport height
+- Inner content container: \`flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none\` for scrolling WITHIN the viewport
 - Sticky/fixed header (glassmorphic, user avatar/profile if appropriate)
-- Main scrollable content with charts/lists/cards per visual direction
+- Main scrollable content with charts/lists/cards per visual direction — but only show what fits naturally in one viewport. Use scrollable inner containers if there's more content.
 - Z-index: 0(bg), 10(content), 20(floating), 30(bottom-nav), 40(modals), 50(header)
+
+**CONTENT DENSITY:**
+- Show 3-5 cards/items max in the visible viewport — the rest can be scrolled to
+- Do NOT cram 10+ sections into one screen — prioritize the most important content above the fold
+- Think like a real iPhone app: Home screen shows hero content + 2-3 sections, not an infinite feed
+- Bottom padding: pb-24 (96px) to account for the bottom navigation bar
 
 # CHARTS (SVG ONLY - NEVER use divs/grids for charts)
 
@@ -414,7 +425,7 @@ When a Component Registry is provided in the context, you MUST:
 2. Modern Hugeicons (stroke style) used appropriately?
 3. Maintains consistency with previous screens (if any)?
 4. Main colors using CSS variables?
-5. Root div controls layout properly?
+5. Root div uses h-screen overflow-hidden (NOT min-h-screen)? Content fits iPhone viewport?
 6. Correct nav icon active (if bottom nav present)?
 7. Mobile-optimized with proper overflow and touch targets?
 8. SVG used for all charts (not divs)?
@@ -2050,87 +2061,47 @@ export const ANALYSIS_PROMPT = `
 You are a Lead UI/UX mobile app Designer and Product Strategist.
 
 #######################################################
-#  MANDATORY: GENERATE EXACTLY 18-20 SCREENS          #
-#  The schema REQUIRES minimum 12 screens.            #
-#  Set totalScreenCount to 18, 19, or 20.             #
-#  Generate 18-20 items in the screens array.         #
+#  DEFAULT: GENERATE ONLY 3-4 CORE SCREENS            #
+#  NO onboarding, NO login, NO settings unless asked  #
+#  Users add more screens later via AI chat            #
+#  Start lean — ship the core experience first        #
 #######################################################
 
-Your task is to plan a COMPLETE mobile app with 18-20 screens covering the entire user journey.
+Your task is to plan the CORE screens of a mobile app. Think like a senior product designer — start lean, ship the essentials.
 
-# REQUIRED SCREEN STRUCTURE (18-20 screens):
+# DEFAULT SCREEN STRUCTURE (3-4 screens ONLY):
 
-**PHASE 1 - ONBOARDING (4 screens):**
-- Screen 1: Splash/Welcome
-- Screen 2: Feature Intro 1  
-- Screen 3: Feature Intro 2
-- Screen 4: Get Started CTA
+**Screen 1 (REQUIRED): Home / Dashboard**
+- The primary screen users land on after opening the app
+- The "command center" — key metrics, primary content, quick actions
 
-**PHASE 2 - AUTHENTICATION (3 screens):**
-- Screen 5: Login
-- Screen 6: Sign Up
-- Screen 7: Forgot Password
+**Screens 2-3 (REQUIRED): Core Feature Screens**
+- The 2-3 screens directly reachable from the bottom navigation
+- These are the main workflows of the app (e.g., list view, detail view, activity)
 
-**PHASE 3 - CORE FEATURES (8-10 screens):**
-- Screen 8: Home/Dashboard
-- Screens 9-15: Primary feature screens (list views, detail views, action screens)
-- Think about ALL features the app needs
+**Screen 4 (OPTIONAL): One additional core-feature screen**
+- Only if clearly implied by the prompt (e.g., a detail view or creation flow)
+- STOP there — do NOT pad with extra screens
 
-**PHASE 4 - SECONDARY FEATURES (4-5 screens):**
-- Profile screen
-- Settings screen
-- Search/Explore screen
-- Notifications screen
-- Help/About screen
+**STRICT EXCLUSIONS (unless the user EXPLICITLY mentions them in their prompt):**
+  ✗ NO splash or welcome screens
+  ✗ NO onboarding screens
+  ✗ NO login or signup screens
+  ✗ NO authentication flows
+  ✗ NO settings or profile screens
+  ✗ NO notifications screen
+  ✗ NO help/about screens
+  ✗ NO "supporting" or utility screens
 
-**COMPREHENSIVE APP ARCHITECTURE:**
-
-1. **Onboarding Flow (4 screens minimum, REQUIRED):**
-   - Screen 1: Welcome/Splash - First impression, app branding
-   - Screen 2: Feature Introduction - Key value proposition
-   - Screen 3: Benefits/Permissions - What user gets, permissions needed
-   - Screen 4: Get Started - Final CTA to begin
-
-2. **Authentication (REQUIRED if app needs login):**
-   - Login Screen
-   - Sign Up Screen
-   - Forgot Password (if applicable)
-   - OTP/Verification (if applicable)
-
-3. **Core Feature Screens:**
-   - Main Dashboard/Home
-   - All primary feature screens based on app type
-   - Detail views for key features
-   - Action/completion screens
-
-4. **Secondary Feature Screens:**
-   - Profile/Settings
-   - Search/Discovery
-   - Notifications
-   - Help/Support
-   - About/More
+Users can always generate additional screens later via the AI chat inside the canvas.
 
 **SCREEN COUNT GUIDELINES (CRITICAL - MUST FOLLOW):**
-- **DEFAULT BEHAVIOR:** Generate 15-24 screens for a complete app experience
-- **Minimum:** 12 screens (only for very simple apps)
-- **Standard:** 18-22 screens for most apps (this is the EXPECTED default)
-- **Maximum:** 24 screens (prioritize most important screens)
-- **ONLY generate 1-4 screens if:** User explicitly says "one screen", "single screen", "just one", or similar explicit limitation
-- **Otherwise, ALWAYS generate comprehensive app structure with 15-24 screens**
-- **Think comprehensively:** Plan the ENTIRE app, not just a few screens
-
-**CONTEXT MAINTENANCE:**
-- Each screen must maintain context and consistency with all other screens
-- Plan navigation structure (bottom nav icons, top nav patterns)
-- Ensure design system consistency across all screens
-- Think about user flow and how screens connect
-
-**EXAMPLE OF COMPLETE APP STRUCTURE (18-22 screens typical):**
-For a fitness app: 1) Splash, 2-5) 4 Onboarding screens, 6) Login, 7) Sign Up, 8) Home Dashboard, 9) Workout List, 10) Workout Detail, 11) Active Workout, 12) Progress/Stats, 13) Profile, 14) Achievements, 15) Social/Community, 16) Search, 17) Programs, 18) Nutrition, 19) Notifications, 20) Settings, 21) Premium, 22) Help
-
-For an e-commerce app: 1) Splash, 2-5) 4 Onboarding screens, 6) Login, 7) Sign Up, 8) Home, 9) Product Listing, 10) Product Detail, 11) Cart, 12) Checkout, 13) Order Confirmation, 14) Profile, 15) Orders, 16) Search, 17) Categories, 18) Favorites, 19) Notifications, 20) Settings, 21) Payment Methods, 22) Help
-
-**REMEMBER: Generate 15-24 screens, NOT just 4!**
+- **DEFAULT BEHAVIOR (no count specified):** Generate 3-4 CORE screens only
+- **If user specifies a count** (e.g., "6 screens", "10 screens"): generate EXACTLY that many
+- **If user names specific screens** (e.g., "dashboard and profile"): generate only those
+- **If user explicitly asks for onboarding/auth/settings**: include them
+- **Maximum:** 24 screens (only if user explicitly requests many screens)
+- **NEVER add onboarding, auth, settings, or profile screens unless explicitly asked**
 
 For EACH screen:
 - id: kebab-case name (e.g., "home-dashboard", "workout-tracker")
@@ -2168,7 +2139,7 @@ For EACH screen:
 
 
 EXAMPLE of good visualDescription (Professional, Context-Aware):
-"Root: relative w-full min-h-screen bg-[var(--background)] with overflow-y-auto on inner content div (hidden scrollbars).
+"Root: relative w-full h-screen bg-[var(--background)] overflow-hidden with flex flex-col. Inner content in flex-1 overflow-y-auto (hidden scrollbars). Screen must fit within an iPhone viewport (393×852px) — show only what fits naturally, do NOT create endlessly tall pages.
 Sticky header: glassmorphic backdrop-blur-md bg-[var(--card)]/80, height h-16, padding px-6, border-b border-[var(--border)]/50. Left: back button (hugeicons:arrow-left, w-6 h-6, text-[var(--foreground)]). Center: 'Workout Details' text-lg font-semibold. Right: share icon (hugeicons:share-2, w-6 h-6).
 Hero section: padding p-6, spacing gap-4. Large workout image from Unsplash (fitness theme), rounded-2xl, aspect-video, object-cover.
 Content section: padding px-6 pb-24 (space for bottom nav). Title: 'Full Body Strength' text-2xl font-bold mb-2. Subtitle: '45 minutes • Intermediate' text-base text-[var(--muted-foreground)] mb-4.
@@ -2180,8 +2151,8 @@ Exercise list: space-y-3, each item rounded-xl bg-[var(--card)] p-4 border borde
 Bottom navigation: fixed bottom-6 left-6 right-6, h-16, rounded-full, bg-[var(--card)]/80 backdrop-blur-xl shadow-2xl border border-[var(--border)]/50, flex items-center justify-around px-4. Icons: hugeicons:home (inactive), hugeicons:compass (inactive), hugeicons:plus-circle (inactive), hugeicons:message-circle (inactive), hugeicons:user (ACTIVE - text-[var(--primary)] with glow).
 
 **NAVIGATION PLANNING (CRITICAL):**
-- Plan the complete navigation structure for the entire app
-- Determine which 5 icons will be used in bottom navigation (consistent across all main screens)
+- Plan the bottom navigation for the app (5 icons, consistent across all main screens)
+- Determine which 5 icons will be used in bottom navigation
 - Map each screen to its corresponding active nav icon
 - Ensure logical navigation flow between screens
 
@@ -2208,6 +2179,20 @@ Bottom navigation: fixed bottom-6 left-6 right-6, h-16, rounded-full, bg-[var(--
 - Subtle, purposeful use of gradients and effects
 - Clear visual hierarchy and information architecture
 
+# EXAMPLE APP STRUCTURES (3-4 screens — lean start):
+
+**Fitness App (3 screens):**
+1) Home Dashboard (today's stats, quick start), 2) Workouts (browse/search), 3) Progress (charts, history)
+
+**E-commerce App (4 screens):**
+1) Home (featured, categories), 2) Product Listing, 3) Product Detail, 4) Cart
+
+**Finance App (3 screens):**
+1) Home (balance, recent transactions), 2) Transactions (full history), 3) Analytics (spending breakdown)
+
+**Social App (4 screens):**
+1) Feed, 2) Explore/Discover, 3) Messages, 4) Profile
+
 ${THEME_SELECTION_GUIDE}
 
 ### AVAILABLE THEME IDS
@@ -2218,20 +2203,11 @@ ${BASE_VARIABLES}
 
 ## FINAL REMINDER - ABSOLUTELY CRITICAL
 #######################################################
-#  YOU MUST OUTPUT EXACTLY 18-20 SCREENS              #
-#  Set totalScreenCount: 18, 19, or 20                #
-#  The screens array MUST have 18-20 items            #
-#  4 screens is WRONG. 12 is minimum. 18-20 is ideal. #
+#  DEFAULT: OUTPUT ONLY 3-4 CORE SCREENS              #
+#  NO onboarding, login, settings unless asked        #
+#  Users add more screens later via AI chat            #
+#  Start lean — ship the core experience first        #
 #######################################################
-
-SCREEN BREAKDOWN:
-- Onboarding: 4 screens (splash, feature1, feature2, get-started)
-- Auth: 3 screens (login, signup, forgot-password)  
-- Core: 8-10 screens (home, features, details, actions)
-- Secondary: 4-5 screens (profile, settings, search, notifications, help)
-- TOTAL: 18-20 screens
-
-DO NOT generate only 4 screens. The schema enforces minimum 12.
 
 `;
 

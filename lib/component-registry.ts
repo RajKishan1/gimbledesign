@@ -48,20 +48,44 @@ export interface DesignSystemSpec {
   rules: string[];      // Specific rules for this design system
 }
 
+export interface AppIdentity {
+  // App-level identity (frozen from screen 1, used on ALL screens)
+  appName: string;              // e.g. "Payvault"
+  appTagline: string | null;    // e.g. "Your money, your way"
+
+  // Primary user identity
+  userName: string;             // e.g. "Alex Johnson"
+  userInitials: string;         // e.g. "AJ"
+  userAvatarUrl: string;        // exact pravatar URL from screen 1
+
+  // Seed data — keeps numbers/names consistent across screens
+  seedData: {
+    primaryAmount: string;      // e.g. "$12,450.00"  (balance, revenue, etc.)
+    secondaryAmount: string;    // e.g. "$2,340.50"
+    trendPercent: string;       // e.g. "+2.4%"
+    dateLabel: string;          // e.g. "Mar 2026"
+    sampleItemName: string;     // e.g. "Netflix"
+    sampleItemAmount: string;   // e.g. "-$14.99"
+  };
+}
+
 export interface ComponentRegistry {
   // Source tracking
   sourceScreenId: string;
   sourceScreenTitle: string;
   extractedAt: string;
-  
+
+  // App identity — frozen from screen 1, included in EVERY prompt
+  appIdentity: AppIdentity;
+
   // Navigation components (IMMUTABLE after extraction)
   navigation: NavigationSpec | null;
   sidebar: NavigationSpec | null;
   header: HeaderSpec | null;
-  
+
   // Design system
   designSystem: DesignSystemSpec;
-  
+
   // Key UI patterns (exact HTML snippets)
   patterns: {
     primaryButton: string;
@@ -70,7 +94,7 @@ export interface ComponentRegistry {
     input: string;
     listItem: string;
   };
-  
+
   // Explicit lock for icons (prevent icon drift)
   iconLock: {
     home: string;
@@ -83,7 +107,7 @@ export interface ComponentRegistry {
     add: string;
     [key: string]: string;
   };
-  
+
   // First screen reference (truncated but complete structure)
   firstScreenHtml: string;
 }
@@ -383,6 +407,138 @@ function buildIconLock(nav: NavigationSpec | null, sidebar: NavigationSpec | nul
 }
 
 // ============================================================================
+// APP IDENTITY EXTRACTION
+// ============================================================================
+
+/**
+ * Extract app identity from the first screen's HTML.
+ * These values are frozen and injected verbatim into EVERY subsequent prompt
+ * so the AI never invents a new app name, user, or inconsistent data.
+ */
+export function extractAppIdentity(html: string, screenTitle: string): AppIdentity {
+  // ── App name ──────────────────────────────────────────────────────────────
+  // Look for brand text: logo area, h1, or the first prominent short text node
+  // Priority: explicit brand/logo text > first h1/h2 > screen title fallback
+  let appName = "";
+
+  // 1. Logo / brand container (class contains "logo", "brand", "app-name")
+  const logoMatch = html.match(
+    /class="[^"]*(?:logo|brand|app-name)[^"]*"[^>]*>([^<]{2,40})</i
+  );
+  if (logoMatch) appName = logoMatch[1].trim();
+
+  // 2. First <h1> (often the app name on splash / home)
+  if (!appName) {
+    const h1Match = html.match(/<h1[^>]*>([^<]{2,40})<\/h1>/i);
+    if (h1Match) appName = h1Match[1].trim();
+  }
+
+  // 3. Short bold text near top of document (heuristic)
+  if (!appName) {
+    const boldMatch = html.match(
+      /class="[^"]*font-bold[^"]*text-(?:2xl|3xl|xl)[^"]*"[^>]*>([^<]{2,30})</i
+    );
+    if (boldMatch) appName = boldMatch[1].trim();
+  }
+
+  // 4. Fallback to screen title
+  if (!appName) appName = screenTitle;
+
+  // ── Tagline ───────────────────────────────────────────────────────────────
+  let appTagline: string | null = null;
+  const taglineMatch = html.match(
+    /class="[^"]*(?:tagline|subtitle|slogan)[^"]*"[^>]*>([^<]{4,80})</i
+  );
+  if (taglineMatch) appTagline = taglineMatch[1].trim();
+
+  // ── User name ─────────────────────────────────────────────────────────────
+  // Look for text next to an avatar image, or inside a "user-name" / "greeting" element
+  let userName = "Alex Johnson";
+
+  // Pattern: avatar img followed by nearby text within 300 chars
+  const avatarAreaMatch = html.match(
+    /pravatar[^"]*"[^>]*>(?:[\s\S]{0,300}?)<(?:span|p|h\d)[^>]*>([A-Z][a-z]+ [A-Z][a-z]+)/
+  );
+  if (avatarAreaMatch) userName = avatarAreaMatch[1].trim();
+
+  // Pattern: class contains "user-name", "username", "greeting"
+  if (userName === "Alex Johnson") {
+    const userNameMatch = html.match(
+      /class="[^"]*(?:user.?name|greeting|display.?name)[^"]*"[^>]*>([A-Z][a-z]+ [A-Z][a-z]+)/i
+    );
+    if (userNameMatch) userName = userNameMatch[1].trim();
+  }
+
+  // Pattern: "Good morning/evening, <Name>" or "Hi, <Name>" or "Hello, <Name>"
+  if (userName === "Alex Johnson") {
+    const greetingMatch = html.match(
+      /(?:Good\s+(?:morning|afternoon|evening)|Hi|Hello),?\s+([A-Z][a-z]+(?: [A-Z][a-z]+)?)/
+    );
+    if (greetingMatch) userName = greetingMatch[1].trim();
+  }
+
+  // ── User initials ─────────────────────────────────────────────────────────
+  const nameParts = userName.split(" ");
+  const userInitials =
+    nameParts.length >= 2
+      ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
+      : nameParts[0].slice(0, 2).toUpperCase();
+
+  // ── Avatar URL ────────────────────────────────────────────────────────────
+  // Grab the first pravatar.cc URL verbatim so every screen uses the same one
+  let userAvatarUrl = `https://i.pravatar.cc/150?u=${userName.replace(/\s+/g, "")}`;
+  const avatarUrlMatch = html.match(
+    /https?:\/\/(?:i\.)?pravatar\.cc\/\d+[^\s"']*/
+  );
+  if (avatarUrlMatch) userAvatarUrl = avatarUrlMatch[0];
+
+  // ── Seed data ─────────────────────────────────────────────────────────────
+  // Extract realistic numbers already used in screen 1 so they're reused verbatim
+
+  // Dollar / currency amounts: grab first two distinct ones
+  const currencyMatches = [
+    ...html.matchAll(/\$[\d,]+(?:\.\d{2})?/g),
+  ].map((m) => m[0]);
+  const uniqueAmounts = [...new Set(currencyMatches)];
+  const primaryAmount = uniqueAmounts[0] || "$12,450.00";
+  const secondaryAmount = uniqueAmounts[1] || "$2,340.50";
+
+  // Trend percentage: "+2.4%" style
+  const trendMatch = html.match(/[+\-]?\d+\.?\d*\s*%/);
+  const trendPercent = trendMatch ? trendMatch[0].trim() : "+2.4%";
+
+  // Month label: "Mar 2026", "January", etc.
+  const dateMatch = html.match(
+    /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4}/i
+  );
+  const dateLabel = dateMatch ? dateMatch[0].trim() : "Mar 2026";
+
+  // Sample line-item name (transaction, product, etc.) and its amount
+  // Look for patterns like "Netflix  -$14.99" or similar
+  const lineItemMatch = html.match(
+    /([A-Z][A-Za-z0-9\s&]{2,20}?)\s*[\n\r\t ]*(-?\$[\d,]+\.\d{2})/
+  );
+  const sampleItemName = lineItemMatch ? lineItemMatch[1].trim() : "Netflix";
+  const sampleItemAmount = lineItemMatch ? lineItemMatch[2].trim() : "-$14.99";
+
+  return {
+    appName,
+    appTagline,
+    userName,
+    userInitials,
+    userAvatarUrl,
+    seedData: {
+      primaryAmount,
+      secondaryAmount,
+      trendPercent,
+      dateLabel,
+      sampleItemName,
+      sampleItemAmount,
+    },
+  };
+}
+
+// ============================================================================
 // MAIN REGISTRY BUILDER
 // ============================================================================
 
@@ -395,25 +551,28 @@ export function buildComponentRegistry(
   userPrompt: string
 ): ComponentRegistry {
   const html = firstFrame.htmlContent;
-  
+
+  // Extract app identity from the first screen (frozen for all subsequent screens)
+  const appIdentity = extractAppIdentity(html, firstFrame.title);
+
   // Detect design system from user prompt
   const designSystem = detectDesignSystem(userPrompt);
-  
+
   // Extract navigation components
   const navigation = extractBottomNavigation(html);
   const sidebar = extractSidebarNavigation(html);
   const header = extractHeader(html);
-  
+
   // Extract UI patterns
   const buttons = extractButtonPatterns(html);
   const card = extractCardPattern(html);
   const input = extractInputPattern(html);
-  
+
   // Build icon lock
   const iconLock = buildIconLock(navigation, sidebar);
-  
+
   // Store first screen HTML (truncated intelligently)
-  const firstScreenHtml = html.length > 15000 
+  const firstScreenHtml = html.length > 15000
     ? truncateHtmlPreservingStructure(html, 15000)
     : html;
 
@@ -421,6 +580,7 @@ export function buildComponentRegistry(
     sourceScreenId: firstFrame.id,
     sourceScreenTitle: firstFrame.title,
     extractedAt: new Date().toISOString(),
+    appIdentity,
     navigation,
     sidebar,
     header,
@@ -482,6 +642,48 @@ export function updateRegistryIfNeeded(
 // ============================================================================
 
 /**
+ * Generate the App Identity block that is prepended to EVERY screen prompt.
+ *
+ * This is the core fix for context drift: app name, user name, avatar URL,
+ * and seed data are frozen from screen 1 and sent verbatim on every generation
+ * so the model never invents new identities or inconsistent numbers.
+ */
+export function generateAppIdentityString(identity: AppIdentity): string {
+  return `
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              APP IDENTITY  (FROZEN — DO NOT CHANGE ON ANY SCREEN)           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+These values were extracted from Screen 1 and are IMMUTABLE for the entire app.
+Use them verbatim on every screen. DO NOT invent new names, amounts, or URLs.
+
+APP:
+  Name       : ${identity.appName}${identity.appTagline ? `\n  Tagline    : ${identity.appTagline}` : ""}
+
+USER:
+  Full name  : ${identity.userName}
+  Initials   : ${identity.userInitials}
+  Avatar URL : ${identity.userAvatarUrl}
+  Use this exact URL for the user avatar on every screen that shows it.
+
+SEED DATA  (copy these exact values wherever similar data appears):
+  Primary amount   : ${identity.seedData.primaryAmount}
+  Secondary amount : ${identity.seedData.secondaryAmount}
+  Trend %          : ${identity.seedData.trendPercent}
+  Date label       : ${identity.seedData.dateLabel}
+  Sample item name : ${identity.seedData.sampleItemName}
+  Sample item amt  : ${identity.seedData.sampleItemAmount}
+
+VIOLATIONS THAT BREAK COHESION (instant quality failure):
+  - Changing the app name between screens
+  - Using a different user name instead of: ${identity.userName}
+  - Using a different avatar URL instead of: ${identity.userAvatarUrl}
+  - Replacing seed amounts with made-up numbers
+  - Changing the user initials in avatar placeholders
+`.trim();
+}
+
+/**
  * Generate the immutable Component Registry context string
  * This should be included in EVERY screen generation prompt
  */
@@ -527,9 +729,9 @@ ${Object.entries(registry.iconLock).map(([key, icon]) => `- ${key}: ${icon}`).jo
 `);
 
   // Navigation Component
+  const isMainScreen = !currentScreenName.toLowerCase().match(/login|signup|sign up|register|onboard|welcome|splash|forgot|otp|verify/);
+
   if (registry.navigation) {
-    const isMainScreen = !currentScreenName.toLowerCase().match(/login|signup|sign up|register|onboard|welcome|splash|forgot|otp|verify/);
-    
     parts.push(`
 ════════════════════════════════════════════════════════════════════════════════
 BOTTOM NAVIGATION (${isMainScreen ? 'REQUIRED FOR THIS SCREEN' : 'DO NOT INCLUDE - This is an auth/onboarding screen'})
@@ -541,10 +743,23 @@ ${registry.navigation.items.map((item, i) => `${i + 1}. ${item.label} → ${item
 Active State: ${registry.navigation.activeStateClass}
 Inactive State: ${registry.navigation.inactiveStateClass}
 
-${isMainScreen ? `
-COPY THIS HTML EXACTLY (only change which item is active):
+${isMainScreen ? `COPY THIS HTML EXACTLY (only change which item is active):
 ${registry.navigation.html}
 ` : 'DO NOT include bottom navigation on auth/onboarding screens.'}
+`);
+  } else if (isMainScreen && registry.firstScreenHtml) {
+    // Regex extraction failed — fall back to full first screen as structural reference
+    parts.push(`
+════════════════════════════════════════════════════════════════════════════════
+NAVIGATION REFERENCE — copy nav from Screen 1 (exact regex extraction unavailable)
+════════════════════════════════════════════════════════════════════════════════
+
+This screen REQUIRES a bottom navigation bar. Extract and copy the bottom
+navigation bar EXACTLY from the Screen 1 HTML below. Keep same icons, order,
+styling, dimensions. ONLY change which icon is active for the current screen.
+
+SCREEN 1 HTML (find and copy the bottom nav from this):
+${registry.firstScreenHtml}
 `);
   }
 
@@ -561,6 +776,8 @@ ${registry.sidebar.items.map((item, i) => `${i + 1}. ${item.label} → ${item.ic
 COPY THIS HTML EXACTLY (only change which item is active for current screen):
 ${registry.sidebar.html}
 `);
+  } else if (registry.firstScreenHtml && !registry.navigation) {
+    // Web: sidebar regex failed — same fallback as nav above (already included above)
   }
 
   // Header

@@ -10,6 +10,10 @@ import {
   generateDesignDNAString,
   generateComponentLibraryString,
 } from "@/lib/design-context-manager";
+import {
+  extractAppIdentity,
+  generateAppIdentityString,
+} from "@/lib/component-registry";
 
 export const generateFrameVariations = inngest.createFunction(
   { id: "generate-frame-variations" },
@@ -88,6 +92,16 @@ export const generateFrameVariations = inngest.createFunction(
         ? `Focus your variations on these aspects: ${activeAspects.join(", ")}. Keep other aspects consistent with the original.`
         : "Vary the overall design approach including layout, colors, typography, and content.";
 
+    // Extract app identity once from the first frame — used in every variation prompt
+    let appIdentityString = "";
+    if (allFrames && Array.isArray(allFrames) && allFrames.length > 0) {
+      const firstFrame = allFrames[0];
+      if (firstFrame?.htmlContent) {
+        const identity = extractAppIdentity(firstFrame.htmlContent, firstFrame.title);
+        appIdentityString = generateAppIdentityString(identity);
+      }
+    }
+
     // Generate each variation as a new frame
     for (let i = 0; i < numberOfOptions; i++) {
       await step.run(`generate-variation-${i + 1}`, async () => {
@@ -117,6 +131,7 @@ ${generateComponentLibraryString(designContext.components)}
           },
           stopWhen: stepCountIs(5),
           prompt: `
+          ${appIdentityString ? `${appIdentityString}\n\n` : ""}
           You are generating VARIATION ${i + 1} of ${numberOfOptions} based on an existing screen design.
 
           ORIGINAL SCREEN TITLE: ${frame.title}
@@ -145,10 +160,10 @@ ${generateComponentLibraryString(designContext.components)}
           1. Generate ONLY raw HTML markup using Tailwind CSS
             - Use theme CSS variables for colors: bg-[var(--background)], text-[var(--foreground)], etc.
           2. All content inside a single root <div>
-            - No overflow classes on the root
-            - Scrollable content in inner containers with: [&::-webkit-scrollbar]:hidden scrollbar-none
-          3. For absolute overlays: Use \`relative w-full h-screen\` on top div
-          4. For regular content: Use \`w-full h-full min-h-screen\` on top div
+            - Root MUST use \`h-screen overflow-hidden\` (NOT min-h-screen) to fit within an iPhone viewport (393×852px)
+            - Scrollable content in INNER containers with: flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden scrollbar-none
+          3. Root: Use \`relative w-full h-screen bg-[var(--background)] overflow-hidden\`
+          4. CONTENT DENSITY: Show 3-5 cards/items in the visible area. Do NOT create endlessly tall pages.
           5. Output raw HTML only, starting with <div> - no markdown, comments, or wrapper tags
 
           Generate the complete, production-ready HTML for this variation now.

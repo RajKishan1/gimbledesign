@@ -14,10 +14,13 @@ import {
   DesignContext,
 } from "@/lib/design-context-manager";
 import {
+  AppIdentity,
   ComponentRegistry,
   buildComponentRegistry,
   updateRegistryIfNeeded,
   generateFullScreenContext,
+  generateAppIdentityString,
+  extractAppIdentity,
   detectDesignSystem,
   getActiveNavItem,
 } from "@/lib/component-registry";
@@ -254,6 +257,35 @@ export const generateScreens = inngest.createFunction(
         ? buildComponentRegistry(frames[0], prompt)
         : null;
 
+    // Provisional identity built from analysis output — available from screen 0.
+    // Upgraded to HTML-extracted identity after screen 1 is generated.
+    let frozenAppIdentity: AppIdentity = {
+      appName: analysisToUse.appName || "App",
+      appTagline: null,
+      userName: "Alex Johnson",
+      userInitials: "AJ",
+      userAvatarUrl: "https://i.pravatar.cc/150?u=AlexJohnson",
+      seedData: {
+        primaryAmount: "$12,450.00",
+        secondaryAmount: "$2,340.50",
+        trendPercent: "+2.4%",
+        dateLabel: "Mar 2026",
+        sampleItemName: "Netflix",
+        sampleItemAmount: "-$14.99",
+      },
+    };
+    // If we already have frames (continuing generation), extract from existing first frame
+    if (isExistingGeneration && frames.length > 0) {
+      frozenAppIdentity = extractAppIdentity(
+        (frames[0] as FrameType).htmlContent,
+        (frames[0] as FrameType).title,
+      );
+    }
+
+    // Theme lock — tells the AI exactly which theme is active and must never change
+    const themeLockString = `THEME LOCK: "${selectedTheme?.name || analysisToUse.themeToUse}" — theme ID: ${analysisToUse.themeToUse}
+All screens MUST use this theme's CSS variables unchanged. Do NOT introduce new colors, swap to a different palette, or change any CSS variable values.`;
+
     // Detect if user requested a specific design system
     const designSystemSpec = detectDesignSystem(prompt);
     const designSystemContext = designSystemSpec.detected
@@ -264,12 +296,14 @@ export const generateScreens = inngest.createFunction(
       const screenPlan = analysisToUse.screens[i];
 
       await step.run(`generate-screen-${i}`, async () => {
-        // After generating first screen, build Component Registry
+        // After generating first screen, build Component Registry + upgrade identity from real HTML
         if (generatedFrames.length === 1 && !componentRegistry) {
           componentRegistry = buildComponentRegistry(
             generatedFrames[0] as FrameType,
             prompt,
           );
+          // Upgrade from provisional (analysis appName) to HTML-extracted identity
+          frozenAppIdentity = componentRegistry.appIdentity;
         }
 
         // After generating second screen, update registry if needed
@@ -287,6 +321,9 @@ export const generateScreens = inngest.createFunction(
             analysisToUse.themeToUse,
           );
         }
+
+        // Always build from frozenAppIdentity — available from screen 0 onwards
+        const appIdentityString = generateAppIdentityString(frozenAppIdentity);
 
         // Generate context string based on whether we have a Component Registry
         let contextString: string;
@@ -346,6 +383,10 @@ export const generateScreens = inngest.createFunction(
           },
           stopWhen: stepCountIs(5),
           prompt: `
+          ${appIdentityString}
+
+          ${themeLockString}
+
           - Screen ${i + 1}/${analysisToUse.screens.length}
           - Screen ID: ${screenPlan.id}
           - Screen Name: ${screenPlan.name}
@@ -408,9 +449,10 @@ export const generateScreens = inngest.createFunction(
           **OUTPUT RULES:**
           1. Generate ONLY raw HTML starting with <div>
           2. Use Tailwind CSS for layout/spacing, CSS variables for colors
-          3. Root: class="relative w-full min-h-screen bg-[var(--background)]"
+          3. Root: class="relative w-full h-screen bg-[var(--background)] overflow-hidden" — use h-screen NOT min-h-screen. The screen must fit within a single iPhone viewport (393×852px). Put scrollable content inside an inner container with flex-1 overflow-y-auto.
           4. Hidden scrollbars: [&::-webkit-scrollbar]:hidden scrollbar-none
           5. No markdown, comments, <html>, <body>, or <head>
+          6. CONTENT DENSITY: Show only 3-5 cards/items in the visible area. Do NOT create endlessly tall pages with 10+ sections. Prioritize above-the-fold content.
           
           Generate the complete, production-ready HTML for this screen now.
       `.trim(),
