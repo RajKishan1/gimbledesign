@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
 
       const portalSession = await paddle.customerPortalSessions.create(
         user.paddleCustomerId,
-        { subscriptionIds: [user.paddleSubscriptionId] }
+        [user.paddleSubscriptionId]
       );
 
       return NextResponse.json({

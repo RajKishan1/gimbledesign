@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   let event;
   try {
-    event = paddle.webhooks.unmarshal(rawBody, webhookSecret, signature);
+    event = await paddle.webhooks.unmarshal(rawBody, webhookSecret, signature);
   } catch {
     console.error("[Paddle Webhook] Invalid signature");
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
