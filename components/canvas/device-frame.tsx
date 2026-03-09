@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import axios from "axios";
-import { TOOL_MODE_ENUM, ToolModeType } from "@/constant/canvas";
+import { TOOL_MODE_ENUM, ToolModeType, DEVICE_DIMENSIONS } from "@/constant/canvas";
 import { useCanvas } from "@/context/canvas-context";
 import { usePrototype } from "@/context/prototype-context";
 import { getHTMLWrapper } from "@/lib/frame-wrapper";
@@ -101,6 +101,14 @@ const DeviceFrame = ({
   } = getDeviceDimensions();
   const isFlexibleHeight = true;
 
+  // Skeleton height: use device-appropriate placeholder height when loading, then switch to content height
+  const skeletonHeight =
+    overrideWidth != null
+      ? (overrideMinHeight ?? 852)
+      : deviceType === "web"
+      ? DEVICE_DIMENSIONS.WEB.skeletonHeight
+      : DEVICE_DIMENSIONS.MOBILE.skeletonHeight;
+
   // Height is content-driven only; no fixed height. Iframe reports content height and we use it.
   const [contentHeight, setContentHeight] = useState<number>(DEVICE_MIN_HEIGHT);
   const [framePosition, setFramePosition] = useState(initialPosition);
@@ -176,8 +184,8 @@ const DeviceFrame = ({
     };
   }, [framePosition]);
 
-  // Height is content-driven; no fixed height constraints.
-  const actualHeight = contentHeight;
+  // While loading use skeletonHeight so the frame placeholder is properly sized; after loading switch to content height.
+  const actualHeight = isLoading ? skeletonHeight : contentHeight;
 
   const handleDownloadPng = useCallback(async () => {
     if (isDownloading) return;
@@ -422,8 +430,7 @@ const DeviceFrame = ({
                 style={{
                   position: "relative",
                   width: DEVICE_WIDTH,
-                  minHeight: DEVICE_MIN_HEIGHT,
-                  height: actualHeight,
+                  height: skeletonHeight,
                 }}
               />
             ) : (

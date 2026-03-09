@@ -41,7 +41,7 @@ export const DEVICE_DIMENSIONS = {
     width: 1440,
     height: null,
     minHeight: 300,
-    skeletonHeight: 800,
+    skeletonHeight: 900,
     flexibleHeight: true,
     label: "Desktop (1440px)",
   },

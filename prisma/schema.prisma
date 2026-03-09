@@ -78,6 +78,15 @@ model User {
   profilePicture String?
   headerImage   String?
 
+  // Paddle subscription fields
+  paddleCustomerId     String?  // ctm_xxx
+  paddleSubscriptionId String?  // sub_xxx
+  plan                 String?  // "lite" | "starter" | "pro" | "team"
+  subscriptionStatus   String?  // "active" | "trialing" | "canceled" | "past_due" | "paused"
+  cancelAtPeriodEnd    Boolean  @default(false)
+  currentPeriodEnd     DateTime?
+  scheduledChangeAt    DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
