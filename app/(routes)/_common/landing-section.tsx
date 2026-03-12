@@ -393,7 +393,7 @@ type LoadingState = "idle" | "enhancing" | "designing";
 // Helper function to get loading text based on state
 const getLoadingText = (
   state: LoadingState,
-  deviceType: DeviceType
+  deviceType: DeviceType,
 ): string | undefined => {
   switch (state) {
     case "enhancing":
@@ -401,10 +401,10 @@ const getLoadingText = (
         deviceType === "web"
           ? "web app"
           : deviceType === "inspirations"
-          ? "inspirations"
-          : deviceType === "wireframe"
-          ? "wireframe"
-          : "mobile app";
+            ? "inspirations"
+            : deviceType === "wireframe"
+              ? "wireframe"
+              : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";
@@ -424,7 +424,7 @@ const LandingSection = () => {
   const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
   const [wireframeKind, setWireframeKind] = useState<"web" | "mobile">("web");
   const [inspirationKind, setInspirationKind] = useState<"web" | "mobile">(
-    "web"
+    "web",
   );
   const userId = user?.id;
 
@@ -561,17 +561,35 @@ const LandingSection = () => {
         <Header />
         <BlurFade>
           <div
-            className={`relative  overflow-hidden py-20.75 border border-zinc-50 dark:border-zinc-900
+            className={`relative  overflow-hidden py-8 border border-zinc-50 dark:border-zinc-900
            `}
           >
             <div className="absolute inset-0 z-[-1]"></div>
             <div
               className="max-w-6xl mx-auto flex flex-col
-         items-center justify-center gap-8  
+         items-center justify-center gap-4 
         "
             >
+              <div className="inline-flex items-center gap-3 rounded-full border bg-background px-4 py-1.5 shadow-sm">
+                {/* Overlapping avatars */}
+                <div className="flex -space-x-2">
+                  {["/men.webp", "/men.webp", "/men.webp"].map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt="founder"
+                      className="size-6 rounded-full border-2 border-background object-cover"
+                    />
+                  ))}
+                </div>
+
+                <span className="text-xs font-medium text-foreground">
+                  Join 30,000+ app founders building today
+                </span>
+              </div>
+
               <div className="flex flex-col items-center ">
-                <div
+                {/* <div
                   className="flex items-center gap-2
                  mx-auto text-center tracking-[-0.035em]"
                 >
@@ -587,54 +605,53 @@ const LandingSection = () => {
                   >
                     5.0 rating . 110+ reviews
                   </p>
-                </div>
+                </div> */}
                 <h1
-                  className="text-center font-bold  text-5xl
-            tracking-[-0.045em] leading-[1.22em]  bg-black dark:bg-linear-to-r dark:from-white dark:to-zinc-700 bg-clip-text text-transparent pb-1 pt-5 "
+                  className="text-center font-bold  text-6xl
+            tracking-[-0.045em] leading-[1.22em]  bg-black dark:bg-linear-to-r dark:from-white dark:to-zinc-700 bg-clip-text text-transparent   "
                 >
-                  Design your entire digital <br className="" />
-                  product with one prompt.
-                  {/* <span className="text-primary">in minutes</span> */}
+                  Bring Your{" "}
+                  <span className="text-[#6466E9]">Ideas to Life</span>
                 </h1>
-                <div className="mx-auto max-w-md mt-3.75">
-                  <p
-                    className={`text-center font-normal text-black/65 dark:text-zinc-200 text-[15px] leading-[1.55em] tracking-[-0.035em] sm:text-lg ${inter.className}`}
-                  >
-                    Generate complete screens, user flows, and layouts
-                    automatically — from idea to polished UI.
-                  </p>
-                </div>
               </div>
 
               <div
-                className="flex w-full flex-col
+                className=" flex w-full flex-col
             item-center gap-8 relative "
               >
-                <div className="w-full mt-6.5 flex flex-col items-center gap-3">
-                  <div className="flex rounded-lg bg-muted p-0.5">
+                <div className="w-full  flex flex-col items-center gap-6 py-2 ">
+                  <div className="relative flex rounded-lg bg-muted p-0.5 mb-4">
+                    <div
+                      className={cn(
+                        "absolute inset-y-0.5 w-1/2 rounded-xl bg-foreground dark:bg-primary transition-transform duration-300 ease-in-out",
+                        deviceType === "web"
+                          ? "translate-x-full"
+                          : "translate-x-0",
+                      )}
+                    />
                     <button
                       type="button"
                       onClick={() => setDeviceType("mobile")}
                       className={cn(
-                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                        "relative z-10 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors ",
                         deviceType === "mobile"
-                          ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? "text-white dark:text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      Mobile
+                      Mobile App
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeviceType("web")}
                       className={cn(
-                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                        "relative z-10 w-50 flex-1 px-4 py-3 text-sm  font-medium  rounded-xl transition-colors",
                         deviceType === "web"
-                          ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? "text-white dark:text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      Web
+                      Web Platform
                     </button>
                   </div>
                   <PromptInput

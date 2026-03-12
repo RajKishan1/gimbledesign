@@ -13,6 +13,7 @@ import {
   Check,
   Zap,
   ArrowRight,
+  Plus,
 } from "lucide-react";
 import { Spinner } from "./ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -99,7 +100,7 @@ const PromptInput = ({
   };
 
   return (
-    <div className="max-w-156  mx-auto">
+    <div className="min-w-156  mx-auto">
       <input
         ref={fileInputRef}
         type="file"
@@ -108,14 +109,15 @@ const PromptInput = ({
         aria-hidden
         onChange={handleFileChange}
       />
-        <InputGroup
+
+      <InputGroup
         className={cn(
-          "min-h-39 max-h-[min(16rem,50vh)] bg-card rounded-2xl border border-border shadow-sm p-2.5 flex flex-col",
-          className && className
+          "min-h-39 max-h-[min(16rem,50vh)] bg-card rounded-2xl border border-border  shadow-[0_30px_80px_rgba(0,0,0,0.12),0_15px_30px_rgba(0,0,0,0.08)] p-2.5 flex flex-col",
+          className && className,
         )}
       >
         <InputGroupTextarea
-          className="text-base! py-2.5! min-h-12 max-h-[min(12rem,40vh)] overflow-y-auto"
+          className="text-base! px-5! py-4! min-h-12 max-h-[min(12rem,40vh)] overflow-y-auto"
           placeholder="Describe your design vision..."
           value={promptText}
           onChange={(e) => {
@@ -127,15 +129,14 @@ const PromptInput = ({
           align="block-end"
           className="flex items-center justify-between gap-2 flex-wrap"
         >
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="w-full flex-1 flex items-between gap-2 flex-wrap ">
             {/* Attach reference image — available for all design types */}
             <button
               type="button"
               onClick={handleAttachClick}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-xl transition-colors"
             >
-              <Paperclip className="size-4" />
-              <span>Attach</span>
+              <Plus className="size-5" />
               {referenceFile && (
                 <span
                   className="text-xs truncate max-w-24"
@@ -190,7 +191,7 @@ const PromptInput = ({
                             "w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md transition-colors",
                             selectedModel === model.id
                               ? "bg-accent text-accent-foreground"
-                              : "hover:bg-accent"
+                              : "hover:bg-accent",
                           )}
                         >
                           <div className="flex items-center gap-2 w-full">
@@ -211,7 +212,7 @@ const PromptInput = ({
                     ) : (
                       <>
                         {SELECTABLE_MODELS.filter(
-                          (m) => m.id === AUTO_MODEL_ID
+                          (m) => m.id === AUTO_MODEL_ID,
                         ).map((model) => (
                           <button
                             key={model.id}
@@ -252,7 +253,7 @@ const PromptInput = ({
               variant="default"
               className={cn(
                 "rounded-lg relative bg-primary text-primary-foreground hover:bg-primary/90 overflow-hidden px-4 font-medium",
-                isLoading && "min-w-28"
+                isLoading && "min-w-28",
               )}
               size="sm"
               disabled={(!promptText?.trim() && !referenceFile) || isLoading}
