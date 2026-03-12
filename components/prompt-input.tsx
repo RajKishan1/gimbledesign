@@ -178,9 +178,9 @@ const PromptInput = ({
                 <div className="p-3">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <Zap className="size-3.5" />
-                    Model
+                    Models
                   </p>
-                  <div className="mt-2 space-y-0.5">
+                  <div className="mt-1 space-y-0.5">
                     {modelsExpanded ? (
                       SELECTABLE_MODELS.map((model) => (
                         <button
@@ -188,7 +188,7 @@ const PromptInput = ({
                           type="button"
                           onClick={() => handleModelSelect(model.id)}
                           className={cn(
-                            "w-full flex flex-col items-start gap-0.5 px-2.5 py-2 text-left rounded-md transition-colors",
+                            "w-full flex flex-col items-start gap-0.5 px-2.5 py-1.5 text-left rounded-md transition-colors",
                             selectedModel === model.id
                               ? "bg-accent text-accent-foreground"
                               : "hover:bg-accent",
@@ -199,7 +199,7 @@ const PromptInput = ({
                               {model.name}
                             </span>
                             {selectedModel === model.id && (
-                              <Check className="size-4 ml-auto text-primary shrink-0" />
+                              <Check className="size-5 ml-auto text-primary shrink-0" />
                             )}
                           </div>
                           {model.description && (

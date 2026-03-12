@@ -561,13 +561,13 @@ const LandingSection = () => {
         <Header />
         <BlurFade>
           <div
-            className={`relative  overflow-hidden py-8 border border-zinc-50 dark:border-zinc-900
+            className={`relative  overflow-hidden py-4 mt-2 border border-zinc-50 dark:border-zinc-900
            `}
           >
             <div className="absolute inset-0 z-[-1]"></div>
             <div
               className="max-w-6xl mx-auto flex flex-col
-         items-center justify-center gap-4 
+         items-center justify-center gap-6 
         "
             >
               <div className="inline-flex items-center gap-3 rounded-full border bg-background px-4 py-1.5 shadow-sm">
@@ -608,7 +608,7 @@ const LandingSection = () => {
                 </div> */}
                 <h1
                   className="text-center font-bold  text-6xl
-            tracking-[-0.045em] leading-[1.22em]  bg-black dark:bg-linear-to-r dark:from-white dark:to-zinc-700 bg-clip-text text-transparent   "
+            tracking-[-0.045em] leading-[1.22em]  bg-black dark:bg-linear-to-r dark:from-white dark:to-zinc-700 bg-clip-text text-transparent  pt-2.5 "
                 >
                   Bring Your{" "}
                   <span className="text-[#6466E9]">Ideas to Life</span>

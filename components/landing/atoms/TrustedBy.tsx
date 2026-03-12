@@ -144,42 +144,42 @@ const TrustedBy: React.FC = () => {
           transition={BASE_TRANSITION}
           className="flex py-[33.9px] border-b border-r border-black/5 items-center justify-center"
         >
-          s
+          <img src="/claude.webp" alt="claude" className="size-8"/>
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
           className="flex py-[29.61px] border-b md:border-r border-black/5 items-center justify-center"
         >
-          sa
+        <img src="/claude.webp" alt="claude" className="size-8"/>
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
           className="flex py-[33.34px] border-b border-r md:border-r-0 lg:border-r border-black/5 items-center justify-center"
         >
-          a
+        <img src="/qwen.webp" alt="claude" className="size-8"/>
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
           className="flex py-[27.74px]  border-b md:border-r border-black/5 items-center justify-center"
         >
-          f
+         <img src="/gmini.webp" alt="claude" className="size-8"/>
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
           className="flex py-[31.29px] border-b border-r border-black/5 items-center justify-center"
         >
-          t
+         <img src="/claude.webp" alt="claude" className="size-8"/>
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
           className="flex py-[27.94px] border-b border-black/5 items-center justify-center"
         >
-          p
+      <img src="/qwen.webp" alt="claude" className="size-8"/>
         </motion.div>
       </motion.div>
     </section>
