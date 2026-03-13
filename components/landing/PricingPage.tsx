@@ -22,92 +22,94 @@ type Plan = {
 
 const plans: Plan[] = [
   {
-    id: "lite",
-    name: "Lite",
-    tagline: "Good for trying out",
-    badge: { label: "EARLY BIRD", variant: "muted" },
-    monthly: { price: 9.99, label: "billed monthly" },
-    yearly: { price: 8, label: "billed yearly" },
-    credits: 1000,
-    screens: 30,
-    buttonText: "Upgrade to Lite",
+    id: "free",
+    name: "Free",
+    tagline: "For quick experiments",
+    monthly: { price: 0, label: "forever free" },
+    yearly: { price: 0, label: "forever free" },
+    credits: 30,
+    screens: 3,
+    buttonText: "Try Free",
     popular: false,
     features: [
-      "2 projects",
-      "Unlimited code exports",
-      "Unlimited Figma exports",
-      "Export to AI builders",
+      "Mobile + Web screen generation",
+      "Edit screens (uses credits)",
+      "1 project",
+      "Community support",
     ],
   },
   {
     id: "starter",
     name: "Starter",
-    tagline: "For higher limits",
-    badge: { label: "40% OFF APPLIED", variant: "neon" },
-    monthly: { price: 24.99, label: "billed monthly" },
-    yearly: { price: 12, label: "billed yearly", originalPrice: 20 },
-    credits: 3000,
-    screens: 100,
-    buttonText: "Upgrade to Starter",
+    tagline: "For getting started",
+    badge: { label: "EARLY BIRD", variant: "neon" },
+    monthly: { price: 15, label: "billed monthly" },
+    yearly: { price: 12, label: "billed yearly", originalPrice: 15 },
+    credits: 500,
+    screens: 50,
+    buttonText: "Start Starter",
     popular: false,
     features: [
-      "5 projects",
-      "Unlimited code exports",
-      "Unlimited Figma exports",
-      "Export to AI builders",
-      "Share preview links",
+      "Up to 5 projects",
+      "Edit with AI",
+      "Create Prototypes",
+      "Export to Figma",
+      "Export to AI Coding apps",
+      "Standard support",
     ],
   },
   {
     id: "pro",
     name: "Pro",
-    tagline: "For even higher AI limits",
+    tagline: "For higher limits",
     badge: { label: "EARLY BIRD", variant: "muted" },
-    monthly: { price: 49.99, label: "billed monthly" },
-    yearly: { price: 35, label: "billed yearly" },
-    credits: 20000,
-    screens: 650,
-    buttonText: "Upgrade to Pro",
+    monthly: { price: 29, label: "billed monthly" },
+    yearly: { price: 23, label: "billed yearly", originalPrice: 29 },
+    credits: 1000,
+    screens: 100,
+    buttonText: "Go Pro",
     popular: true,
     features: [
       "Unlimited projects",
-      "Purchase additional credits",
-      "Unlimited code exports",
-      "Unlimited Figma exports",
-      "Export to AI builders",
-      "Share preview links",
-      "REST API access",
+      "Edit with AI",
+      "Create Prototypes",
+      "Export to Figma",
+      "Export to AI Coding apps",
+      "Priority support",
     ],
   },
   {
-    id: "team",
-    name: "Team",
-    tagline: "Built for collaboration",
+    id: "scale",
+    name: "Scale",
+    tagline: "For agencies & product teams",
     badge: { label: "EARLY BIRD", variant: "muted" },
-    monthly: { price: 69.99, label: "billed monthly" },
-    yearly: { price: 40, label: "billed yearly" },
-    credits: 30000,
-    screens: 1000,
+    monthly: { price: 59, label: "billed monthly" },
+    yearly: { price: 47, label: "billed yearly", originalPrice: 59 },
+    credits: 2000,
+    screens: 200,
     perSeat: true,
-    buttonText: "Upgrade to Team",
+    buttonText: "Go Scale",
     popular: false,
     features: [
-      "Everything in Pro",
-      "Team collaboration",
+      "Unlimited projects",
+      "Edit with AI",
+      "Create Prototypes",
+      "Export to Figma",
+      "Export to AI Coding apps",
       "Priority support",
-      "Centralized billing",
+      "Dedicated account manager",
     ],
   },
 ];
 
 const INFO_FEATURES = new Set([
-  "Purchase additional credits",
-  "Team collaboration",
+  "Edit screens (uses credits)",
+  "Edit with AI",
+  "Create Prototypes",
+  "Export to Figma",
+  "Export to AI Coding apps",
   "Priority support",
-  "Share preview links",
-  "Unlimited code exports",
-  "Unlimited Figma exports",
-  "Export to AI builders",
+  "Dedicated account manager",
 ]);
 
 function Badge({ label, variant }: { label: string; variant: "neon" | "muted" }) {
@@ -201,11 +203,10 @@ export default function PricingPage() {
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold text-[var(--foreground)] mb-4 tracking-tight">
-          Transparent pricing for everyone
+          Pricing that scales with how fast you ship UI
         </h1>
         <p className="text-[var(--muted-foreground)] text-base md:text-lg max-w-xl mx-auto">
-          A fraction of the cost and time of hiring designers or doing it
-          yourself from scratch.
+          Generate mobile + web app screens, then edit and iterate using the same credit balance.
         </p>
       </div>
 
@@ -232,7 +233,7 @@ export default function PricingPage() {
           >
             Yearly
             <span className="text-[10px] font-bold tracking-wider text-[var(--primary)] bg-[var(--primary)]/10 border border-[var(--primary)]/25 px-2 py-0.5 rounded-full">
-              4 MONTHS FREE
+              SAVE 20%
             </span>
           </button>
         </div>
@@ -256,7 +257,7 @@ export default function PricingPage() {
               {/* Most Popular banner */}
               {plan.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                  <span className="text-[10px] font-bold tracking-[0.15em] px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 text-white">
+                  <span className="text-[10px] font-bold tracking-[0.15em] px-4 py-1.5 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)]">
                     MOST POPULAR
                   </span>
                 </div>
@@ -300,7 +301,11 @@ export default function PricingPage() {
               {/* CTA Button */}
               <button
                 disabled={isLoading}
-                onClick={() => openPaddleCheckout(plan.id, billing, setLoadingPlan)}
+                onClick={() =>
+                  plan.id === "free"
+                    ? (window.location.href = "/signup")
+                    : openPaddleCheckout(plan.id, billing, setLoadingPlan)
+                }
                 className={`w-full mt-5 mb-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${
                   plan.popular
                     ? "bg-[var(--primary)] hover:opacity-90 text-[var(--primary-foreground)]"
@@ -322,7 +327,7 @@ export default function PricingPage() {
                   </p>
                   <p className="text-[var(--muted-foreground)] text-xs flex items-center gap-1 mt-0.5">
                     ≈ {plan.screens.toLocaleString()}
-                    {plan.perSeat ? " screens per seat" : " screens"}
+                    {plan.perSeat ? " screens / regeneration / AI edits per seat" : " screens / regeneration / AI edits"}
                     <Info size={11} className="opacity-50" />
                   </p>
                 </div>

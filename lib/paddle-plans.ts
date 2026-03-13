@@ -3,7 +3,7 @@
 // Sandbox: Dashboard → Catalog → Products
 // Format: pri_xxxxxxxxxxxxxxxxxxxxxxxx
 
-export type PlanId = "lite" | "starter" | "pro" | "team";
+export type PlanId = "free" | "starter" | "pro" | "scale";
 
 export interface PlanConfig {
   name: string;
@@ -13,29 +13,29 @@ export interface PlanConfig {
 }
 
 export const PLANS: Record<PlanId, PlanConfig> = {
-  lite: {
-    name: "Lite",
-    credits: 1000,
-    monthlyPriceId: process.env.PADDLE_PRICE_LITE_MONTHLY ?? "",
-    yearlyPriceId:  process.env.PADDLE_PRICE_LITE_YEARLY  ?? "",
+  free: {
+    name: "Free",
+    credits: 30,
+    monthlyPriceId: "",
+    yearlyPriceId:  "",
   },
   starter: {
     name: "Starter",
-    credits: 3000,
+    credits: 500,
     monthlyPriceId: process.env.PADDLE_PRICE_STARTER_MONTHLY ?? "",
     yearlyPriceId:  process.env.PADDLE_PRICE_STARTER_YEARLY  ?? "",
   },
   pro: {
     name: "Pro",
-    credits: 20000,
+    credits: 1000,
     monthlyPriceId: process.env.PADDLE_PRICE_PRO_MONTHLY ?? "",
     yearlyPriceId:  process.env.PADDLE_PRICE_PRO_YEARLY  ?? "",
   },
-  team: {
-    name: "Team",
-    credits: 30000,
-    monthlyPriceId: process.env.PADDLE_PRICE_TEAM_MONTHLY ?? "",
-    yearlyPriceId:  process.env.PADDLE_PRICE_TEAM_YEARLY  ?? "",
+  scale: {
+    name: "Scale",
+    credits: 2000,
+    monthlyPriceId: process.env.PADDLE_PRICE_SCALE_MONTHLY ?? "",
+    yearlyPriceId:  process.env.PADDLE_PRICE_SCALE_YEARLY  ?? "",
   },
 };
 
@@ -48,3 +48,5 @@ export const PRICE_TO_PLAN: Record<string, PlanId> = Object.entries(PLANS).reduc
   },
   {} as Record<string, PlanId>,
 );
+
+export const PAID_PLAN_IDS: PlanId[] = ["starter", "pro", "scale"];

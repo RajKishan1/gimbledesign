@@ -22,7 +22,7 @@ export async function GET() {
       userRecord = await prisma.user.create({
         data: {
           userId: user.id,
-          credits: 10.0,
+          credits: 30.0,
         },
       });
     }
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest) {
       userRecord = await prisma.user.create({
         data: {
           userId: user.id,
-          credits: 10.0,
+          credits: 30.0,
         },
       });
     }
