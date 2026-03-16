@@ -186,8 +186,24 @@ const PageContent = ({
     run();
   }, [projectId, generateDesign]);
 
-  const handleGenerate = (promptText: string, model?: string) => {
-    generateDesign({ prompt: promptText, ...(model && { model }) });
+  const handleGenerate = async (promptText: string, model?: string, imageBase64?: string, mimeType?: string) => {
+    let finalPrompt = promptText;
+    if (imageBase64 && mimeType) {
+      try {
+        const describeRes = await fetch("/api/describe-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64, mimeType }),
+        });
+        const describeData = await describeRes.json();
+        if (describeRes.ok && describeData?.description) {
+          finalPrompt = `${describeData.description}${promptText ? `\n\n${promptText}` : ""}`;
+        }
+      } catch (e) {
+        console.error("Describe image error:", e);
+      }
+    }
+    generateDesign({ prompt: finalPrompt, ...(model && { model }) });
   };
 
   const {

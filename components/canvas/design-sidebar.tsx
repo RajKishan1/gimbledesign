@@ -41,7 +41,7 @@ export type SetupStatus = "reading" | "enhancing" | "generating" | null;
 
 interface DesignSidebarProps {
   projectId: string;
-  onGenerate: (promptText: string, model?: string) => void;
+  onGenerate: (promptText: string, model?: string, imageBase64?: string, mimeType?: string) => void;
   isPending: boolean;
   /** User's original prompt, shown at top of chat when present */
   initialPrompt?: string | null;
@@ -398,6 +398,7 @@ const DesignSidebar = ({
   const handleGenerate = async () => {
     if (!promptText.trim()) return;
     const text = promptText.trim();
+    const imageToSend = attachedImage; // capture before clearing
     setPromptText("");
     setAttachedImage(null);
     setAttachedUrl(null);
@@ -416,7 +417,17 @@ const DesignSidebar = ({
       );
     } else {
       await saveMessageMutation.mutateAsync({ message: text, role: "user" });
-      onGenerate(text, selectedModel);
+      // Extract base64 + mimeType from the data URL (e.g. "data:image/png;base64,...")
+      let imageBase64: string | undefined;
+      let mimeType: string | undefined;
+      if (imageToSend) {
+        const match = imageToSend.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          mimeType = match[1];
+          imageBase64 = match[2];
+        }
+      }
+      onGenerate(text, selectedModel, imageBase64, mimeType);
     }
   };
 
@@ -585,7 +596,7 @@ const DesignSidebar = ({
                               type="button"
                               className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted transition-colors border border-transparent hover:border-border shadow-sm"
                             >
-                              {/* <HugeiconsIcon icon={Add01Icon} size={18} color="currentColor" strokeWidth={2} /> */}
+                              <HugeiconsIcon icon={Add01Icon} size={18} color="currentColor" strokeWidth={2} />
                             </button>
                           </DropdownMenuTrigger>
                         </TooltipTrigger>
