@@ -585,7 +585,7 @@ const DesignSidebar = ({
                               type="button"
                               className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted transition-colors border border-transparent hover:border-border shadow-sm"
                             >
-                              <HugeiconsIcon icon={Add01Icon} size={18} color="currentColor" strokeWidth={2} />
+                              {/* <HugeiconsIcon icon={Add01Icon} size={18} color="currentColor" strokeWidth={2} /> */}
                             </button>
                           </DropdownMenuTrigger>
                         </TooltipTrigger>
@@ -613,7 +613,7 @@ const DesignSidebar = ({
                           <HugeiconsIcon icon={Link01Icon} size={18} color="currentColor" strokeWidth={1.75} />
                           Website URL
                         </DropdownMenuItem>
-                        <div className="my-1 h-px bg-border" />
+                        {/* <div className="my-1 h-px bg-border" />
                         <button
                           type="button"
                           onClick={(e) => { e.preventDefault(); cycleVariations(); }}
@@ -621,7 +621,7 @@ const DesignSidebar = ({
                         >
                           <HugeiconsIcon icon={ImageUpload01Icon} size={16} color="currentColor" strokeWidth={1.75} />
                           <span>Variations: {variationCount}x</span>
-                        </button>
+                        </button> */}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
