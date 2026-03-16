@@ -418,16 +418,15 @@ const DesignSidebar = ({
     } else {
       await saveMessageMutation.mutateAsync({ message: text, role: "user" });
       // Extract base64 + mimeType from the data URL (e.g. "data:image/png;base64,...")
-      let imageBase64: string | undefined;
-      let mimeType: string | undefined;
       if (imageToSend) {
-        const match = imageToSend.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-        if (match) {
-          mimeType = match[1];
-          imageBase64 = match[2];
-        }
+        const commaIdx = imageToSend.dataUrl.indexOf(",");
+        const header = imageToSend.dataUrl.slice(0, commaIdx); // "data:image/png;base64"
+        const base64Data = imageToSend.dataUrl.slice(commaIdx + 1);
+        const mime = header.replace("data:", "").replace(";base64", ""); // "image/png"
+        onGenerate(text, selectedModel, base64Data, mime);
+      } else {
+        onGenerate(text, selectedModel);
       }
-      onGenerate(text, selectedModel, imageBase64, mimeType);
     }
   };
 

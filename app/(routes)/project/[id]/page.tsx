@@ -189,6 +189,7 @@ const PageContent = ({
   const handleGenerate = async (promptText: string, model?: string, imageBase64?: string, mimeType?: string) => {
     let finalPrompt = promptText;
     if (imageBase64 && mimeType) {
+      setSetupStatus("reading");
       try {
         const describeRes = await fetch("/api/describe-image", {
           method: "POST",
@@ -202,6 +203,7 @@ const PageContent = ({
       } catch (e) {
         console.error("Describe image error:", e);
       }
+      setSetupStatus(null);
     }
     generateDesign({ prompt: finalPrompt, ...(model && { model }) });
   };
