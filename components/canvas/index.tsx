@@ -10,6 +10,7 @@ import DeviceFrame from "./device-frame";
 import HtmlDialog from "./html-dialog";
 import PrototypeConnectors from "./prototype-connectors";
 import { toast } from "sonner";
+import { Rnd } from "react-rnd";
 import { useCanvasTransform } from "@/hooks/use-canvas-transform";
 
 const Canvas = ({
@@ -63,6 +64,19 @@ const Canvas = ({
   const [canvasImages, setCanvasImages] = useState<
     { id: string; src: string; x: number; y: number; width: number; height: number }[]
   >([]);
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+
+  const updateCanvasImage = useCallback(
+    (id: string, patch: Partial<{ x: number; y: number; width: number; height: number }>) => {
+      setCanvasImages((prev) => prev.map((img) => (img.id === id ? { ...img, ...patch } : img)));
+    },
+    []
+  );
+
+  const deleteCanvasImage = useCallback((id: string) => {
+    setCanvasImages((prev) => prev.filter((img) => img.id !== id));
+    setSelectedImageId((curr) => (curr === id ? null : curr));
+  }, []);
 
   const canvasRootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -88,6 +102,20 @@ const Canvas = ({
     maxScale: 4,
   });
 
+  // Keyboard delete for selected canvas image
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!selectedImageId) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        deleteCanvasImage(selectedImageId);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [selectedImageId, deleteCanvasImage]);
+
   // Attach the non-passive wheel listener to the container so we can preventDefault
   useEffect(() => {
     const el = containerRef.current;
@@ -99,6 +127,7 @@ const Canvas = ({
   // ── Pointer drag pan (HAND mode) ─────────────────────────────────────
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
+      setSelectedImageId(null);
       if (toolMode !== TOOL_MODE_ENUM.HAND) return;
       if (e.button !== 0) return;
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -409,20 +438,68 @@ const Canvas = ({
                 })}
 
             {/* Canvas-level images */}
-            {canvasImages.map((img) => (
-              <div
-                key={img.id}
-                className="absolute z-[50]"
-                style={{ left: img.x, top: img.y, width: img.width, height: img.height }}
-              >
-                <img
-                  src={img.src}
-                  alt="Inserted"
-                  className="w-full h-full object-contain rounded shadow-md border border-black/10"
-                  draggable={false}
-                />
-              </div>
-            ))}
+            {canvasImages.map((img) => {
+              const isSelected = selectedImageId === img.id;
+              return (
+                <Rnd
+                  key={img.id}
+                  position={{ x: img.x, y: img.y }}
+                  size={{ width: img.width, height: img.height }}
+                  scale={transform.scale}
+                  disableDragging={toolMode === TOOL_MODE_ENUM.HAND || isPrototypeMode}
+                  enableResizing={
+                    isSelected && toolMode !== TOOL_MODE_ENUM.HAND && !isPrototypeMode
+                      ? { bottomRight: true, bottomLeft: true, topRight: true, topLeft: true }
+                      : false
+                  }
+                  lockAspectRatio
+                  onDragStart={(e) => {
+                    (e as Event).stopPropagation?.();
+                    setSelectedImageId(img.id);
+                  }}
+                  onDragStop={(_e, d) => {
+                    updateCanvasImage(img.id, { x: d.x, y: d.y });
+                  }}
+                  onResizeStop={(_e, _dir, ref, _delta, position) => {
+                    updateCanvasImage(img.id, {
+                      width: parseInt(ref.style.width, 10),
+                      height: parseInt(ref.style.height, 10),
+                      x: position.x,
+                      y: position.y,
+                    });
+                  }}
+                  className={cn("z-[50]", isSelected && "ring-2 ring-blue-500 rounded")}
+                  style={{ cursor: toolMode === TOOL_MODE_ENUM.HAND ? "grab" : "move" }}
+                >
+                  <div
+                    className="relative w-full h-full"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageId(img.id);
+                    }}
+                  >
+                    <img
+                      src={img.src}
+                      alt="Inserted"
+                      className="w-full h-full object-contain rounded shadow-md border border-black/10"
+                      draggable={false}
+                    />
+                    {isSelected && (
+                      <button
+                        className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs shadow-md z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteCanvasImage(img.id);
+                        }}
+                        title="Remove image"
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </div>
+                </Rnd>
+              );
+            })}
 
             {/* Prototype connector arrows layer */}
             <PrototypeConnectors canvasScale={transform.scale} />
