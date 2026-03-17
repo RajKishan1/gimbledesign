@@ -190,8 +190,8 @@ const Canvas = ({
         const dataUrl = reader.result as string;
         const img = new Image();
         img.onload = () => {
-          const maxW = 280;
-          const maxH = 200;
+          const maxW = 600;
+          const maxH = 500;
           let w = img.naturalWidth;
           let h = img.naturalHeight;
           if (w > maxW || h > maxH) {
@@ -462,8 +462,8 @@ const Canvas = ({
                   }}
                   onResizeStop={(_e, _dir, ref, _delta, position) => {
                     updateCanvasImage(img.id, {
-                      width: parseInt(ref.style.width, 10),
-                      height: parseInt(ref.style.height, 10),
+                      width: Math.round(parseFloat(ref.style.width)),
+                      height: Math.round(parseFloat(ref.style.height)),
                       x: position.x,
                       y: position.y,
                     });

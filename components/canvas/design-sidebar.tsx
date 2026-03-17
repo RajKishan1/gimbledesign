@@ -100,7 +100,7 @@ function StatusMessage({ status, message }: { status: string; message: string })
   );
 }
 
-function ChatBubble({ message, role, imageUrl }: { message: string; role: string; imageUrl?: string | null }) {
+function ChatBubble({ message, role }: { message: string; role: string }) {
   const isUser = role === "user";
   return (
     <div className={cn("flex gap-2", isUser ? "justify-end" : "justify-start")}>
@@ -117,13 +117,6 @@ function ChatBubble({ message, role, imageUrl }: { message: string; role: string
             : "bg-muted text-foreground max-w-[82%] rounded-bl-sm"
         )}
       >
-        {imageUrl && (
-          <img
-            src={imageUrl}
-            alt="Reference"
-            className="rounded-lg mb-2 max-h-36 w-auto object-contain"
-          />
-        )}
         {message}
       </div>
     </div>
@@ -259,7 +252,16 @@ function ChatMessages({
         }
         return (
           <div key={msg.id}>
-            <ChatBubble message={msg.message} role={msg.role} imageUrl={msg.imageUrl} />
+            {msg.imageUrl && (
+              <div className="flex justify-end mb-1.5">
+                <img
+                  src={msg.imageUrl}
+                  alt="Reference"
+                  className="rounded-2xl max-w-[70%] max-h-48 object-contain rounded-br-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
+                />
+              </div>
+            )}
+            <ChatBubble message={msg.message} role={msg.role} />
             {turnFrames.length > 0 && (
               <div className="mt-2.5 space-y-2.5">
                 {turnFrames.map((frame) => (
