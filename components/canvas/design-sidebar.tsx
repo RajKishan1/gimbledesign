@@ -100,7 +100,7 @@ function StatusMessage({ status, message }: { status: string; message: string })
   );
 }
 
-function ChatBubble({ message, role }: { message: string; role: string }) {
+function ChatBubble({ message, role, imageUrl }: { message: string; role: string; imageUrl?: string | null }) {
   const isUser = role === "user";
   return (
     <div className={cn("flex gap-2", isUser ? "justify-end" : "justify-start")}>
@@ -117,6 +117,13 @@ function ChatBubble({ message, role }: { message: string; role: string }) {
             : "bg-muted text-foreground max-w-[82%] rounded-bl-sm"
         )}
       >
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt="Reference"
+            className="rounded-lg mb-2 max-h-36 w-auto object-contain"
+          />
+        )}
         {message}
       </div>
     </div>
@@ -147,7 +154,7 @@ function ChatMessages({
   frames?: Array<{ id: string; title: string; isLoading?: boolean; htmlContent?: string; createdAt?: Date }>;
   projectId: string;
   selectedFrame: { id: string; title: string } | null;
-  chatMessages?: Array<{ id: string; message: string; role: string; frameId?: string | null; createdAt: Date }>;
+  chatMessages?: Array<{ id: string; message: string; role: string; frameId?: string | null; imageUrl?: string | null; createdAt: Date }>;
   initialPrompt?: string | null;
   setupStatus?: SetupStatus;
 }) {
@@ -252,7 +259,7 @@ function ChatMessages({
         }
         return (
           <div key={msg.id}>
-            <ChatBubble message={msg.message} role={msg.role} />
+            <ChatBubble message={msg.message} role={msg.role} imageUrl={msg.imageUrl} />
             {turnFrames.length > 0 && (
               <div className="mt-2.5 space-y-2.5">
                 {turnFrames.map((frame) => (
@@ -385,8 +392,8 @@ const DesignSidebar = ({
   const chatMessages = chatData || [];
 
   const saveMessageMutation = useMutation({
-    mutationFn: async ({ message, frameId, role = "user" }: { message: string; frameId?: string | null; role?: string }) => {
-      const res = await axios.post(`/api/project/${projectId}/chat`, { message, frameId: frameId || null, role });
+    mutationFn: async ({ message, frameId, role = "user", imageUrl }: { message: string; frameId?: string | null; role?: string; imageUrl?: string | null }) => {
+      const res = await axios.post(`/api/project/${projectId}/chat`, { message, frameId: frameId || null, role, imageUrl: imageUrl || null });
       return res.data.message;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chat", projectId] }),
@@ -397,7 +404,10 @@ const DesignSidebar = ({
 
   const handleGenerate = async () => {
     if (!promptText.trim()) return;
-    const text = promptText.trim();
+    const urlToSend = attachedUrl; // capture before clearing
+    const text = urlToSend
+      ? `Reference website: ${urlToSend}\n\n${promptText.trim()}`
+      : promptText.trim();
     const imageToSend = attachedImage; // capture before clearing
     setPromptText("");
     setAttachedImage(null);
@@ -406,7 +416,7 @@ const DesignSidebar = ({
     if (selectedFrame) {
       const screenName = `@${selectedFrame.title}`;
       const messageText = text.startsWith("@") ? text : `${screenName} ${text}`;
-      await saveMessageMutation.mutateAsync({ message: messageText, frameId: selectedFrame.id, role: "user" });
+      await saveMessageMutation.mutateAsync({ message: messageText, frameId: selectedFrame.id, role: "user", imageUrl: imageToSend?.dataUrl });
       regenerateFrame.mutate(
         { frameId: selectedFrame.id, prompt: text, model: selectedModel },
         {
@@ -416,7 +426,7 @@ const DesignSidebar = ({
         }
       );
     } else {
-      await saveMessageMutation.mutateAsync({ message: text, role: "user" });
+      await saveMessageMutation.mutateAsync({ message: text, role: "user", imageUrl: imageToSend?.dataUrl });
       // Extract base64 + mimeType from the data URL (e.g. "data:image/png;base64,...")
       if (imageToSend) {
         const commaIdx = imageToSend.dataUrl.indexOf(",");

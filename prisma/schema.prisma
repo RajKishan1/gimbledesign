@@ -58,6 +58,7 @@ model ChatMessage {
   project   Project  @relation(fields: [projectId], references: [id])
   frameId   String?  @db.ObjectId // Optional: if editing a specific frame
   message   String
+  imageUrl  String?  // Optional: data-URL of an attached reference image
   role      String   @default("user") // "user" or "assistant"
   
   createdAt DateTime @default(now())

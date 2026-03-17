@@ -171,9 +171,16 @@ const Canvas = ({
             h = Math.round(h * r);
           }
           const id = `canvas-img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+          const rect = containerRef.current?.getBoundingClientRect();
+          const centerX = rect
+            ? (rect.width / 2 - transform.x) / transform.scale - w / 2
+            : 150;
+          const centerY = rect
+            ? (rect.height / 2 - transform.y) / transform.scale - h / 2
+            : 150;
           setCanvasImages((prev) => [
             ...prev,
-            { id, src: dataUrl, x: 150, y: 150, width: w, height: h },
+            { id, src: dataUrl, x: centerX, y: centerY, width: w, height: h },
           ]);
           toast.success("Image added to canvas");
         };
@@ -182,7 +189,7 @@ const Canvas = ({
       reader.readAsDataURL(file);
       e.target.value = "";
     },
-    []
+    [transform.x, transform.y, transform.scale]
   );
 
   // ── Thumbnail / screenshot ────────────────────────────────────────────
@@ -405,7 +412,7 @@ const Canvas = ({
             {canvasImages.map((img) => (
               <div
                 key={img.id}
-                className="absolute pointer-events-none"
+                className="absolute z-[50]"
                 style={{ left: img.x, top: img.y, width: img.width, height: img.height }}
               >
                 <img

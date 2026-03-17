@@ -63,7 +63,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { message, frameId, role = "user" } = await request.json();
+    const { message, frameId, role = "user", imageUrl } = await request.json();
 
     if (!message) {
       return NextResponse.json(
@@ -104,6 +104,7 @@ export async function POST(
         projectId: projectId,
         frameId: frameId || null,
         message: message,
+        imageUrl: imageUrl || null,
         role: role,
       },
     });
