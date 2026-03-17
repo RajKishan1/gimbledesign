@@ -9,7 +9,6 @@ export const useGetCredits = (userId?: string) => {
       return res.data.data.credits as number;
     },
     enabled: !!userId,
-    refetchOnWindowFocus: true,
   });
 };
 

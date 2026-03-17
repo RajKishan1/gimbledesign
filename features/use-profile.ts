@@ -21,8 +21,6 @@ export const useGetProfile = () => {
       const res = await axios.get("/api/profile");
       return res.data.data as ProfileData;
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
   });
 };
 

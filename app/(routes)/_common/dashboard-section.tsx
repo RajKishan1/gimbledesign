@@ -519,14 +519,14 @@ const DashboardSection = () => {
 };
 
 const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 50, scale: 0.95 },
+  hidden: { opacity: 0, y: 20, scale: 0.98 },
   visible: (index: number) => ({
     opacity: 1,
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.6,
-      delay: index * 0.1,
+      duration: 0.3,
+      delay: Math.min(index * 0.05, 0.3),
       ease: [0.22, 1, 0.36, 1],
     },
   }),
@@ -546,7 +546,7 @@ export const ProjectsGrid = ({
   isMovingToExplore?: boolean;
 }) => {
   const ref = React.useRef(null);
-  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
   return (
     <div
       ref={ref}
@@ -559,7 +559,7 @@ export const ProjectsGrid = ({
           initial="hidden"
           animate={index < INITIAL_VISIBLE_COUNT || isInView ? "visible" : "hidden"}
           variants={cardVariants}
-          whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+          className="hover:scale-[1.02] transition-transform duration-200"
         >
           <ProjectCard
             project={project}
@@ -639,6 +639,7 @@ onMoveToExplore?: (args: { projectId: string; isExplore: boolean }) => void;
               <img
                 src={thumbnail}
                 alt=""
+                loading="lazy"
                 className="w-full h-full object-cover object-left scale-110 opacity-90"
               />
             ) : (

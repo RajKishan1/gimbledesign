@@ -28,6 +28,18 @@ export async function GET(request: Request) {
         },
         ...(limit && { take: limit }),
         orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          deviceType: true,
+          theme: true,
+          isFavorite: true,
+          isExplore: true,
+          shareToken: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
 
       return NextResponse.json({
