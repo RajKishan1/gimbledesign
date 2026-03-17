@@ -547,77 +547,167 @@ export const ProjectsGrid = ({
 }) => {
   const ref = React.useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
+
+  // ── Shared mutations (called ONCE, not per-card) ────────────────────
+  const { mutate: renameProject, isPending: isRenaming } = useRenameProject();
+  const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
+  const { mutate: duplicateProject, isPending: isDuplicating } = useDuplicateProject();
+  const { mutate: setFavorite, isPending: isTogglingFavorite } = useSetProjectFavorite();
+
+  // ── Shared dialog state (1 rename + 1 delete dialog for ALL cards) ──
+  const [dialogProject, setDialogProject] = React.useState<ProjectType | null>(null);
+  const [renameOpen, setRenameOpen] = React.useState(false);
+  const [renameValue, setRenameValue] = React.useState("");
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+
+  const openRename = React.useCallback((p: ProjectType) => {
+    setDialogProject(p);
+    setRenameValue(p.name);
+    setRenameOpen(true);
+  }, []);
+
+  const openDelete = React.useCallback((p: ProjectType) => {
+    setDialogProject(p);
+    setDeleteOpen(true);
+  }, []);
+
+  const handleRenameSubmit = () => {
+    if (!dialogProject) return;
+    const name = renameValue.trim();
+    if (!name) return;
+    renameProject(
+      { projectId: dialogProject.id, name },
+      { onSuccess: () => { setRenameOpen(false); setDialogProject(null); } }
+    );
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!dialogProject) return;
+    deleteProject(dialogProject.id, {
+      onSuccess: () => { setDeleteOpen(false); setDialogProject(null); },
+    });
+  };
+
   return (
-    <div
-      ref={ref}
-      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
-    >
-      {projects.map((project: ProjectType, index: number) => (
-        <motion.div
-          key={project.id}
-          custom={index}
-          initial="hidden"
-          animate={index < INITIAL_VISIBLE_COUNT || isInView ? "visible" : "hidden"}
-          variants={cardVariants}
-          className="hover:scale-[1.02] transition-transform duration-200"
+    <>
+      <div
+        ref={ref}
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+      >
+        {projects.map((project: ProjectType, index: number) => (
+          <motion.div
+            key={project.id}
+            custom={index}
+            initial="hidden"
+            animate={index < INITIAL_VISIBLE_COUNT || isInView ? "visible" : "hidden"}
+            variants={cardVariants}
+            className="hover:scale-[1.02] transition-transform duration-200"
+          >
+            <ProjectCard
+              project={project}
+              isAdmin={isAdmin}
+              onMoveToExplore={onMoveToExplore}
+              isMovingToExplore={isMovingToExplore}
+              onRename={openRename}
+              onDelete={openDelete}
+              onDuplicate={duplicateProject}
+              isDuplicating={isDuplicating}
+              onToggleFavorite={setFavorite}
+              isTogglingFavorite={isTogglingFavorite}
+            />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── Shared Rename Dialog ─────────────────────────────────────── */}
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent
+          className="sm:max-w-md"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDownOutside={(e) => e.stopPropagation()}
         >
-          <ProjectCard
-            project={project}
-            isAdmin={isAdmin}
-            onMoveToExplore={onMoveToExplore}
-            isMovingToExplore={isMovingToExplore}
-          />
-        </motion.div>
-      ))}
-    </div>
+          <DialogHeader>
+            <DialogTitle>Rename project</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Label htmlFor="rename-input">Project name</Label>
+            <Input
+              id="rename-input"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleRenameSubmit()}
+              placeholder="Project name"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameOpen(false)} disabled={isRenaming}>
+              Cancel
+            </Button>
+            <Button onClick={handleRenameSubmit} disabled={isRenaming || !renameValue.trim()}>
+              {isRenaming ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Shared Delete Dialog ─────────────────────────────────────── */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent
+          className="sm:max-w-md"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDownOutside={(e) => e.stopPropagation()}
+        >
+          <DialogHeader>
+            <DialogTitle>Delete project</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete &quot;{dialogProject?.name}&quot;? This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={isDeleting}>
+              {isDeleting ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
+// ── Lightweight ProjectCard — no hooks, no dialogs ──────────────────────
 export const ProjectCard = memo(
   ({
     project,
     isAdmin,
     onMoveToExplore,
     isMovingToExplore,
+    onRename,
+    onDelete,
+    onDuplicate,
+    isDuplicating,
+    onToggleFavorite,
+    isTogglingFavorite,
   }: {
     project: ProjectType;
     isAdmin?: boolean;
-onMoveToExplore?: (args: { projectId: string; isExplore: boolean }) => void;
-  isMovingToExplore?: boolean;
+    onMoveToExplore?: (args: { projectId: string; isExplore: boolean }) => void;
+    isMovingToExplore?: boolean;
+    onRename: (p: ProjectType) => void;
+    onDelete: (p: ProjectType) => void;
+    onDuplicate: (id: string) => void;
+    isDuplicating: boolean;
+    onToggleFavorite: (args: { projectId: string; isFavorite: boolean }) => void;
+    isTogglingFavorite: boolean;
   }) => {
-  const router = useRouter();
-    const [renameOpen, setRenameOpen] = useState(false);
-    const [renameValue, setRenameValue] = useState(project.name);
-    const [deleteOpen, setDeleteOpen] = useState(false);
-
-    const { mutate: renameProject, isPending: isRenaming } = useRenameProject();
-    const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
-    const { mutate: duplicateProject, isPending: isDuplicating } =
-      useDuplicateProject();
-    const { mutate: setFavorite, isPending: isTogglingFavorite } =
-      useSetProjectFavorite();
+    const router = useRouter();
+    const thumbnail = project.thumbnail || null;
 
     const timeAgo = formatDistanceToNow(new Date(project.createdAt), {
       addSuffix: true,
     });
-    const thumbnail = project.thumbnail || null;
-
-    const handleRenameSubmit = () => {
-      const name = renameValue.trim();
-      if (!name) return;
-      renameProject(
-        { projectId: project.id, name },
-        { onSuccess: () => setRenameOpen(false) }
-      );
-    };
-
-    const handleDeleteConfirm = () => {
-      deleteProject(project.id, { onSuccess: () => setDeleteOpen(false) });
-    };
-
-    const handleDuplicate = () => {
-      duplicateProject(project.id);
-    };
 
     const deviceLabel =
       project.deviceType === "web"
@@ -627,83 +717,82 @@ onMoveToExplore?: (args: { projectId: string; isExplore: boolean }) => void;
         : project.deviceType === "wireframe"
         ? "Wireframe"
         : "Inspirations";
+
     return (
-      <>
-        <div
-          role="button"
-          className="w-full flex flex-col rounded-xl cursor-pointer overflow-hidden shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5 relative bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
-          onClick={() => router.push(`/project/${project.id}`)}
-        >
-          <div className="h-36 relative overflow-hidden flex items-center justify-center">
-            {thumbnail ? (
-              <img
-                src={thumbnail}
-                alt=""
-                loading="lazy"
-                className="w-full h-full object-cover object-left scale-110 opacity-90"
-              />
-            ) : (
-              <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
-                Project
-              </span>
-            )}
-            <div
-              className="absolute top-2 right-2 z-10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white border-0 shadow-sm"
-                    aria-label="Project options"
-                  >
-                    <MoreVertical className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  onClick={(e) => e.stopPropagation()}
+      <div
+        role="button"
+        className="w-full flex flex-col rounded-xl cursor-pointer overflow-hidden shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5 relative bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
+        onClick={() => router.push(`/project/${project.id}`)}
+      >
+        <div className="h-36 relative overflow-hidden flex items-center justify-center">
+          {thumbnail ? (
+            <img
+              src={thumbnail}
+              alt=""
+              loading="lazy"
+              className="w-full h-full object-cover object-left scale-110 opacity-90"
+            />
+          ) : (
+            <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
+              Project
+            </span>
+          )}
+          <div
+            className="absolute top-2 right-2 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white border-0 shadow-sm"
+                  aria-label="Project options"
                 >
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setFavorite({
-                        projectId: project.id,
-                        isFavorite: !project.isFavorite,
-                      });
-                    }}
-                    disabled={isTogglingFavorite}
-                  >
-                    <Star
-                      className={cn("size-4", project.isFavorite && "fill-current")}
-                    />
-                    {project.isFavorite
-                      ? "Remove from Favorites"
-                      : "Add to Favorites"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setRenameValue(project.name);
-                      setRenameOpen(true);
-                    }}
-                  >
-                    <Pencil className="size-4" />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleDuplicate();
-                    }}
-                    disabled={isDuplicating}
-                  >
-                    <Copy className="size-4" />
-                    Duplicate
-                  </DropdownMenuItem>
-{isAdmin && onMoveToExplore && (
+                  <MoreVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onToggleFavorite({
+                      projectId: project.id,
+                      isFavorite: !project.isFavorite,
+                    });
+                  }}
+                  disabled={isTogglingFavorite}
+                >
+                  <Star
+                    className={cn("size-4", project.isFavorite && "fill-current")}
+                  />
+                  {project.isFavorite
+                    ? "Remove from Favorites"
+                    : "Add to Favorites"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onRename(project);
+                  }}
+                >
+                  <Pencil className="size-4" />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDuplicate(project.id);
+                  }}
+                  disabled={isDuplicating}
+                >
+                  <Copy className="size-4" />
+                  Duplicate
+                </DropdownMenuItem>
+                {isAdmin && onMoveToExplore && (
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.preventDefault();
@@ -720,100 +809,30 @@ onMoveToExplore?: (args: { projectId: string; isExplore: boolean }) => void;
                       : "Move to Explore"}
                   </DropdownMenuItem>
                 )}
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setDeleteOpen(true);
-                    }}
-                  >
-                    <Trash2 className="size-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          <div className="w-full p-4 flex flex-col">
-            <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-white">
-              {project.name}
-            </h3>
-            <p className="text-xs text-white/70">
-              {timeAgo} • {deviceLabel}
-            </p>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDelete(project);
+                  }}
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
-          <DialogContent
-            className="sm:max-w-md"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDownOutside={(e) => e.stopPropagation()}
-          >
-            <DialogHeader>
-              <DialogTitle>Rename project</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-2 py-2">
-              <Label htmlFor="rename-input">Project name</Label>
-              <Input
-                id="rename-input"
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleRenameSubmit()}
-                placeholder="Project name"
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setRenameOpen(false)}
-                disabled={isRenaming}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleRenameSubmit}
-                disabled={isRenaming || !renameValue.trim()}
-              >
-                {isRenaming ? "Saving…" : "Save"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-          <DialogContent
-            className="sm:max-w-md"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDownOutside={(e) => e.stopPropagation()}
-          >
-            <DialogHeader>
-              <DialogTitle>Delete project</DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete &quot;{project.name}&quot;? This
-              cannot be undone.
-            </p>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setDeleteOpen(false)}
-                disabled={isDeleting}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteConfirm}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Deleting…" : "Delete"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </>
+        <div className="w-full p-4 flex flex-col">
+          <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-white">
+            {project.name}
+          </h3>
+          <p className="text-xs text-white/70">
+            {timeAgo} • {deviceLabel}
+          </p>
+        </div>
+      </div>
     );
   }
 );
