@@ -32,6 +32,7 @@ model Project {
   shareToken    String?  @unique         // When set, project is viewable at /p/[shareToken] (no auth)
   frames        Frame[]
   chatMessages  ChatMessage[]
+  canvasImages  CanvasImage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -66,6 +67,22 @@ model ChatMessage {
 
   @@index([projectId])
   @@index([frameId])
+}
+
+model CanvasImage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectId String   @db.ObjectId
+  project   Project  @relation(fields: [projectId], references: [id])
+  src       String   // base64 data URL
+  x         Float
+  y         Float
+  width     Float
+  height    Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
 }
 
 model User {

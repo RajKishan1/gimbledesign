@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoadingStatusType, useCanvas } from "@/context/canvas-context";
 import { usePrototype } from "@/context/prototype-context";
 import { cn } from "@/lib/utils";
@@ -61,22 +62,50 @@ const Canvas = ({
   const [openHtmlDialog, setOpenHtmlDialog] = useState(false);
   const [isScreenshotting, setIsScreenshotting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [canvasImages, setCanvasImages] = useState<
-    { id: string; src: string; x: number; y: number; width: number; height: number }[]
-  >([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const updateCanvasImage = useCallback(
-    (id: string, patch: Partial<{ x: number; y: number; width: number; height: number }>) => {
-      setCanvasImages((prev) => prev.map((img) => (img.id === id ? { ...img, ...patch } : img)));
+  // ── Persisted canvas images ────────────────────────────────────────────
+  const { data: canvasImages = [] } = useQuery<
+    { id: string; src: string; x: number; y: number; width: number; height: number }[]
+  >({
+    queryKey: ["canvasImages", projectId],
+    queryFn: async () => {
+      const res = await axios.get(`/api/project/${projectId}/canvas-image`);
+      return res.data.images ?? [];
     },
-    []
-  );
+    enabled: !!projectId,
+  });
+
+  const addImageMutation = useMutation({
+    mutationFn: async (img: { src: string; x: number; y: number; width: number; height: number }) => {
+      const res = await axios.post(`/api/project/${projectId}/canvas-image`, img);
+      return res.data.image;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["canvasImages", projectId] }),
+  });
+
+  const updateImageMutation = useMutation({
+    mutationFn: async (data: { imageId: string; x?: number; y?: number; width?: number; height?: number }) => {
+      const res = await axios.patch(`/api/project/${projectId}/canvas-image`, data);
+      return res.data.image;
+    },
+    // Don't invalidate on success — the Rnd component already shows the correct position.
+    // Only refetch on error to recover from stale state.
+    onError: () => queryClient.invalidateQueries({ queryKey: ["canvasImages", projectId] }),
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async (imageId: string) => {
+      await axios.delete(`/api/project/${projectId}/canvas-image`, { data: { imageId } });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["canvasImages", projectId] }),
+  });
 
   const deleteCanvasImage = useCallback((id: string) => {
-    setCanvasImages((prev) => prev.filter((img) => img.id !== id));
+    deleteImageMutation.mutate(id);
     setSelectedImageId((curr) => (curr === id ? null : curr));
-  }, []);
+  }, [deleteImageMutation]);
 
   const canvasRootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -199,7 +228,6 @@ const Canvas = ({
             w = Math.round(w * r);
             h = Math.round(h * r);
           }
-          const id = `canvas-img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
           const rect = containerRef.current?.getBoundingClientRect();
           const centerX = rect
             ? (rect.width / 2 - transform.x) / transform.scale - w / 2
@@ -207,11 +235,10 @@ const Canvas = ({
           const centerY = rect
             ? (rect.height / 2 - transform.y) / transform.scale - h / 2
             : 150;
-          setCanvasImages((prev) => [
-            ...prev,
-            { id, src: dataUrl, x: centerX, y: centerY, width: w, height: h },
-          ]);
-          toast.success("Image added to canvas");
+          addImageMutation.mutate(
+            { src: dataUrl, x: centerX, y: centerY, width: w, height: h },
+            { onSuccess: () => toast.success("Image added to canvas") }
+          );
         };
         img.src = dataUrl;
       };
@@ -458,10 +485,11 @@ const Canvas = ({
                     setSelectedImageId(img.id);
                   }}
                   onDragStop={(_e, d) => {
-                    updateCanvasImage(img.id, { x: d.x, y: d.y });
+                    updateImageMutation.mutate({ imageId: img.id, x: d.x, y: d.y });
                   }}
                   onResizeStop={(_e, _dir, ref, _delta, position) => {
-                    updateCanvasImage(img.id, {
+                    updateImageMutation.mutate({
+                      imageId: img.id,
                       width: Math.round(parseFloat(ref.style.width)),
                       height: Math.round(parseFloat(ref.style.height)),
                       x: position.x,
