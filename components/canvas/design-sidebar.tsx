@@ -105,7 +105,7 @@ function ChatBubble({ message, role }: { message: string; role: string }) {
   return (
     <div className={cn("flex gap-2", isUser ? "justify-end" : "justify-start")}>
       {!isUser && (
-        <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 mt-0.5">
           <HugeiconsIcon icon={ColorsIcon} size={12} color="currentColor" strokeWidth={1.75} className="text-primary" />
         </div>
       )}
@@ -851,7 +851,7 @@ function ThemeItem({ theme, isSelected, onSelect }: { theme: ThemeType; isSelect
       </div>
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <span className="text-xs text-muted-foreground truncate">{theme.name}</span>
-        {isSelected && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} color={color.primary} strokeWidth={2} className="flex-shrink-0 ml-auto" />}
+        {isSelected && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} color={color.primary} strokeWidth={2} className="shrink-0 ml-auto" />}
       </div>
     </button>
   );
@@ -875,7 +875,7 @@ function FontItem({ font, isSelected, onSelect }: { font: { id: string; name: st
         <span className="text-[10px] text-muted-foreground capitalize">{font.category}</span>
       </div>
       {isSelected && (
-        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} color="currentColor" strokeWidth={2} className="text-foreground flex-shrink-0" />
+        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} color="currentColor" strokeWidth={2} className="text-foreground shrink-0" />
       )}
     </button>
   );
