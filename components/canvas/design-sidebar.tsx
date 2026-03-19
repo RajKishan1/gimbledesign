@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
@@ -51,9 +51,9 @@ interface DesignSidebarProps {
 
 type DesignTab = "chat" | "theme" | "fonts";
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Sub-components (memoized) ────────────────────────────────────────────────
 
-function ShimmerCard({ title }: { title: string }) {
+const ShimmerCard = memo(function ShimmerCard({ title }: { title: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-3">
       <div className="space-y-2">
@@ -64,9 +64,9 @@ function ShimmerCard({ title }: { title: string }) {
       </div>
     </div>
   );
-}
+});
 
-function CompletedFrameCard({ title }: { title: string }) {
+const CompletedFrameCard = memo(function CompletedFrameCard({ title }: { title: string }) {
   return (
     <div className="rounded-xl border border-green-200 dark:border-green-800/30 bg-green-50/50 dark:bg-green-900/10 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="flex items-center gap-2">
@@ -79,9 +79,9 @@ function CompletedFrameCard({ title }: { title: string }) {
       </div>
     </div>
   );
-}
+});
 
-function StatusMessage({ status, message }: { status: string; message: string }) {
+const StatusMessage = memo(function StatusMessage({ status, message }: { status: string; message: string }) {
   const statusColors: Record<string, string> = {
     analyzing: "bg-primary/10 text-primary border-primary/20",
     generating: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
@@ -98,9 +98,9 @@ function StatusMessage({ status, message }: { status: string; message: string })
       </div>
     </div>
   );
-}
+});
 
-function ChatBubble({ message, role }: { message: string; role: string }) {
+const ChatBubble = memo(function ChatBubble({ message, role }: { message: string; role: string }) {
   const isUser = role === "user";
   return (
     <div className={cn("flex gap-2", isUser ? "justify-end" : "justify-start")}>
@@ -121,9 +121,9 @@ function ChatBubble({ message, role }: { message: string; role: string }) {
       </div>
     </div>
   );
-}
+});
 
-function SelectedFrameChip({ title }: { title: string }) {
+const SelectedFrameChip = memo(function SelectedFrameChip({ title }: { title: string }) {
   return (
     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 self-start animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
@@ -132,12 +132,11 @@ function SelectedFrameChip({ title }: { title: string }) {
       <span className="text-xs font-medium text-primary">@{title}</span>
     </div>
   );
-}
+});
 
-function ChatMessages({
+const ChatMessages = memo(function ChatMessages({
   loadingStatus,
   frames,
-  projectId,
   selectedFrame,
   chatMessages = [],
   initialPrompt,
@@ -145,7 +144,6 @@ function ChatMessages({
 }: {
   loadingStatus: string | null;
   frames?: Array<{ id: string; title: string; isLoading?: boolean; htmlContent?: string; createdAt?: Date }>;
-  projectId: string;
   selectedFrame: { id: string; title: string } | null;
   chatMessages?: Array<{ id: string; message: string; role: string; frameId?: string | null; imageUrl?: string | null; createdAt: Date }>;
   initialPrompt?: string | null;
@@ -153,15 +151,22 @@ function ChatMessages({
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const allFrames = frames || [];
-  const loadingFrames = allFrames.filter((f) => f.isLoading);
-  const currentlyGeneratingFrame = loadingFrames[0] || null;
-  const completedFrames = allFrames.filter(
-    (f) => !f.isLoading && f.htmlContent && f.htmlContent.trim().length > 0
+
+  const currentlyGeneratingFrame = useMemo(
+    () => allFrames.find((f) => f.isLoading) || null,
+    [allFrames]
+  );
+
+  const completedFrames = useMemo(
+    () => allFrames.filter(
+      (f) => !f.isLoading && f.htmlContent && f.htmlContent.trim().length > 0
+    ),
+    [allFrames]
   );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [loadingStatus, currentlyGeneratingFrame, completedFrames.length, chatMessages.length, selectedFrame, initialPrompt, setupStatus]);
+  }, [loadingStatus, currentlyGeneratingFrame?.id, completedFrames.length, chatMessages.length, selectedFrame?.id, initialPrompt, setupStatus]);
 
   const getSetupStatusMessage = () => {
     if (!setupStatus) return null;
@@ -203,29 +208,48 @@ function ChatMessages({
   }
 
   // ── Group frames with the prompt that generated them ──────────────────────
-  // User messages without frameId are "generation triggers" (batch generation).
-  // We use createdAt timestamps to assign frames to the turn that generated them.
-  const userGenMessages = chatMessages.filter(
-    (m) => m.role === "user" && !m.frameId
+  const userGenMessages = useMemo(
+    () => chatMessages.filter((m) => m.role === "user" && !m.frameId),
+    [chatMessages]
   );
 
-  const getFramesForTurn = (
-    turnStart: Date | null,
-    turnEnd: Date | null
-  ) => {
-    return completedFrames.filter((frame) => {
-      // Frames without a timestamp fall back to the initial group
-      if (!frame.createdAt) return turnStart === null;
-      const t = new Date(frame.createdAt).getTime();
-      if (turnStart !== null && t < new Date(turnStart).getTime()) return false;
-      if (turnEnd !== null && t >= new Date(turnEnd).getTime()) return false;
-      return true;
-    });
-  };
+  // Pre-compute timestamp maps to avoid repeated Date construction
+  const { initialTurnFrames, turnFramesByMsgId } = useMemo(() => {
+    // Pre-parse all frame timestamps once
+    const frameTimestamps = completedFrames.map((frame) => ({
+      frame,
+      time: frame.createdAt ? new Date(frame.createdAt).getTime() : null,
+    }));
 
-  const firstGenMsg = userGenMessages[0];
-  // Frames before the first chat-generation message belong to the initial prompt
-  const initialTurnFrames = getFramesForTurn(null, firstGenMsg?.createdAt ?? null);
+    // Pre-parse all gen message timestamps once
+    const genTimestamps = userGenMessages.map((m) => ({
+      id: m.id,
+      time: new Date(m.createdAt).getTime(),
+    }));
+
+    const getFramesForTurn = (turnStart: number | null, turnEnd: number | null) => {
+      return frameTimestamps
+        .filter(({ time }) => {
+          if (time === null) return turnStart === null;
+          if (turnStart !== null && time < turnStart) return false;
+          if (turnEnd !== null && time >= turnEnd) return false;
+          return true;
+        })
+        .map(({ frame }) => frame);
+    };
+
+    const firstGenTime = genTimestamps[0]?.time ?? null;
+    const initial = getFramesForTurn(null, firstGenTime);
+
+    const byMsgId = new Map<string, typeof completedFrames>();
+    for (let i = 0; i < genTimestamps.length; i++) {
+      const gen = genTimestamps[i];
+      const nextGen = genTimestamps[i + 1];
+      byMsgId.set(gen.id, getFramesForTurn(gen.time, nextGen?.time ?? null));
+    }
+
+    return { initialTurnFrames: initial, turnFramesByMsgId: byMsgId };
+  }, [completedFrames, userGenMessages]);
 
   return (
     <div className="space-y-2.5">
@@ -244,12 +268,7 @@ function ChatMessages({
       {/* ── Chat messages, each generation trigger followed by its frames ── */}
       {chatMessages.map((msg) => {
         const isGenTrigger = msg.role === "user" && !msg.frameId;
-        let turnFrames: typeof completedFrames = [];
-        if (isGenTrigger) {
-          const genIdx = userGenMessages.findIndex((m) => m.id === msg.id);
-          const nextGen = userGenMessages[genIdx + 1];
-          turnFrames = getFramesForTurn(msg.createdAt, nextGen?.createdAt ?? null);
-        }
+        const turnFrames = isGenTrigger ? (turnFramesByMsgId.get(msg.id) || []) : [];
         return (
           <div key={msg.id}>
             {msg.imageUrl && (
@@ -283,7 +302,7 @@ function ChatMessages({
       <div ref={messagesEndRef} />
     </div>
   );
-}
+});
 
 // ─── Sidebar collapse toggle icon ─────────────────────────────────────────────
 function SidebarToggleIcon() {
@@ -307,31 +326,34 @@ function modelShortLabel(modelId: string) {
   return m?.name ?? "Auto";
 }
 
-// ─── Main sidebar ─────────────────────────────────────────────────────────────
+// ─── Chat input (isolated to prevent typing re-renders in parent) ─────────────
 
-const DesignSidebar = ({
+interface ChatInputProps {
+  projectId: string;
+  onGenerate: (promptText: string, model?: string, imageBase64?: string, mimeType?: string) => void;
+  isPending: boolean;
+  setupStatus: SetupStatus;
+  selectedFrame: { id: string; title: string } | null;
+  regenerateFrame: ReturnType<typeof useRegenerateFrame>;
+  saveMessageMutation: ReturnType<typeof useMutation<any, any, { message: string; frameId?: string | null; role?: string; imageUrl?: string | null }>>;
+}
+
+const ChatInput = memo(function ChatInput({
   projectId,
   onGenerate,
   isPending,
-  initialPrompt,
-  setupStatus = null,
-}: DesignSidebarProps) => {
-  const { mode, links, removeLink, clearLinks, selectedLinkId, setSelectedLinkId } = usePrototype();
-  const { frames, themes, theme: currentTheme, setTheme, fonts, font: currentFont, setFont, loadingStatus, selectedFrame } = useCanvas();
-
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  setupStatus,
+  selectedFrame,
+  regenerateFrame,
+  saveMessageMutation,
+}: ChatInputProps) {
   const [promptText, setPromptText] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<DesignTab>("chat");
   const [selectedModel, setSelectedModel] = useState<string>("auto");
-  const [variationCount, setVariationCount] = useState<1 | 2 | 3>(1);
   const [attachedImage, setAttachedImage] = useState<{ dataUrl: string; name: string } | null>(null);
   const [attachedUrl, setAttachedUrl] = useState<string | null>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInputValue, setUrlInputValue] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
-
-  const queryClient = useQueryClient();
-  const regenerateFrame = useRegenerateFrame(projectId);
 
   // Restore model from localStorage
   useEffect(() => {
@@ -343,14 +365,6 @@ const DesignSidebar = ({
   const handleModelChange = useCallback((id: string) => {
     setSelectedModel(id);
     if (typeof window !== "undefined") localStorage.setItem("selectedModel", id);
-  }, []);
-
-  const cycleVariations = useCallback(() => {
-    setVariationCount((prev) => (prev === 3 ? 1 : ((prev + 1) as 1 | 2 | 3)));
-  }, []);
-
-  const handleAttachClick = useCallback(() => {
-    imageInputRef.current?.click();
   }, []);
 
   const handleAddUrl = useCallback(() => {
@@ -382,25 +396,6 @@ const DesignSidebar = ({
     e.target.value = "";
   }, []);
 
-  // Load chat messages
-  const { data: chatData } = useQuery({
-    queryKey: ["chat", projectId],
-    queryFn: async () => {
-      const res = await axios.get(`/api/project/${projectId}/chat`);
-      return res.data.messages || [];
-    },
-    enabled: !!projectId,
-  });
-  const chatMessages = chatData || [];
-
-  const saveMessageMutation = useMutation({
-    mutationFn: async ({ message, frameId, role = "user", imageUrl }: { message: string; frameId?: string | null; role?: string; imageUrl?: string | null }) => {
-      const res = await axios.post(`/api/project/${projectId}/chat`, { message, frameId: frameId || null, role, imageUrl: imageUrl || null });
-      return res.data.message;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chat", projectId] }),
-  });
-
   const isLoading =
     isPending || regenerateFrame.isPending || saveMessageMutation.isPending || !!setupStatus;
 
@@ -429,12 +424,11 @@ const DesignSidebar = ({
       );
     } else {
       await saveMessageMutation.mutateAsync({ message: text, role: "user", imageUrl: imageToSend?.dataUrl });
-      // Extract base64 + mimeType from the data URL (e.g. "data:image/png;base64,...")
       if (imageToSend) {
         const commaIdx = imageToSend.dataUrl.indexOf(",");
-        const header = imageToSend.dataUrl.slice(0, commaIdx); // "data:image/png;base64"
+        const header = imageToSend.dataUrl.slice(0, commaIdx);
         const base64Data = imageToSend.dataUrl.slice(commaIdx + 1);
-        const mime = header.replace("data:", "").replace(";base64", ""); // "image/png"
+        const mime = header.replace("data:", "").replace(";base64", "");
         onGenerate(text, selectedModel, base64Data, mime);
       } else {
         onGenerate(text, selectedModel);
@@ -443,6 +437,265 @@ const DesignSidebar = ({
   };
 
   const currentModelLabel = modelShortLabel(selectedModel);
+
+  return (
+    <>
+      <div className="px-3 pb-3 shrink-0">
+        <div
+          className={cn(
+            "rounded-xl overflow-hidden",
+            "bg-card border border-border",
+            "ring-1 ring-pink-500/25 dark:ring-pink-500/40",
+            "shadow-[0_0_0_1px_rgba(236,72,153,0.12)] dark:shadow-[0_0_0_1px_rgba(236,72,153,0.25)]",
+            "shadow-lg dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),0_0_20px_rgba(236,72,153,0.08)]"
+          )}
+        >
+          {/* Attached image preview */}
+          {attachedImage && (
+            <div className="px-3 pt-2.5 flex items-center gap-2">
+              <div className="relative w-10 h-10 rounded-lg overflow-hidden border-2 border-green-500/60 dark:border-green-400/50 shrink-0">
+                <img src={attachedImage.dataUrl} alt="Attachment" className="w-full h-full object-cover" />
+                <button
+                  className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white hover:bg-black/90 transition-colors"
+                  onClick={() => setAttachedImage(null)}
+                  aria-label="Remove attachment"
+                >
+                  <span className="text-[10px] font-bold leading-none">×</span>
+                </button>
+              </div>
+              <span className="text-xs text-muted-foreground truncate flex-1">{attachedImage.name}</span>
+            </div>
+          )}
+
+          {/* Attached URL chip */}
+          {attachedUrl && !showUrlInput && (
+            <div className="px-3 pt-2 flex items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted/80 border border-border max-w-full">
+                <HugeiconsIcon icon={Link01Icon} size={12} color="currentColor" strokeWidth={1.75} className="text-muted-foreground shrink-0" />
+                <span className="text-xs text-muted-foreground truncate flex-1" title={attachedUrl}>{attachedUrl}</span>
+                <button
+                  type="button"
+                  onClick={clearAttachedUrl}
+                  className="rounded p-0.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
+                  aria-label="Remove URL"
+                >
+                  <HugeiconsIcon icon={Delete01Icon} size={12} color="currentColor" strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* URL input row (when "Add URL" was chosen) */}
+          {showUrlInput && (
+            <div className="px-3 pt-2 flex items-center gap-2">
+              <input
+                type="url"
+                placeholder="Paste website URL..."
+                value={urlInputValue}
+                onChange={(e) => setUrlInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); handleAddUrl(); }
+                  if (e.key === "Escape") setShowUrlInput(false);
+                }}
+                className="flex-1 min-w-0 h-8 rounded-lg border border-border bg-background px-2.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                autoFocus
+              />
+              <button type="button" onClick={handleAddUrl} className="h-8 px-2.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:opacity-90">
+                Add
+              </button>
+              <button type="button" onClick={() => { setShowUrlInput(false); setUrlInputValue(""); }} className="h-8 px-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* Textarea */}
+          <Textarea
+            placeholder={
+              selectedFrame
+                ? `@${selectedFrame.title} describe changes…`
+                : "Describe your design"
+            }
+            value={promptText}
+            onChange={(e) => setPromptText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleGenerate();
+              }
+            }}
+            className="min-h-[72px] max-h-40 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 text-sm px-3 pt-3 pb-1"
+          />
+
+          {/* Bottom toolbar — "+" (left), model (right), send (far right) */}
+          <div className="flex items-center gap-2 px-3 py-2.5 border-t border-border/80">
+            {/* "+" attach button with menu */}
+            <DropdownMenu onOpenChange={(open) => { if (!open) setShowUrlInput(false); }}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted transition-colors border border-transparent hover:border-border shadow-sm"
+                    >
+                      <HugeiconsIcon icon={Add01Icon} size={18} color="currentColor" strokeWidth={2} />
+                    </button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-popover text-popover-foreground border border-border">
+                  Attach a screenshot, sketch or visual inspiration
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent
+                align="start"
+                side="top"
+                sideOffset={8}
+                className="w-52 rounded-xl border border-border bg-popover p-1.5 shadow-xl dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+              >
+                <DropdownMenuItem
+                  onClick={() => { imageInputRef.current?.click(); }}
+                  className="flex items-center gap-2.5 rounded-lg py-2.5 px-2.5 text-sm cursor-pointer"
+                >
+                  <HugeiconsIcon icon={ImageUpload01Icon} size={18} color="currentColor" strokeWidth={1.75} />
+                  Upload Files
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setShowUrlInput(true)}
+                  className="flex items-center gap-2.5 rounded-lg py-2.5 px-2.5 text-sm cursor-pointer"
+                >
+                  <HugeiconsIcon icon={Link01Icon} size={18} color="currentColor" strokeWidth={1.75} />
+                  Website URL
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Spacer */}
+            <div className="flex-1 min-w-0" />
+
+            {/* Model selector */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border bg-muted/40"
+                >
+                  <span className="flex items-center gap-1 truncate">{currentModelLabel}</span>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-60 shrink-0">
+                    <path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44 rounded-xl border border-border shadow-xl">
+                {SELECTABLE_MODELS.map((m) => (
+                  <DropdownMenuItem
+                    key={m.id}
+                    onClick={() => handleModelChange(m.id)}
+                    className={cn("text-xs rounded-lg", selectedModel === m.id && "text-primary font-medium")}
+                  >
+                    <span className="flex-1">{m.name}</span>
+                    {selectedModel === m.id && (
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} color="currentColor" strokeWidth={2} className="text-primary ml-1" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Send / Generate button */}
+            <button
+              type="button"
+              disabled={isLoading || !promptText.trim()}
+              onClick={handleGenerate}
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0",
+                "border border-white/10 dark:border-white/5",
+                "shadow-md hover:shadow-lg active:shadow-sm active:scale-[0.98]",
+                isLoading || !promptText.trim()
+                  ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none"
+                  : "bg-foreground text-background hover:opacity-90 dark:bg-primary dark:text-primary-foreground dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+              )}
+            >
+              {isLoading ? (
+                <Spinner className="w-3.5 h-3.5" />
+              ) : (
+                <HugeiconsIcon icon={ArrowRight01Icon} size={14} color="currentColor" strokeWidth={2} />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Loading status hint */}
+        {setupStatus && (
+          <p className="text-[10px] text-muted-foreground text-center mt-1.5">
+            {setupStatus === "reading" && "Reading image…"}
+            {setupStatus === "enhancing" && "Enhancing prompt…"}
+            {setupStatus === "generating" && "Generating design…"}
+          </p>
+        )}
+      </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        aria-hidden
+        onChange={handleImageFile}
+      />
+    </>
+  );
+});
+
+// ─── Main sidebar ─────────────────────────────────────────────────────────────
+
+const DesignSidebar = ({
+  projectId,
+  onGenerate,
+  isPending,
+  initialPrompt,
+  setupStatus = null,
+}: DesignSidebarProps) => {
+  const { mode, links, removeLink, clearLinks, selectedLinkId, setSelectedLinkId } = usePrototype();
+  const { frames, themes, theme: currentTheme, setTheme, fonts, font: currentFont, setFont, loadingStatus, selectedFrame } = useCanvas();
+
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<DesignTab>("chat");
+
+  const queryClient = useQueryClient();
+  const regenerateFrame = useRegenerateFrame(projectId);
+
+  // Load chat messages
+  const { data: chatData } = useQuery({
+    queryKey: ["chat", projectId],
+    queryFn: async () => {
+      const res = await axios.get(`/api/project/${projectId}/chat`);
+      return res.data.messages || [];
+    },
+    enabled: !!projectId,
+    staleTime: 10_000,
+  });
+  const chatMessages = chatData || [];
+
+  const saveMessageMutation = useMutation({
+    mutationFn: async ({ message, frameId, role = "user", imageUrl }: { message: string; frameId?: string | null; role?: string; imageUrl?: string | null }) => {
+      const res = await axios.post(`/api/project/${projectId}/chat`, { message, frameId: frameId || null, role, imageUrl: imageUrl || null });
+      return res.data.message;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chat", projectId] }),
+  });
+
+  // Memoize theme onSelect callbacks to avoid defeating React.memo
+  const themeSelectHandlers = useMemo(() => {
+    if (!themes) return [];
+    return themes.map((theme) => () => setTheme(theme.id));
+  }, [themes, setTheme]);
+
+  // Memoize font onSelect callbacks
+  const fontSelectHandlers = useMemo(() => {
+    if (!fonts) return [];
+    return fonts.map((font) => () => setFont(font.id));
+  }, [fonts, setFont]);
 
   return (
     <div
@@ -500,7 +753,6 @@ const DesignSidebar = ({
                 <ChatMessages
                   loadingStatus={loadingStatus}
                   frames={frames}
-                  projectId={projectId}
                   selectedFrame={selectedFrame}
                   chatMessages={chatMessages}
                   initialPrompt={initialPrompt}
@@ -508,218 +760,15 @@ const DesignSidebar = ({
                 />
               </div>
 
-              {/* Input card — reference: glowing border, dark card, aligned toolbar */}
-              <div className="px-3 pb-3 shrink-0">
-                <div
-                  className={cn(
-                    "rounded-xl overflow-hidden",
-                    "bg-card border border-border",
-                    "ring-1 ring-pink-500/25 dark:ring-pink-500/40",
-                    "shadow-[0_0_0_1px_rgba(236,72,153,0.12)] dark:shadow-[0_0_0_1px_rgba(236,72,153,0.25)]",
-                    "shadow-lg dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),0_0_20px_rgba(236,72,153,0.08)]"
-                  )}
-                >
-                  {/* Attached image preview */}
-                  {attachedImage && (
-                    <div className="px-3 pt-2.5 flex items-center gap-2">
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border-2 border-green-500/60 dark:border-green-400/50 shrink-0">
-                        <img src={attachedImage.dataUrl} alt="Attachment" className="w-full h-full object-cover" />
-                        <button
-                          className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white hover:bg-black/90 transition-colors"
-                          onClick={() => setAttachedImage(null)}
-                          aria-label="Remove attachment"
-                        >
-                          <span className="text-[10px] font-bold leading-none">×</span>
-                        </button>
-                      </div>
-                      <span className="text-xs text-muted-foreground truncate flex-1">{attachedImage.name}</span>
-                    </div>
-                  )}
-
-                  {/* Attached URL chip */}
-                  {attachedUrl && !showUrlInput && (
-                    <div className="px-3 pt-2 flex items-center gap-2">
-                      <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted/80 border border-border max-w-full">
-                        <HugeiconsIcon icon={Link01Icon} size={12} color="currentColor" strokeWidth={1.75} className="text-muted-foreground shrink-0" />
-                        <span className="text-xs text-muted-foreground truncate flex-1" title={attachedUrl}>{attachedUrl}</span>
-                        <button
-                          type="button"
-                          onClick={clearAttachedUrl}
-                          className="rounded p-0.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
-                          aria-label="Remove URL"
-                        >
-                          <HugeiconsIcon icon={Delete01Icon} size={12} color="currentColor" strokeWidth={2} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* URL input row (when "Add URL" was chosen) */}
-                  {showUrlInput && (
-                    <div className="px-3 pt-2 flex items-center gap-2">
-                      <input
-                        type="url"
-                        placeholder="Paste website URL..."
-                        value={urlInputValue}
-                        onChange={(e) => setUrlInputValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") { e.preventDefault(); handleAddUrl(); }
-                          if (e.key === "Escape") setShowUrlInput(false);
-                        }}
-                        className="flex-1 min-w-0 h-8 rounded-lg border border-border bg-background px-2.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        autoFocus
-                      />
-                      <button type="button" onClick={handleAddUrl} className="h-8 px-2.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:opacity-90">
-                        Add
-                      </button>
-                      <button type="button" onClick={() => { setShowUrlInput(false); setUrlInputValue(""); }} className="h-8 px-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Textarea */}
-                  <Textarea
-                    placeholder={
-                      selectedFrame
-                        ? `@${selectedFrame.title} describe changes…`
-                        : "Describe your design"
-                    }
-                    value={promptText}
-                    onChange={(e) => setPromptText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleGenerate();
-                      }
-                    }}
-                    className="min-h-[72px] max-h-40 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 text-sm px-3 pt-3 pb-1"
-                  />
-
-                  {/* Bottom toolbar — "+" (left), model (right), send (far right) */}
-                  <div className="flex items-center gap-2 px-3 py-2.5 border-t border-border/80">
-                    {/* "+" attach button with menu (reference: circular, dark, tooltip) */}
-                    <DropdownMenu onOpenChange={(open) => { if (!open) setShowUrlInput(false); }}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground bg-muted/60 hover:bg-muted transition-colors border border-transparent hover:border-border shadow-sm"
-                            >
-                              <HugeiconsIcon icon={Add01Icon} size={18} color="currentColor" strokeWidth={2} />
-                            </button>
-                          </DropdownMenuTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="bg-popover text-popover-foreground border border-border">
-                          Attach a screenshot, sketch or visual inspiration
-                        </TooltipContent>
-                      </Tooltip>
-                      <DropdownMenuContent
-                        align="start"
-                        side="top"
-                        sideOffset={8}
-                        className="w-52 rounded-xl border border-border bg-popover p-1.5 shadow-xl dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
-                      >
-                        <DropdownMenuItem
-                          onClick={() => { imageInputRef.current?.click(); }}
-                          className="flex items-center gap-2.5 rounded-lg py-2.5 px-2.5 text-sm cursor-pointer"
-                        >
-                          <HugeiconsIcon icon={ImageUpload01Icon} size={18} color="currentColor" strokeWidth={1.75} />
-                          Upload Files
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setShowUrlInput(true)}
-                          className="flex items-center gap-2.5 rounded-lg py-2.5 px-2.5 text-sm cursor-pointer"
-                        >
-                          <HugeiconsIcon icon={Link01Icon} size={18} color="currentColor" strokeWidth={1.75} />
-                          Website URL
-                        </DropdownMenuItem>
-                        {/* <div className="my-1 h-px bg-border" />
-                        <button
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); cycleVariations(); }}
-                          className="w-full flex items-center gap-2.5 rounded-lg py-2.5 px-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                        >
-                          <HugeiconsIcon icon={ImageUpload01Icon} size={16} color="currentColor" strokeWidth={1.75} />
-                          <span>Variations: {variationCount}x</span>
-                        </button> */}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {/* Spacer */}
-                    <div className="flex-1 min-w-0" />
-
-                    {/* Model selector */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border bg-muted/40"
-                        >
-                          <span className="flex items-center gap-1 truncate">{currentModelLabel}</span>
-                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="opacity-60 shrink-0">
-                            <path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44 rounded-xl border border-border shadow-xl">
-                        {SELECTABLE_MODELS.map((m) => (
-                          <DropdownMenuItem
-                            key={m.id}
-                            onClick={() => handleModelChange(m.id)}
-                            className={cn("text-xs rounded-lg", selectedModel === m.id && "text-primary font-medium")}
-                          >
-                            <span className="flex-1">{m.name}</span>
-                            {selectedModel === m.id && (
-                              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} color="currentColor" strokeWidth={2} className="text-primary ml-1" />
-                            )}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {/* Send / Generate button — subtle 3D raised effect */}
-                    <button
-                      type="button"
-                      disabled={isLoading || !promptText.trim()}
-                      onClick={handleGenerate}
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0",
-                        "border border-white/10 dark:border-white/5",
-                        "shadow-md hover:shadow-lg active:shadow-sm active:scale-[0.98]",
-                        isLoading || !promptText.trim()
-                          ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none"
-                          : "bg-foreground text-background hover:opacity-90 dark:bg-primary dark:text-primary-foreground dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-                      )}
-                    >
-                      {isLoading ? (
-                        <Spinner className="w-3.5 h-3.5" />
-                      ) : (
-                        <HugeiconsIcon icon={ArrowRight01Icon} size={14} color="currentColor" strokeWidth={2} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Loading status hint */}
-                {setupStatus && (
-                  <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-                    {setupStatus === "reading" && "Reading image…"}
-                    {setupStatus === "enhancing" && "Enhancing prompt…"}
-                    {setupStatus === "generating" && "Generating design…"}
-                  </p>
-                )}
-              </div>
-
-              {/* Hidden file input */}
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                aria-hidden
-                onChange={handleImageFile}
+              {/* Input — isolated component so typing doesn't re-render messages */}
+              <ChatInput
+                projectId={projectId}
+                onGenerate={onGenerate}
+                isPending={isPending}
+                setupStatus={setupStatus}
+                selectedFrame={selectedFrame}
+                regenerateFrame={regenerateFrame}
+                saveMessageMutation={saveMessageMutation}
               />
             </div>
           )}
@@ -731,12 +780,12 @@ const DesignSidebar = ({
                 Choose a theme
               </p>
               <div className="space-y-1.5">
-                {themes?.map((theme) => (
+                {themes?.map((theme, i) => (
                   <ThemeItem
                     key={theme.id}
                     theme={theme}
                     isSelected={currentTheme?.id === theme.id}
-                    onSelect={() => setTheme(theme.id)}
+                    onSelect={themeSelectHandlers[i]}
                   />
                 ))}
               </div>
@@ -750,12 +799,12 @@ const DesignSidebar = ({
                 Choose a font
               </p>
               <div className="space-y-1.5">
-                {fonts?.map((font) => (
+                {fonts?.map((font, i) => (
                   <FontItem
                     key={font.id}
                     font={font}
                     isSelected={currentFont?.id === font.id}
-                    onSelect={() => setFont(font.id)}
+                    onSelect={fontSelectHandlers[i]}
                   />
                 ))}
               </div>
@@ -832,10 +881,10 @@ const DesignSidebar = ({
   );
 };
 
-// ─── Theme item ───────────────────────────────────────────────────────────────
+// ─── Theme item (memoized with useMemo for color parsing) ─────────────────────
 
-function ThemeItem({ theme, isSelected, onSelect }: { theme: ThemeType; isSelected: boolean; onSelect: () => void }) {
-  const color = parseThemeColors(theme.style);
+const ThemeItem = memo(function ThemeItem({ theme, isSelected, onSelect }: { theme: ThemeType; isSelected: boolean; onSelect: () => void }) {
+  const color = useMemo(() => parseThemeColors(theme.style), [theme.style]);
   return (
     <button
       onClick={onSelect}
@@ -855,11 +904,11 @@ function ThemeItem({ theme, isSelected, onSelect }: { theme: ThemeType; isSelect
       </div>
     </button>
   );
-}
+});
 
-// ─── Font item ────────────────────────────────────────────────────────────────
+// ─── Font item (memoized) ─────────────────────────────────────────────────────
 
-function FontItem({ font, isSelected, onSelect }: { font: { id: string; name: string; family: string; category: string }; isSelected: boolean; onSelect: () => void }) {
+const FontItem = memo(function FontItem({ font, isSelected, onSelect }: { font: { id: string; name: string; family: string; category: string }; isSelected: boolean; onSelect: () => void }) {
   return (
     <button
       onClick={onSelect}
@@ -879,6 +928,6 @@ function FontItem({ font, isSelected, onSelect }: { font: { id: string; name: st
       )}
     </button>
   );
-}
+});
 
 export default DesignSidebar;

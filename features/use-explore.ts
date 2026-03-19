@@ -20,6 +20,7 @@ export function useExploreProjects(limit?: number) {
       const res = await axios.get(url);
       return (res.data.data ?? []) as ExploreProject[];
     },
+    staleTime: 30_000,
   });
 }
 
