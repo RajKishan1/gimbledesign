@@ -369,9 +369,7 @@ const DashboardSection = () => {
                 </Link>
               </div>
               {exploreLoading ? (
-                <div className="flex justify-center py-12">
-                  <Spinner className="size-10" />
-                </div>
+                <ProjectShimmerGrid count={8} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" />
               ) : exploreProjects.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
                   <p className="text-sm text-muted-foreground">
@@ -467,9 +465,7 @@ const DashboardSection = () => {
                 </div>
               </div>
               {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <Spinner className="size-10" />
-                </div>
+                <ProjectShimmerGrid count={10} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mt-3" />
               ) : (
                 <>
                   <div className="mt-3">
@@ -531,6 +527,34 @@ const cardVariants: Variants = {
     },
   }),
 };
+
+function ProjectShimmerCard() {
+  return (
+    <div className="flex flex-col rounded-xl overflow-hidden bg-neutral-900 dark:bg-neutral-800">
+      <div className="h-36 relative overflow-hidden bg-neutral-800 dark:bg-neutral-700">
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      </div>
+      <div className="p-4 space-y-2.5">
+        <div className="h-4 w-3/4 rounded bg-neutral-800 dark:bg-neutral-700 relative overflow-hidden">
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+        <div className="h-3 w-1/2 rounded bg-neutral-800 dark:bg-neutral-700 relative overflow-hidden">
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProjectShimmerGrid({ count = 10, className = "" }: { count?: number; className?: string }) {
+  return (
+    <div className={`grid ${className}`}>
+      {Array.from({ length: count }, (_, i) => (
+        <ProjectShimmerCard key={i} />
+      ))}
+    </div>
+  );
+}
 
 const INITIAL_VISIBLE_COUNT = 15; /* at least 3 rows (e.g. 5 cols × 3) */
 
