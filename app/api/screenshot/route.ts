@@ -72,11 +72,11 @@ export async function POST(req: Request) {
 
     const page = await browser.newPage();
 
-    //set View port size
+    //set View port size — use 1x scale for thumbnails (smaller file size)
     await page.setViewport({
       width: Number(width),
       height: Number(height),
-      deviceScaleFactor: 2,
+      deviceScaleFactor: 1,
     });
 
     //Set HTML Content
@@ -88,25 +88,33 @@ export async function POST(req: Request) {
 
     //Screenshot
 
-    const buffer = await page.screenshot({
-      type: "png",
-      fullPage: false,
-    });
-
+    // For thumbnails (projectId provided): use JPEG at 70% quality (~10-30KB vs 200-500KB PNG)
+    // For direct screenshot downloads: keep PNG for full quality
     if (projectId) {
-      const base64 = buffer.toString("base64");
+      const jpegBuffer = await page.screenshot({
+        type: "jpeg",
+        quality: 70,
+        fullPage: false,
+      });
+
+      const base64 = jpegBuffer.toString("base64");
       await prisma.project.update({
         where: {
           id: projectId,
           userId,
         },
         data: {
-          thumbnail: `data:image/png;base64,${base64}`,
+          thumbnail: `data:image/jpeg;base64,${base64}`,
         },
       });
 
       return NextResponse.json({ base64 });
     }
+
+    const buffer = await page.screenshot({
+      type: "png",
+      fullPage: false,
+    });
 
     return new NextResponse(buffer as any, {
       headers: {
