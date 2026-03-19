@@ -189,25 +189,8 @@ const ChatMessages = memo(function ChatMessages({
     }
   };
 
-  const statusMessage = getStatusMessage();
-  const hasContent =
-    loadingStatus || setupStatus || currentlyGeneratingFrame ||
-    completedFrames.length > 0 || chatMessages.length > 0 ||
-    selectedFrame || (initialPrompt && initialPrompt.trim());
-
-  if (!hasContent) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-          <HugeiconsIcon icon={Message01Icon} size={20} color="currentColor" strokeWidth={1.75} className="text-primary/60" />
-        </div>
-        <p className="text-sm font-medium text-foreground/70">Your assistant</p>
-        <p className="text-xs text-muted-foreground">Describe changes below to get started</p>
-      </div>
-    );
-  }
-
   // ── Group frames with the prompt that generated them ──────────────────────
+  // NOTE: All hooks must be called before any early return
   const userGenMessages = useMemo(
     () => chatMessages.filter((m) => m.role === "user" && !m.frameId),
     [chatMessages]
@@ -250,6 +233,24 @@ const ChatMessages = memo(function ChatMessages({
 
     return { initialTurnFrames: initial, turnFramesByMsgId: byMsgId };
   }, [completedFrames, userGenMessages]);
+
+  const statusMessage = getStatusMessage();
+  const hasContent =
+    loadingStatus || setupStatus || currentlyGeneratingFrame ||
+    completedFrames.length > 0 || chatMessages.length > 0 ||
+    selectedFrame || (initialPrompt && initialPrompt.trim());
+
+  if (!hasContent) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+          <HugeiconsIcon icon={Message01Icon} size={20} color="currentColor" strokeWidth={1.75} className="text-primary/60" />
+        </div>
+        <p className="text-sm font-medium text-foreground/70">Your assistant</p>
+        <p className="text-xs text-muted-foreground">Describe changes below to get started</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2.5">
