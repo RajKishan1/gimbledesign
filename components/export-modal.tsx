@@ -38,7 +38,7 @@ const EXPORT_FORMATS = [
     id: "prompt-export",
     label: "Prompt Export",
     description:
-      "Export the full prompt and complete output—including code for every screen—as a single document.",
+      "Download a detailed .md implementation plan with code, theme tokens, and build steps for any AI coding tool.",
     icon: DocumentCodeIcon,
     supported: true,
   },
@@ -46,7 +46,7 @@ const EXPORT_FORMATS = [
     id: "build-with-ai",
     label: "Build with AI",
     description:
-      "Download a detailed .md implementation plan with code and build steps for any AI coding tool.",
+      "Open anything.com — an AI builder that turns your design into a working app instantly.",
     icon: SparklesIcon,
     supported: true,
   },
@@ -142,11 +142,11 @@ const CTA_CONFIG: Record<
     icon: CodeIcon,
   },
   "prompt-export": {
-    label: "Export prompt & code",
+    label: "Download Prompt & Code",
     icon: DocumentCodeIcon,
   },
   "build-with-ai": {
-    label: "Download AI Build Plan",
+    label: "Copy & Open anything.com",
     icon: SparklesIcon,
     trailingIcon: ArrowRight01Icon,
   },
@@ -206,42 +206,6 @@ export function ExportModal({
       toast.error("No screens to export");
       return;
     }
-    const projectName = project?.name ?? "Project";
-    const lines: string[] = [
-      `# ${projectName} – Prompt & Code Export`,
-      "",
-      "## Original prompt",
-      initialPrompt
-        ? `\`\`\`\n${initialPrompt}\n\`\`\``
-        : "_No prompt stored._",
-      "",
-      "## Screens & code",
-      "",
-    ];
-    frames.forEach((f: { title: string; htmlContent: string }) => {
-      lines.push(`### ${f.title}`);
-      lines.push("");
-      lines.push("```html");
-      lines.push(buildFullHtmlForFrame(f.htmlContent, f.title));
-      lines.push("```");
-      lines.push("");
-    });
-    copyToClipboard(lines.join("\n"));
-    onOpenChange(false);
-  }, [
-    frames,
-    project?.name,
-    initialPrompt,
-    buildFullHtmlForFrame,
-    copyToClipboard,
-    onOpenChange,
-  ]);
-
-  const handleBuildWithAI = useCallback(() => {
-    if (frames.length === 0) {
-      toast.error("No screens to export");
-      return;
-    }
 
     const projectName = project?.name ?? "Project";
     const userDesc = description.trim() || "Make this real.";
@@ -274,7 +238,7 @@ export function ExportModal({
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
     a.href = url;
-    a.download = `${slug || "project"}-build-plan.md`;
+    a.download = `${slug || "project"}-prompt-export.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -283,11 +247,62 @@ export function ExportModal({
     toast.success("Implementation plan downloaded!");
     onOpenChange(false);
   }, [
+    frames,
     project?.name,
     project,
     initialPrompt,
     description,
+    theme,
+    font,
+    buildFullHtmlForFrame,
+    onOpenChange,
+  ]);
+
+  const handleBuildWithAI = useCallback(async () => {
+    if (frames.length === 0) {
+      toast.error("No screens to export");
+      return;
+    }
+
+    // Build the prompt to copy
+    const projectName = project?.name ?? "Project";
+    const deviceType = (project as { deviceType?: string })?.deviceType ?? "web";
+    const planFrames = frames.map((f: { title: string; htmlContent: string }) => ({
+      title: f.title,
+      fullHtml: buildFullHtmlForFrame(f.htmlContent, f.title),
+    }));
+
+    const markdown = generateBuildPlan({
+      projectName,
+      initialPrompt: initialPrompt || "",
+      userInstructions: "Build this application with identical design.",
+      deviceType,
+      themeName: theme?.name ?? "Default",
+      themeStyle: theme?.style ?? "",
+      fontFamily: font?.family ?? "Plus Jakarta Sans",
+      fontUrl: font?.googleFontUrl ?? "",
+      fontCategory: font?.category ?? "sans-serif",
+      frames: planFrames,
+    });
+
+    // Copy to clipboard, then open anything.com
+    try {
+      await navigator.clipboard.writeText(markdown);
+      toast.success("Prompt copied to clipboard — paste it in anything.com", {
+        duration: 5000,
+      });
+    } catch {
+      toast.error("Failed to copy prompt to clipboard");
+      return;
+    }
+
+    window.open("https://anything.com", "_blank");
+    onOpenChange(false);
+  }, [
     frames,
+    project?.name,
+    project,
+    initialPrompt,
     theme,
     font,
     buildFullHtmlForFrame,
@@ -343,8 +358,8 @@ export function ExportModal({
             ))}
           </div>
 
-          {/* Build with AI: description field */}
-          {selectedFormat === "build-with-ai" && (
+          {/* Prompt Export: description field */}
+          {selectedFormat === "prompt-export" && (
             <div className="px-5 pt-4 pb-2 space-y-2">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Description
@@ -362,7 +377,7 @@ export function ExportModal({
 
         {/* Sticky footer */}
         <div className="shrink-0 border-t border-border p-5 space-y-3">
-          {selectedFormat === "build-with-ai" && (
+          {selectedFormat === "prompt-export" && (
             <p className="text-xs text-muted-foreground leading-relaxed">
               Downloads a detailed implementation plan (.md) with your
               design&apos;s code, theme tokens, and build steps—ready for any AI
@@ -372,7 +387,7 @@ export function ExportModal({
           <Button
             className={cn(
               "w-full font-medium gap-2",
-              selectedFormat === "build-with-ai"
+              selectedFormat === "prompt-export"
                 ? "bg-primary text-primary-foreground hover:opacity-90"
                 : "bg-foreground text-background hover:opacity-90 dark:bg-primary dark:text-primary-foreground"
             )}

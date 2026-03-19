@@ -58,7 +58,8 @@ const CanvasControls = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
-              Select
+              <span>Select</span>
+              <kbd className="ml-1.5 rounded bg-white/15 px-1 py-0.5 text-[10px] font-mono">V</kbd>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -76,7 +77,8 @@ const CanvasControls = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
-              Grab canvas
+              <span>Hand</span>
+              <kbd className="ml-1.5 rounded bg-white/15 px-1 py-0.5 text-[10px] font-mono">H</kbd>
             </TooltipContent>
           </Tooltip>
         </div>

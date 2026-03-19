@@ -197,13 +197,29 @@ const Canvas = ({
   // ── Keyboard shortcuts ────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore when typing in inputs/textareas
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      )
+        return;
+
       if (e.key === "Escape" && linkingState.isLinking) {
         cancelLinking();
+      }
+
+      // Figma-style tool shortcuts
+      const key = e.key.toLowerCase();
+      if (key === "v") {
+        setToolMode(TOOL_MODE_ENUM.SELECT);
+      } else if (key === "h") {
+        setToolMode(TOOL_MODE_ENUM.HAND);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [linkingState.isLinking, cancelLinking]);
+  }, [linkingState.isLinking, cancelLinking, setToolMode]);
 
   // ── Image insert ──────────────────────────────────────────────────────
   const handleInsertImageClick = useCallback(() => {
