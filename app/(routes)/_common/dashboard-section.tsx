@@ -369,7 +369,7 @@ const DashboardSection = () => {
                 </Link>
               </div>
               {exploreLoading ? (
-                <ProjectShimmerGrid count={8} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" />
+                <ProjectShimmerGrid count={4} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" />
               ) : exploreProjects.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
                   <p className="text-sm text-muted-foreground">
@@ -465,7 +465,7 @@ const DashboardSection = () => {
                 </div>
               </div>
               {isLoading ? (
-                <ProjectShimmerGrid count={10} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mt-3" />
+                <ProjectShimmerGrid count={4} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mt-3" />
               ) : (
                 <>
                   <div className="mt-3">
