@@ -424,10 +424,10 @@ const DashboardSection = () => {
           </div>
 
           {/* My Projects */}
-          <div className="w-full py-12">
+          <div className="w-full py-10">
             <div className="w-full max-w-6xl mx-auto px-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-                <h2 className="font-bold text-2xl tracking-tight text-foreground">
+                <h2 className="font-semibold text-2xl tracking-tight text-foreground">
                   My Projects
                 </h2>
                 <div className="flex items-center gap-3">
@@ -442,7 +442,7 @@ const DashboardSection = () => {
                           : "text-muted-foreground hover:text-foreground"
                       )}
                     >
-                      ALL PROJECTS
+                      All Projects
                     </button>
                     <button
                       type="button"
@@ -454,7 +454,7 @@ const DashboardSection = () => {
                           : "text-muted-foreground hover:text-foreground"
                       )}
                     >
-                      FAVORITES
+                      Favourites
                     </button>
                   </div>
                   <Link
