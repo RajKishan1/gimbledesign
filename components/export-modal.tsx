@@ -23,6 +23,7 @@ import { THEME_LIST } from "@/lib/themes";
 import { getFontById, DEFAULT_FONT } from "@/constant/fonts";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { generateBuildPlan } from "@/lib/generate-build-plan";
 
 // Scalable: add new formats here with supported: true when implemented
 const EXPORT_FORMATS = [
@@ -45,7 +46,7 @@ const EXPORT_FORMATS = [
     id: "build-with-ai",
     label: "Build with AI",
     description:
-      "Get a ready-to-use prompt with code and all steps to continue building in any AI tool.",
+      "Download a detailed .md implementation plan with code and build steps for any AI coding tool.",
     icon: SparklesIcon,
     supported: true,
   },
@@ -145,7 +146,7 @@ const CTA_CONFIG: Record<
     icon: DocumentCodeIcon,
   },
   "build-with-ai": {
-    label: "Build with AI",
+    label: "Download AI Build Plan",
     icon: SparklesIcon,
     trailingIcon: ArrowRight01Icon,
   },
@@ -237,39 +238,59 @@ export function ExportModal({
   ]);
 
   const handleBuildWithAI = useCallback(() => {
+    if (frames.length === 0) {
+      toast.error("No screens to export");
+      return;
+    }
+
     const projectName = project?.name ?? "Project";
     const userDesc = description.trim() || "Make this real.";
-    const promptExportBody =
-      frames.length > 0
-        ? frames
-            .map(
-              (f: { title: string; htmlContent: string }) =>
-                `## ${f.title}\n\`\`\`html\n${buildFullHtmlForFrame(f.htmlContent, f.title)}\n\`\`\``
-            )
-            .join("\n\n")
-        : "";
-    const fullPrompt = [
-      "I have a design project I want to build with AI.",
-      "",
-      "Project name: " + projectName,
-      "Original idea: " + (initialPrompt || "(none)"),
-      "",
-      "My instructions: " + userDesc,
-      "",
-      "Attached is the full HTML for each screen. Use this as reference to implement the app.",
-      "",
-      promptExportBody,
-    ].join("\n");
-    copyToClipboard(fullPrompt);
-    toast.success("Ready-to-use prompt copied. Paste it into your AI builder.");
+    const deviceType = (project as { deviceType?: string })?.deviceType ?? "web";
+
+    const planFrames = frames.map((f: { title: string; htmlContent: string }) => ({
+      title: f.title,
+      fullHtml: buildFullHtmlForFrame(f.htmlContent, f.title),
+    }));
+
+    const markdown = generateBuildPlan({
+      projectName,
+      initialPrompt: initialPrompt || "",
+      userInstructions: userDesc,
+      deviceType,
+      themeName: theme?.name ?? "Default",
+      themeStyle: theme?.style ?? "",
+      fontFamily: font?.family ?? "Plus Jakarta Sans",
+      fontUrl: font?.googleFontUrl ?? "",
+      fontCategory: font?.category ?? "sans-serif",
+      frames: planFrames,
+    });
+
+    // Trigger file download
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const slug = projectName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+    a.href = url;
+    a.download = `${slug || "project"}-build-plan.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success("Implementation plan downloaded!");
     onOpenChange(false);
   }, [
     project?.name,
+    project,
     initialPrompt,
     description,
     frames,
+    theme,
+    font,
     buildFullHtmlForFrame,
-    copyToClipboard,
     onOpenChange,
   ]);
 
@@ -343,8 +364,9 @@ export function ExportModal({
         <div className="shrink-0 border-t border-border p-5 space-y-3">
           {selectedFormat === "build-with-ai" && (
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Copies a fully-formed prompt—with your design's code and build
-              steps—ready to paste into any AI tool.
+              Downloads a detailed implementation plan (.md) with your
+              design&apos;s code, theme tokens, and build steps—ready for any AI
+              coding tool.
             </p>
           )}
           <Button
