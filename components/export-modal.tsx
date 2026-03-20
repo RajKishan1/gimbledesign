@@ -14,8 +14,9 @@ import {
   DocumentCodeIcon,
   SparklesIcon,
   ArrowRight01Icon,
+  Copy01Icon,
 } from "@hugeicons/core-free-icons";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useGetProjectById } from "@/features/use-project-id";
 import { useCanvas } from "@/context/canvas-context";
 import { getHTMLWrapper } from "@/lib/frame-wrapper";
@@ -40,6 +41,14 @@ const EXPORT_FORMATS = [
     description:
       "Download a detailed .md implementation plan with code, theme tokens, and build steps for any AI coding tool.",
     icon: DocumentCodeIcon,
+    supported: true,
+  },
+  {
+    id: "copy-to-figma",
+    label: "Copy to Figma",
+    description:
+      "Copy all screens as Figma-compatible layers — paste directly into any Figma file.",
+    icon: Copy01Icon,
     supported: true,
   },
   {
@@ -145,6 +154,10 @@ const CTA_CONFIG: Record<
     label: "Download Prompt & Code",
     icon: DocumentCodeIcon,
   },
+  "copy-to-figma": {
+    label: "Copy to Figma",
+    icon: Copy01Icon,
+  },
   "build-with-ai": {
     label: "Copy & Open anything.com",
     icon: SparklesIcon,
@@ -162,7 +175,9 @@ export function ExportModal({
   );
   const [description, setDescription] = useState("");
   const { data: project } = useGetProjectById(projectId);
-  const { theme: themeId, font: canvasFont } = useCanvas();
+  const { theme: themeId, font: canvasFont, deviceType, selectedFrame: activeFrame } = useCanvas();
+  const [isCopyingToFigma, setIsCopyingToFigma] = useState(false);
+  const figmaClipboardCache = useRef<Map<string, string>>(new Map());
   const theme = THEME_LIST.find((t) => t.id === (project?.theme ?? themeId));
   const font = canvasFont ?? getFontById(DEFAULT_FONT);
   const frames = project?.frames ?? [];
@@ -258,6 +273,69 @@ export function ExportModal({
     onOpenChange,
   ]);
 
+  const handleCopyToFigma = useCallback(async () => {
+    if (frames.length === 0) {
+      toast.error("No screens to export");
+      return;
+    }
+    // Use the selected frame, or fall back to the first frame
+    const frame = (activeFrame ?? frames[0]) as { title: string; htmlContent: string };
+    if (!frame) return;
+
+    if (isCopyingToFigma) return;
+    setIsCopyingToFigma(true);
+    try {
+      const viewportWidth = deviceType === "web" ? 1440 : 393;
+      const fullHtml = buildFullHtmlForFrame(frame.htmlContent, frame.title);
+      const cacheKey = `${viewportWidth}:${fullHtml}`;
+      let clipboardHtml = figmaClipboardCache.current.get(cacheKey);
+
+      if (!clipboardHtml) {
+        const res = await fetch("/api/figma-clipboard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ html: fullHtml, width: viewportWidth }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Request failed" }));
+          toast.error(err.error || "Failed to prepare for Figma");
+          return;
+        }
+        clipboardHtml = await res.text();
+        figmaClipboardCache.current.set(cacheKey, clipboardHtml);
+      }
+
+      // Prefer Clipboard API, fallback to execCommand
+      const blob = new Blob([clipboardHtml], { type: "text/html" });
+      if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "text/html": blob }),
+          ]);
+          toast.success(`Copied "${frame.title}"! Paste in Figma with Ctrl+V (or Cmd+V)`);
+          onOpenChange(false);
+          return;
+        } catch {
+          // Fall through to execCommand fallback
+        }
+      }
+      const handler = (e: ClipboardEvent) => {
+        e.clipboardData?.setData("text/html", clipboardHtml!);
+        e.preventDefault();
+        document.removeEventListener("copy", handler);
+      };
+      document.addEventListener("copy", handler);
+      document.execCommand("copy");
+      toast.success(`Copied "${frame.title}"! Paste in Figma with Ctrl+V (or Cmd+V)`);
+      onOpenChange(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to copy to Figma");
+    } finally {
+      setIsCopyingToFigma(false);
+    }
+  }, [frames, activeFrame, deviceType, buildFullHtmlForFrame, isCopyingToFigma, onOpenChange]);
+
   const handleBuildWithAI = useCallback(async () => {
     if (frames.length === 0) {
       toast.error("No screens to export");
@@ -312,11 +390,13 @@ export function ExportModal({
   const handlePrimaryAction = useCallback(() => {
     if (selectedFormat === "code-to-clipboard") handleCodeToClipboard();
     else if (selectedFormat === "prompt-export") handlePromptExport();
+    else if (selectedFormat === "copy-to-figma") handleCopyToFigma();
     else if (selectedFormat === "build-with-ai") handleBuildWithAI();
   }, [
     selectedFormat,
     handleCodeToClipboard,
     handlePromptExport,
+    handleCopyToFigma,
     handleBuildWithAI,
   ]);
 
@@ -392,15 +472,16 @@ export function ExportModal({
                 : "bg-foreground text-background hover:opacity-90 dark:bg-primary dark:text-primary-foreground"
             )}
             onClick={handlePrimaryAction}
+            disabled={isCopyingToFigma && selectedFormat === "copy-to-figma"}
           >
             <HugeiconsIcon
               icon={cta.icon}
               size={15}
               color="currentColor"
               strokeWidth={1.75}
-              className="shrink-0"
+              className={cn("shrink-0", isCopyingToFigma && selectedFormat === "copy-to-figma" && "animate-spin")}
             />
-            {cta.label}
+            {isCopyingToFigma && selectedFormat === "copy-to-figma" ? "Preparing for Figma…" : cta.label}
             {cta.trailingIcon && (
               <HugeiconsIcon
                 icon={cta.trailingIcon}
