@@ -749,7 +749,7 @@ const DesignSidebar = ({
           {activeTab === "chat" && (
             <div className="flex flex-col flex-1 min-h-0">
               {/* Messages */}
-              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pt-4 pb-3">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin px-3 pt-4 pb-3">
                 <ChatMessages
                   loadingStatus={loadingStatus}
                   frames={frames}
@@ -775,7 +775,7 @@ const DesignSidebar = ({
 
           {/* ── Theme tab ───────────────────────────────────────────── */}
           {activeTab === "theme" && (
-            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 pt-4">
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin p-3 pt-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 shrink-0">
                 Choose a theme
               </p>
@@ -794,7 +794,7 @@ const DesignSidebar = ({
 
           {/* ── Fonts tab ───────────────────────────────────────────── */}
           {activeTab === "fonts" && (
-            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 pt-4">
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin p-3 pt-4">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 shrink-0">
                 Choose a font
               </p>
@@ -823,7 +823,7 @@ const DesignSidebar = ({
             </span>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
             {links.length > 0 && (
               <div className="flex justify-end mb-2">
                 <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive hover:text-destructive" onClick={clearLinks}>
