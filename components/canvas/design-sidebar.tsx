@@ -113,7 +113,7 @@ const ChatBubble = memo(function ChatBubble({ message, role }: { message: string
         className={cn(
           "rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed animate-in fade-in slide-in-from-bottom-2 duration-300",
           isUser
-            ? "bg-foreground text-background max-w-[82%] max-h-32 overflow-y-auto overflow-x-hidden rounded-br-sm"
+            ? "bg-foreground text-background max-w-[82%] rounded-br-sm"
             : "bg-muted text-foreground max-w-[82%] rounded-bl-sm"
         )}
       >
@@ -446,9 +446,8 @@ const ChatInput = memo(function ChatInput({
           className={cn(
             "rounded-xl overflow-hidden",
             "bg-card border border-border",
-            "ring-1 ring-pink-500/25 dark:ring-pink-500/40",
-            "shadow-[0_0_0_1px_rgba(236,72,153,0.12)] dark:shadow-[0_0_0_1px_rgba(236,72,153,0.25)]",
-            "shadow-lg dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),0_0_20px_rgba(236,72,153,0.08)]"
+            "ring-1 ring-primary/25 dark:ring-primary/40",
+            "shadow-lg"
           )}
         >
           {/* Attached image preview */}
