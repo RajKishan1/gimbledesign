@@ -3,6 +3,12 @@ import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+import sharp from "sharp";
+
+// Max width for stored card thumbnails. Cards render ~270px wide; 640 covers
+// Retina / high-DPI without bloating the DB / JSON payload.
+const THUMBNAIL_MAX_WIDTH = 640;
+const THUMBNAIL_QUALITY = 65;
 // Cache the Chromium executable path to avoid re-downloading
 let cachedExecutablePath: string | null = null;
 let downloadPromise: Promise<string> | null = null;
@@ -88,16 +94,27 @@ export async function POST(req: Request) {
 
     //Screenshot
 
-    // For thumbnails (projectId provided): use JPEG at 70% quality (~10-30KB vs 200-500KB PNG)
-    // For direct screenshot downloads: keep PNG for full quality
+    // For thumbnails (projectId provided): capture as JPEG then downscale with
+    // sharp so we only store a small, card-sized image (typically ~5-20KB).
+    // This keeps /api/project and /api/explore JSON responses small and makes
+    // image decode on the dashboard much cheaper.
     if (projectId) {
-      const jpegBuffer = await page.screenshot({
+      const rawJpeg = (await page.screenshot({
         type: "jpeg",
-        quality: 70,
+        quality: 85,
         fullPage: false,
-      });
+      })) as Buffer;
 
-      const base64 = jpegBuffer.toString("base64");
+      const resizedBuffer = await sharp(rawJpeg)
+        .resize({
+          width: THUMBNAIL_MAX_WIDTH,
+          withoutEnlargement: true,
+          fit: "inside",
+        })
+        .jpeg({ quality: THUMBNAIL_QUALITY, mozjpeg: true })
+        .toBuffer();
+
+      const base64 = resizedBuffer.toString("base64");
       await prisma.project.update({
         where: {
           id: projectId,

@@ -29,13 +29,18 @@ export type DeviceType = "mobile" | "web" | "inspirations" | "wireframe";
 export type WireframeKind = "web" | "mobile";
 
 interface PropsType {
-  promptText: string;
-  setPromptText: (value: string) => void;
+  /** Controlled value. When omitted, the component manages its own state. */
+  promptText?: string;
+  /** Controlled setter (used together with promptText). */
+  setPromptText?: (value: string) => void;
+  /** Initial value when using uncontrolled mode. */
+  defaultValue?: string;
   isLoading?: boolean;
   loadingText?: string;
   className?: string;
   hideSubmitBtn?: boolean;
-  onSubmit?: () => void;
+  /** Called on submit; receives the current value so parents can stay uncontrolled. */
+  onSubmit?: (value: string) => void;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
   deviceType?: DeviceType;
@@ -52,8 +57,9 @@ interface PropsType {
 }
 
 const PromptInput = ({
-  promptText,
-  setPromptText,
+  promptText: controlledText,
+  setPromptText: setControlledText,
+  defaultValue = "",
   isLoading,
   loadingText,
   className,
@@ -73,6 +79,14 @@ const PromptInput = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showAllModels, setShowAllModels] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isControlled = controlledText !== undefined;
+  const [internalText, setInternalText] = useState(defaultValue);
+  const promptText = isControlled ? (controlledText as string) : internalText;
+  const setPromptText = (value: string) => {
+    if (!isControlled) setInternalText(value);
+    setControlledText?.(value);
+  };
 
   // When popover opens with Auto selected, show only Auto; when another model is selected, show all
   const isAutoSelected = selectedModel === AUTO_MODEL_ID;
@@ -112,7 +126,7 @@ const PromptInput = ({
 
       <InputGroup
         className={cn(
-          "min-h-39 max-h-[min(16rem,50vh)] bg-card rounded-2xl border border-border  shadow-[0_30px_80px_rgba(0,0,0,0.12),0_15px_30px_rgba(0,0,0,0.08)] p-2.5 flex flex-col",
+          "min-h-39 max-h-[min(16rem,50vh)] bg-card rounded-2xl border border-border shadow-[0_10px_30px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] p-2.5 flex flex-col",
           className && className,
         )}
       >
@@ -257,7 +271,7 @@ const PromptInput = ({
               )}
               size="sm"
               disabled={(!promptText?.trim() && !referenceFile) || isLoading}
-              onClick={() => onSubmit?.()}
+              onClick={() => onSubmit?.(promptText)}
             >
               {isLoading && (
                 <span className="generate-btn-shimmer" aria-hidden />

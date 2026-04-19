@@ -21,6 +21,7 @@ export function useExploreProjects(limit?: number) {
       return (res.data.data ?? []) as ExploreProject[];
     },
     staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 }
 

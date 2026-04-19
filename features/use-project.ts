@@ -104,6 +104,8 @@ export const useGetProjects = (
     },
     enabled: !!userId,
     retry: 1,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -45,8 +45,8 @@ const linkNavItems = [
   { href: "/FAQ", label: "Support", icon: Message01Icon, isHugeicon: true },
 ];
 
-export default function DashboardSidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+function DashboardSidebarImpl() {
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const pathname = usePathname();
   const { data: session } = authClient.useSession();
   const user = session?.user;
@@ -65,9 +65,12 @@ export default function DashboardSidebar() {
 
   return (
     <aside
+      onClick={() => {
+        if (isCollapsed) setIsCollapsed(false);
+      }}
       className={cn(
         "flex flex-col h-screen border-r border-border bg-background transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
-        isCollapsed ? "w-[72px]" : "w-64"
+        isCollapsed ? "w-[72px] cursor-pointer" : "w-64"
       )}
     >
       {/* Top: Brand + collapse */}
@@ -328,3 +331,7 @@ export default function DashboardSidebar() {
     </aside>
   );
 }
+
+const DashboardSidebar = memo(DashboardSidebarImpl);
+DashboardSidebar.displayName = "DashboardSidebar";
+export default DashboardSidebar;

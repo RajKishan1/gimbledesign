@@ -86,7 +86,6 @@ const DashboardSection = () => {
   const user = session?.user;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("auto");
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
@@ -144,7 +143,7 @@ const DashboardSection = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (promptText: string) => {
     if (!user) {
       toast.error("Please sign in to create designs.");
       router.push("/login");
@@ -230,21 +229,22 @@ const DashboardSection = () => {
         {/* <Header /> */}
         <main className="flex-1 min-h-0 overflow-y-auto">
           {/* Hero */}
-          <div className="relative overflow-hidden py-10 sm:py-24 border-b border-border">
-            <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-4 px-6">
+          <div className="relative overflow-hidden py-14 sm:py-20 border-b border-border">
+            <div className="w-full max-w-4xl mx-auto flex flex-col items-center px-6">
               <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Users className="size-4" />
-                  <Users className="size-4 -ml-2" />
+                  {/* <Users className="size-4 -ml-2" /> */}
                 </span>
                 Join 30,000+ app founders building today
               </p>
-              <h1 className="text-center font-bold text-3xl sm:text-4xl md:text-5xl mb-14 tracking-tight text-foreground">
+              <h1 className="text-center font-bold text-3xl sm:text-4xl md:text-5xl mt-4 mb-10 tracking-tight text-foreground">
                 Bring Your <span className="text-foreground/90">Ideas</span> to
                 Life
               </h1>
+              <div className="w-full flex flex-col items-center gap-6">
               {(deviceType === "wireframe" || deviceType === "inspirations") ? (
-                <div className="w-full max-w-156 mx-auto mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
+                <div className="w-full max-w-156 mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-foreground">
                       {deviceType === "wireframe" ? "Wireframe" : "Reimagine"}
@@ -299,15 +299,23 @@ const DashboardSection = () => {
                   </Link>
                 </div>
               ) : (
-                <div className="flex justify-center gap-2">
+                <div className="relative flex rounded-lg bg-muted p-0.5">
+                  <div
+                    className={cn(
+                      "absolute inset-y-0.5 w-1/2 rounded-xl bg-foreground dark:bg-primary transition-transform duration-300 ease-in-out",
+                      deviceType === "web"
+                        ? "translate-x-full"
+                        : "translate-x-0"
+                    )}
+                  />
                   <button
                     type="button"
                     onClick={() => setDeviceType("mobile")}
                     className={cn(
-                      "px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                      "relative z-10 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
                       deviceType === "mobile"
-                        ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:text-foreground hover:bg-accent"
+                        ? "text-white dark:text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     Mobile App
@@ -316,10 +324,10 @@ const DashboardSection = () => {
                     type="button"
                     onClick={() => setDeviceType("web")}
                     className={cn(
-                      "px-4 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                      "relative z-10 w-50 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
                       deviceType === "web"
-                        ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:text-foreground hover:bg-accent"
+                        ? "text-white dark:text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     Web Platform
@@ -328,8 +336,6 @@ const DashboardSection = () => {
               )}
               <div className="w-full">
                 <PromptInput
-                  promptText={promptText}
-                  setPromptText={setPromptText}
                   isLoading={loadingState !== "idle" || isPending}
                   loadingText={getLoadingText(loadingState, deviceType)}
                   onSubmit={handleSubmit}
@@ -344,6 +350,7 @@ const DashboardSection = () => {
                   referenceFile={referenceFile}
                   onReferenceChange={setReferenceFile}
                 />
+              </div>
               </div>
             </div>
           </div>
@@ -368,56 +375,10 @@ const DashboardSection = () => {
                   <Compass className="size-4" />
                 </Link>
               </div>
-              {exploreLoading ? (
-                <ProjectShimmerGrid count={4} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" />
-              ) : exploreProjects.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    No explore projects yet. Admins can move projects to Explore
-                    from the project menu.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {exploreProjects.map((p) => (
-                    <Link
-                      key={p.id}
-                      href={`/project/${p.id}`}
-                      className="group flex flex-col rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5 bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
-                    >
-                      <div className="h-36 relative overflow-hidden flex items-center justify-center">
-                        {p.thumbnail ? (
-                          <img
-                            src={p.thumbnail}
-                            alt=""
-                            className="w-full h-full object-cover object-left scale-110 opacity-90"
-                          />
-                        ) : (
-                          <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
-                            Project
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-white">
-                          {p.name}
-                        </h3>
-                        <p className="text-xs text-white/70">
-                          {formatDistanceToNow(new Date(p.updatedAt), {
-                            addSuffix: true,
-                          })}{" "}
-                          •{" "}
-                          {p.deviceType === "web"
-                            ? "Web"
-                            : p.deviceType === "mobile"
-                            ? "Mobile"
-                            : p.deviceType}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <ExploreGrid
+                projects={exploreProjects}
+                isLoading={exploreLoading}
+              />
             </div>
           </div>
 
@@ -465,7 +426,7 @@ const DashboardSection = () => {
                 </div>
               </div>
               {isLoading ? (
-                <ProjectShimmerGrid count={4} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mt-3" />
+                <ProjectShimmerGrid count={4} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-3" />
               ) : (
                 <>
                   <div className="mt-3">
@@ -556,9 +517,85 @@ function ProjectShimmerGrid({ count = 10, className = "" }: { count?: number; cl
   );
 }
 
+type ExploreItem = {
+  id: string;
+  name: string;
+  thumbnail: string | null;
+  deviceType: string;
+  updatedAt: string;
+};
+
+const ExploreGrid = memo(function ExploreGrid({
+  projects,
+  isLoading,
+}: {
+  projects: ExploreItem[];
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <ProjectShimmerGrid
+        count={4}
+        className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+      />
+    );
+  }
+  if (projects.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
+        <p className="text-sm text-muted-foreground">
+          No explore projects yet. Admins can move projects to Explore from the
+          project menu.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {projects.map((p) => (
+        <Link
+          key={p.id}
+          href={`/project/${p.id}`}
+          className="flex flex-col rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
+        >
+          <div className="h-36 relative overflow-hidden flex items-center justify-center">
+            {p.thumbnail ? (
+              <img
+                src={p.thumbnail}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover object-left scale-110 opacity-90"
+              />
+            ) : (
+              <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
+                Project
+              </span>
+            )}
+          </div>
+          <div className="p-4">
+            <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-white">
+              {p.name}
+            </h3>
+            <p className="text-xs text-white/70">
+              {formatDistanceToNow(new Date(p.updatedAt), { addSuffix: true })}{" "}
+              •{" "}
+              {p.deviceType === "web"
+                ? "Web"
+                : p.deviceType === "mobile"
+                ? "Mobile"
+                : p.deviceType}
+            </p>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+});
+
 const INITIAL_VISIBLE_COUNT = 15; /* at least 3 rows (e.g. 5 cols × 3) */
 
-export const ProjectsGrid = ({
+const ProjectsGridImpl = ({
   projects,
   isAdmin,
   onMoveToExplore,
@@ -616,7 +653,7 @@ export const ProjectsGrid = ({
     <>
       <div
         ref={ref}
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
       >
         {projects.map((project: ProjectType, index: number) => (
           <motion.div
@@ -625,7 +662,6 @@ export const ProjectsGrid = ({
             initial="hidden"
             animate={index < INITIAL_VISIBLE_COUNT || isInView ? "visible" : "hidden"}
             variants={cardVariants}
-            className="hover:scale-[1.02] transition-transform duration-200"
           >
             <ProjectCard
               project={project}
@@ -701,6 +737,9 @@ export const ProjectsGrid = ({
   );
 };
 
+export const ProjectsGrid = memo(ProjectsGridImpl);
+ProjectsGrid.displayName = "ProjectsGrid";
+
 // ── Lightweight ProjectCard — no hooks, no dialogs ──────────────────────
 export const ProjectCard = memo(
   ({
@@ -745,7 +784,7 @@ export const ProjectCard = memo(
     return (
       <div
         role="button"
-        className="w-full flex flex-col rounded-xl cursor-pointer overflow-hidden shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5 relative bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
+        className="w-full flex flex-col rounded-xl cursor-pointer overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform relative bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
         onClick={() => router.push(`/project/${project.id}`)}
       >
         <div className="h-36 relative overflow-hidden flex items-center justify-center">
@@ -754,6 +793,7 @@ export const ProjectCard = memo(
               src={thumbnail}
               alt=""
               loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover object-left scale-110 opacity-90"
             />
           ) : (

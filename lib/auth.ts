@@ -25,11 +25,21 @@ function getMongoDb() {
 
 const { db, client } = getMongoDb();
 
+const baseURL =
+  process.env.BETTER_AUTH_URL ??
+  process.env.NEXT_PUBLIC_APP_URL ??
+  "http://localhost:3000";
+
 export const auth = betterAuth({
-  baseURL:
-    process.env.BETTER_AUTH_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://localhost:3000",
+  baseURL,
+  trustedOrigins: [
+    baseURL,
+    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS
+      ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",")
+          .map((o) => o.trim())
+          .filter(Boolean)
+      : []),
+  ],
   secret: process.env.BETTER_AUTH_SECRET,
   database: mongodbAdapter(db, { client }),
   socialProviders: {
