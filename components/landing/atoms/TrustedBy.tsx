@@ -131,8 +131,8 @@ const TrustedBy: React.FC = () => {
   };
 
   return (
-    <section ref={ref}>
-      <div className="border-b border-black/5" />
+    <section ref={ref} className="bg-background">
+      <div className="border-b border-border" />
       <motion.div
         initial="hidden"
         animate={controls}
@@ -142,44 +142,44 @@ const TrustedBy: React.FC = () => {
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
-          className="flex py-[33.9px] border-b border-r border-black/5 items-center justify-center"
+          className="flex py-[33.9px] border-b border-r border-border items-center justify-center"
         >
-          <img src="/claude.webp" alt="claude" className="size-8"/>
+          <img src="/claude.webp" alt="claude" className="size-8" />
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
-          className="flex py-[29.61px] border-b md:border-r border-black/5 items-center justify-center"
+          className="flex py-[29.61px] border-b md:border-r border-border items-center justify-center"
         >
-        <img src="/claude.webp" alt="claude" className="size-8"/>
+          <img src="/claude.webp" alt="claude" className="size-8" />
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
-          className="flex py-[33.34px] border-b border-r md:border-r-0 lg:border-r border-black/5 items-center justify-center"
+          className="flex py-[33.34px] border-b border-r md:border-r-0 lg:border-r border-border items-center justify-center"
         >
-        <img src="/qwen.webp" alt="claude" className="size-8"/>
+          <img src="/qwen.webp" alt="claude" className="size-8" />
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
-          className="flex py-[27.74px]  border-b md:border-r border-black/5 items-center justify-center"
+          className="flex py-[27.74px]  border-b md:border-r border-border items-center justify-center"
         >
-         <img src="/gmini.webp" alt="claude" className="size-8"/>
+          <img src="/gmini.webp" alt="claude" className="size-8" />
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
-          className="flex py-[31.29px] border-b border-r border-black/5 items-center justify-center"
+          className="flex py-[31.29px] border-b border-r border-border items-center justify-center"
         >
-         <img src="/claude.webp" alt="claude" className="size-8"/>
+          <img src="/claude.webp" alt="claude" className="size-8" />
         </motion.div>
         <motion.div
           variants={revealAnimationVariants}
           transition={BASE_TRANSITION}
-          className="flex py-[27.94px] border-b border-black/5 items-center justify-center"
+          className="flex py-[27.94px] border-b border-border items-center justify-center"
         >
-      <img src="/qwen.webp" alt="claude" className="size-8"/>
+          <img src="/qwen.webp" alt="claude" className="size-8" />
         </motion.div>
       </motion.div>
     </section>

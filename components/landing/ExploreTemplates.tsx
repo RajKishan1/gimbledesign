@@ -40,12 +40,16 @@ const TemplateData = [
 
 export const TemplateCards = ({ imgUrl, title, text }: Props) => {
   return (
-    <div className="flex flex-col min-w-96 min-h-129 bg-gray-50">
-      <img src={imgUrl} alt="" className="min-h-96"/>
-      <span className=" w-full border p-6">
+    <div className="flex flex-col min-w-96 min-h-129 bg-card">
+      <img src={imgUrl} alt="" className="min-h-96" />
+      <span className=" w-full border border-border p-6">
         {" "}
-        <h2 className="font-semibold text-[22px] leading-[1.5em] tracking-[-0.035em] mb-2">{title}</h2>
-        <p className="text-black/60 dark:text-neutral-200 text-base leading-[1.6em]">{text}</p>
+        <h2 className="font-semibold text-[22px] leading-[1.5em] tracking-[-0.035em] mb-2 text-foreground">
+          {title}
+        </h2>
+        <p className="text-muted-foreground text-base leading-[1.6em]">
+          {text}
+        </p>
       </span>
     </div>
   );
@@ -53,12 +57,12 @@ export const TemplateCards = ({ imgUrl, title, text }: Props) => {
 
 const ExploreTemplates = () => {
   return (
-    <section>
+    <section className="bg-background">
       <div className="flex flex-col mx-auto  items-center mt-18.75">
-        <h1 className="text-[40px] font-semibold tracking-[-0.045] text-black dark:text-white mb-3">
+        <h1 className="text-[40px] font-semibold tracking-[-0.045] text-foreground mb-3">
           Explore Templates
         </h1>
-        <p className="text-center mb-13 text-[17px] leading-[1.55em] tracking-[-0.035em]">
+        <p className="text-center mb-13 text-[17px] leading-[1.55em] tracking-[-0.035em] text-muted-foreground">
           Customise beautiful pre-built design Templates
         </p>
       </div>

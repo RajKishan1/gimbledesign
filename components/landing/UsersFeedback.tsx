@@ -79,9 +79,9 @@ interface TestimonialCardProps {
 
 const UserCard: React.FC<TestimonialCardProps> = ({ quote, author }) => {
   return (
-    <div className="w-full min-h-75 flex flex-col justify-between border border-gray-200 bg-white p-6 dark:border-gray-950 dark:bg-black sm:p-8">
+    <div className="w-full min-h-75 flex flex-col justify-between border border-border bg-card p-6 sm:p-8">
       {/* Quote */}
-      <p className="mb-8 text-base leading-relaxed text-black/60 dark:text-neutral-400 sm:mb-12 sm:text-lg">
+      <p className="mb-8 text-base leading-relaxed text-muted-foreground sm:mb-12 sm:text-lg">
         {quote}
       </p>
 
@@ -96,10 +96,10 @@ const UserCard: React.FC<TestimonialCardProps> = ({ quote, author }) => {
 
         {/* Name and Role */}
         <div>
-          <h4 className="text-[17px] font-semibold text-black dark:text-white sm:text-lg">
+          <h4 className="text-[17px] font-semibold text-foreground sm:text-lg">
             {author.name}
           </h4>
-          <p className="text-sm text-black/60 leading-[1.55em] tracking-[-0.035em] dark:text-neutral-400">
+          <p className="text-sm text-muted-foreground leading-[1.55em] tracking-[-0.035em]">
             {author.role}
           </p>
         </div>
@@ -110,14 +110,18 @@ const UserCard: React.FC<TestimonialCardProps> = ({ quote, author }) => {
 
 const UsersFeedback = () => {
   return (
-    <section className="">
+    <section className="bg-background">
       <div className="flex flex-col items-center my-19">
         {" "}
-        <div className="mb-0.5 rounded-full p-1 px-3.75 bg-white text-sm">Users Feedback</div>
-        <h1 className="font-semibold text-[40px] text-black my-4">Hear from our users</h1>
-        <p className="text-center text-[17px] leading-[1.55em] tracking-[-0.035em] text-black/60"> 
-          See authentic feedback and testimonials highlighting <br/> how our work
-          delivered value & met client.
+        <div className="mb-0.5 rounded-full p-1 px-3.75 bg-card text-foreground border border-border text-sm">
+          Users Feedback
+        </div>
+        <h1 className="font-semibold text-[40px] text-foreground my-4">
+          Hear from our users
+        </h1>
+        <p className="text-center text-[17px] leading-[1.55em] tracking-[-0.035em] text-muted-foreground">
+          See authentic feedback and testimonials highlighting <br /> how our
+          work delivered value & met client.
         </p>
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3  px-4">

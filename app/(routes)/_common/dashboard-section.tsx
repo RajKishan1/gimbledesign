@@ -56,6 +56,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { ProjectThumbnail } from "@/components/ui/project-thumbnail";
 
 type LoadingState = "idle" | "enhancing" | "designing";
 
@@ -229,20 +230,19 @@ const DashboardSection = () => {
         {/* <Header /> */}
         <main className="flex-1 min-h-0 overflow-y-auto">
           {/* Hero */}
-          <div className="relative overflow-hidden py-14 sm:py-20 border-b border-border">
+          <div className="relative overflow-hidden py-16 sm:py-24">
             <div className="w-full max-w-4xl mx-auto flex flex-col items-center px-6">
               <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Users className="size-4" />
-                  {/* <Users className="size-4 -ml-2" /> */}
                 </span>
                 Join 30,000+ app founders building today
               </p>
-              <h1 className="text-center font-bold text-3xl sm:text-4xl md:text-5xl mt-4 mb-10 tracking-tight text-foreground">
+              <h1 className="text-center font-bold text-3xl sm:text-4xl md:text-5xl mt-3 mb-8 tracking-tight text-foreground">
                 Bring Your <span className="text-foreground/90">Ideas</span> to
                 Life
               </h1>
-              <div className="w-full flex flex-col items-center gap-6">
+              <div className="w-full flex flex-col items-center gap-5">
               {(deviceType === "wireframe" || deviceType === "inspirations") ? (
                 <div className="w-full max-w-156 mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -356,7 +356,7 @@ const DashboardSection = () => {
           </div>
 
           {/* Explore — projects moved to explore by admins */}
-          <div className="w-full py-12 border-b border-border">
+          <div className="w-full py-12">
             <div className="w-full max-w-6xl mx-auto px-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <div>
@@ -558,20 +558,12 @@ const ExploreGrid = memo(function ExploreGrid({
           href={`/project/${p.id}`}
           className="flex flex-col rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
         >
-          <div className="h-36 relative overflow-hidden flex items-center justify-center">
-            {p.thumbnail ? (
-              <img
-                src={p.thumbnail}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover object-left scale-110 opacity-90"
-              />
-            ) : (
-              <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
-                Project
-              </span>
-            )}
+          <div className="h-36 relative overflow-hidden">
+            <ProjectThumbnail
+              projectId={p.id}
+              thumbnail={p.thumbnail}
+              deviceType={p.deviceType}
+            />
           </div>
           <div className="p-4">
             <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-white">
@@ -787,20 +779,12 @@ export const ProjectCard = memo(
         className="w-full flex flex-col rounded-xl cursor-pointer overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform relative bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
         onClick={() => router.push(`/project/${project.id}`)}
       >
-        <div className="h-36 relative overflow-hidden flex items-center justify-center">
-          {thumbnail ? (
-            <img
-              src={thumbnail}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="w-full h-full object-cover object-left scale-110 opacity-90"
-            />
-          ) : (
-            <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">
-              Project
-            </span>
-          )}
+        <div className="h-36 relative overflow-hidden">
+          <ProjectThumbnail
+            projectId={project.id}
+            thumbnail={thumbnail}
+            deviceType={project.deviceType}
+          />
           <div
             className="absolute top-2 right-2 z-10"
             onClick={(e) => e.stopPropagation()}

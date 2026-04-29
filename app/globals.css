@@ -70,6 +70,7 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
   --grid-color: #999999;
+  --canvas-bg: #ebebeb;
 }
 
 .dark {
@@ -136,6 +137,7 @@
     0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --grid-color: #333333;
+  --canvas-bg: #1d1d1d;
 }
 
 @theme inline {
@@ -233,6 +235,18 @@
   }
 }
 
+/* Canvas grid background — small dots, theme-aware.
+   Base64-encoded SVG (more robust than %-encoded against CSS minifiers). */
+.canvas-bg {
+  background-color: var(--canvas-bg);
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMSIgZmlsbD0iI2Q0ZDRkNCIvPjwvc3ZnPg==");
+  background-size: 24px 24px;
+  background-repeat: repeat;
+}
+.dark .canvas-bg {
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMSIgZmlsbD0iIzQwNDA0MCIvPjwvc3ZnPg==");
+}
+
 /* Scrollbar hide utility */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -280,7 +294,7 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.15) 50%,
     transparent 100%
   );
   animation: shimmer-btn 1.5s ease-in-out infinite;

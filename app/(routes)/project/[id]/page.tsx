@@ -237,7 +237,7 @@ const PageContent = ({
 
   return (
     <div
-      className="relative h-screen w-full
+      className="canvas-bg relative h-screen w-full
      flex flex-col
     "
     >

@@ -114,7 +114,7 @@ const PromptInput = ({
   };
 
   return (
-    <div className="min-w-156  mx-auto">
+    <div className="w-full max-w-2xl mx-auto">
       <input
         ref={fileInputRef}
         type="file"
@@ -126,12 +126,15 @@ const PromptInput = ({
 
       <InputGroup
         className={cn(
-          "min-h-39 max-h-[min(16rem,50vh)] bg-card rounded-2xl border border-border shadow-[0_10px_30px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04)] p-2.5 flex flex-col",
+          "min-h-39 max-h-[min(16rem,50vh)] bg-card rounded-2xl p-2.5 flex flex-col",
+          "border border-border/60 transition-[border-color,box-shadow] duration-200",
+          "shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_10px_30px_-12px_rgba(0,0,0,0.4),0_1px_2px_rgba(0,0,0,0.06)]",
+          "focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/15",
           className && className,
         )}
       >
         <InputGroupTextarea
-          className="text-base! px-5! py-4! min-h-12 max-h-[min(12rem,40vh)] overflow-y-auto"
+          className="text-base! px-5! py-4! min-h-12 max-h-[min(12rem,40vh)] overflow-y-auto placeholder:text-muted-foreground/60"
           placeholder="Describe your design vision..."
           value={promptText}
           onChange={(e) => {
@@ -143,31 +146,35 @@ const PromptInput = ({
           align="block-end"
           className="flex items-center justify-between gap-2 flex-wrap"
         >
-          <div className="w-full flex-1 flex items-between gap-2 flex-wrap ">
-            {/* Attach reference image — available for all design types */}
-            <button
-              type="button"
-              onClick={handleAttachClick}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-xl transition-colors"
-            >
-              <Plus className="size-5" />
-              {referenceFile && (
-                <span
-                  className="text-xs truncate max-w-24"
-                  title={referenceFile.name}
-                >
-                  ({referenceFile.name})
-                </span>
-              )}
-            </button>
-            {referenceFile && (
+          <div className="flex-1 flex items-center gap-1.5 flex-wrap min-w-0">
+            {/* Attach reference image — show button when empty, chip when attached */}
+            {!referenceFile ? (
               <button
                 type="button"
-                onClick={clearReference}
-                className="text-xs text-muted-foreground hover:text-destructive"
+                onClick={handleAttachClick}
+                aria-label="Attach reference image"
+                className="flex items-center justify-center size-8 text-muted-foreground hover:text-foreground rounded-md border border-transparent hover:border-border hover:bg-accent/50 transition-colors"
               >
-                Clear
+                <Plus className="size-5" />
               </button>
+            ) : (
+              <div className="flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md bg-muted/60 border border-border/60 text-xs max-w-full">
+                <Paperclip className="size-3.5 text-muted-foreground shrink-0" />
+                <span
+                  className="truncate max-w-32 text-foreground"
+                  title={referenceFile.name}
+                >
+                  {referenceFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearReference}
+                  aria-label="Remove attachment"
+                  className="size-4 rounded-full inline-flex items-center justify-center hover:bg-foreground/10 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                >
+                  <span className="text-[11px] leading-none">×</span>
+                </button>
+              </div>
             )}
 
             {/* Model-only popover */}
@@ -181,7 +188,7 @@ const PromptInput = ({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md border border-transparent hover:border-border transition-colors"
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md border border-transparent hover:border-border hover:bg-accent/50 transition-colors"
                 >
                   <Zap className="size-4" />
                   <span>{selectedModelName}</span>
@@ -266,7 +273,10 @@ const PromptInput = ({
             <InputGroupButton
               variant="default"
               className={cn(
-                "rounded-lg relative bg-primary text-primary-foreground hover:bg-primary/90 overflow-hidden px-4 font-medium",
+                "rounded-lg relative bg-primary text-primary-foreground overflow-hidden px-4 font-medium",
+                "shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_2px_rgba(0,0,0,0.15)]",
+                "hover:bg-primary/90 active:scale-[0.98] transition-[background-color,transform] duration-150",
+                "disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed disabled:hover:bg-muted",
                 isLoading && "min-w-28",
               )}
               size="sm"

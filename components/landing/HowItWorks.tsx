@@ -29,11 +29,11 @@ const HowItWorks = () => {
 
   return (
     <div
-      className={` bg-white dark:bg-black transition-colors duration-300 pt-10 ${inter.className} border-x border-gray-900`}
+      className={`bg-background transition-colors duration-300 pt-10 ${inter.className} border-x border-border`}
     >
       <div className="max-w-6xl mx-auto">
         {/* Title */}
-        <h1 className="text-3xl font-medium text-center mb-8 text-black dark:text-white">
+        <h1 className="text-3xl font-medium text-center mb-8 text-foreground">
           How it works?
         </h1>
 
@@ -42,22 +42,20 @@ const HowItWorks = () => {
           {steps.map((step, index) => (
             <div
               key={index}
-              className={` p-8 ${
-                index < 4 ? "border border-gray-200 dark:border-gray-900" : ""
-              }`}
+              className={` p-8 ${index < 4 ? "border border-border" : ""}`}
             >
               {/* Step Number */}
-              <p className="text-xl font-medium leading-6 mb-5 text-neutral-400 dark:text-neutral-500">
+              <p className="text-xl font-medium leading-6 mb-5 text-muted-foreground">
                 {step.number}
               </p>
 
               {/* Step Title */}
-              <h2 className="text-xl font-medium leading-6 mb-3 text-black dark:text-white">
+              <h2 className="text-xl font-medium leading-6 mb-3 text-foreground">
                 {step.title}
               </h2>
 
               {/* Step Description */}
-              <p className="max-w-3/5 text-lg font-medium leading-relaxed text-neutral-600 dark:text-neutral-400">
+              <p className="max-w-3/5 text-lg font-medium leading-relaxed text-muted-foreground">
                 {step.description}
               </p>
             </div>

@@ -61,7 +61,6 @@ const Canvas = ({
   const [toolMode, setToolMode] = useState<ToolModeType>(TOOL_MODE_ENUM.SELECT);
   const [openHtmlDialog, setOpenHtmlDialog] = useState(false);
   const [isScreenshotting, setIsScreenshotting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -264,39 +263,9 @@ const Canvas = ({
     [transform.x, transform.y, transform.scale]
   );
 
-  // ── Thumbnail / screenshot ────────────────────────────────────────────
-  const saveThumbnailToProject = useCallback(
-    async (projectId: string | null) => {
-      try {
-        if (!projectId) return null;
-        const result = getCanvasHtmlContent();
-        if (!result?.html) return null;
-        setSelectedFrameId(null);
-        setIsSaving(true);
-        const response = await axios.post("/api/screenshot", {
-          html: result.html,
-          width: result.element.scrollWidth,
-          height: 700,
-          projectId,
-        });
-        if (response.data) {
-          console.log("Thumbnail saved", response.data);
-        }
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [setSelectedFrameId]
-  );
-
-  useEffect(() => {
-    if (!projectId) return;
-    if (loadingStatus === "completed") {
-      saveThumbnailToProject(projectId);
-    }
-  }, [loadingStatus, projectId, saveThumbnailToProject]);
+  // Thumbnails are now generated as small AI SVGs at project creation time
+  // (see lib/thumbnail-generator.ts), so the canvas no longer has to take a
+  // Puppeteer screenshot when generation completes.
 
   const onOpenHtmlDialog = () => setOpenHtmlDialog(true);
 
@@ -348,13 +317,12 @@ const Canvas = ({
     }
   }, [projectName, setSelectedFrameId]);
 
-  const currentStatus = isSaving
-    ? "finalizing"
-    : isPending && (loadingStatus === null || loadingStatus === "idle")
-    ? "fetching"
-    : loadingStatus !== "idle" && loadingStatus !== "completed"
-    ? loadingStatus
-    : null;
+  const currentStatus =
+    isPending && (loadingStatus === null || loadingStatus === "idle")
+      ? "fetching"
+      : loadingStatus !== "idle" && loadingStatus !== "completed"
+      ? loadingStatus
+      : null;
 
   return (
     <>
@@ -365,7 +333,7 @@ const Canvas = ({
         <div
           ref={containerRef}
           className={cn(
-            "absolute inset-0 w-full h-full bg-muted",
+            "canvas-bg absolute inset-0 w-full h-full",
             toolMode === TOOL_MODE_ENUM.HAND
               ? "cursor-grab active:cursor-grabbing"
               : linkingState.isLinking
@@ -374,10 +342,6 @@ const Canvas = ({
             isPrototypeMode && "bg-accent/30"
           )}
           style={{
-            backgroundImage: isPrototypeMode
-              ? "radial-gradient(circle, var(--grid-color) 1px, transparent 1px), linear-gradient(135deg, rgba(99, 102, 241, 0.02) 25%, transparent 25%)"
-              : "radial-gradient(circle, var(--grid-color) 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
             // Prevent browser's own pan/zoom so our handler is the sole authority
             touchAction: "none",
           }}
@@ -583,7 +547,7 @@ const Canvas = ({
 function CanvasLoader({
   status,
 }: {
-  status?: LoadingStatusType | "fetching" | "finalizing";
+  status?: LoadingStatusType | "fetching";
 }) {
   return (
     <div
@@ -596,8 +560,7 @@ function CanvasLoader({
         status === "fetching" && "bg-gray-500 text-white",
         status === "running" && "bg-amber-500 text-white",
         status === "analyzing" && "bg-blue-500 text-white",
-        status === "generating" && "bg-purple-500 text-white",
-        status === "finalizing" && "bg-purple-500 text-white"
+        status === "generating" && "bg-purple-500 text-white"
       )}
     >
       <Spinner className="w-4 h-4 stroke-3!" />

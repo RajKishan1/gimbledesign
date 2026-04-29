@@ -50,49 +50,49 @@ const Faq = () => {
 
   return (
     <section
-      className={` bg-[#f9f9f9]  dark:bg-black transition-colors duration-300 ${inter.className} px-6`}
+      className={`bg-background transition-colors duration-300 ${inter.className} px-6`}
     >
-      <div className=" flex justify-between items-center  mx-auto  pt-12 border border-b-0 border-gray-200 dark:border-gray-900">
+      <div className=" flex justify-between items-center  mx-auto  pt-12 border border-b-0 border-border">
         <div className="flex justify-center ">
           {/* Title Section */}
-          <div className="w-1/2 lg:col-span-4 p-6 border-y px-12 dark:border-gray-900 ">
-            <p className="bg-white rounded-full px-3.75 py-1 text-sm">
+          <div className="w-1/2 lg:col-span-4 p-6 border-y px-12 border-border">
+            <p className="bg-card text-foreground border border-border rounded-full px-3.75 py-1 text-sm">
               Common questions
             </p>
             <h1
-              className={`text-[40px] py-4 mb-0.5 font-medium leading-tight text-black dark:text-white `}
+              className={`text-[40px] py-4 mb-0.5 font-medium leading-tight text-foreground`}
             >
               Find Your Answers Here
             </h1>
-            <p className="text-black/60 text-[18px] leading-[1.55em] font-medium tracking-[-0.03em]">
+            <p className="text-muted-foreground text-[18px] leading-[1.55em] font-medium tracking-[-0.03em]">
               Find answers to common questions about Bloopix, <br />
               its features, and how it can help your team.
             </p>
           </div>
 
           {/* FAQ Items */}
-          <div className="lg:col-span-8 space-y-4 w-1/2 border-x border-gray-200 dark:border-gray-900 ">
+          <div className="lg:col-span-8 space-y-4 w-1/2 border-x border-border">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className={`border-t border-gray-200 dark:border-gray-800 px-8 py-2 my-auto ${
-                  index === faqs.length - 1
-                    ? "border-b border-gray-200 dark:border-gray-800"
-                    : ""
+                className={`border-t border-border px-8 py-2 my-auto ${
+                  index === faqs.length - 1 ? "border-b border-border" : ""
                 }`}
               >
                 <button
                   onClick={() => toggleFAQ(index)}
-                  className="w-full py-6 flex items-center justify-between text-left transition-colors duration-200 hover:text-neutral-600 dark:hover:text-neutral-300"
+                  className="w-full py-6 flex items-center justify-between text-left transition-colors duration-200 hover:text-muted-foreground"
                   aria-expanded={openIndex === index}
                 >
-                  <span className="text-lg font-normal pr-8 text-black dark:text-white">
+                  <span className="text-lg font-normal pr-8 text-foreground">
                     {faq.question}
                   </span>
                   <Plus
                     size={16}
-                    className={`flex shrink-0 transition-transform duration-300 text-black/65 dark:text-white ${
-                      openIndex === index ? "rotate-225 bg-indigo-500 rounded-full text-white p-0.5 h-5 w-5" : ""
+                    className={`flex shrink-0 transition-transform duration-300 text-muted-foreground ${
+                      openIndex === index
+                        ? "rotate-225 bg-primary text-primary-foreground rounded-full p-0.5 h-5 w-5"
+                        : ""
                     }`}
                   />
                 </button>
@@ -104,7 +104,7 @@ const Faq = () => {
                       : "max-h-0 opacity-0"
                   }`}
                 >
-                  <div className="pb-6 pr-12 leading-relaxed text-neutral-600 dark:text-neutral-400">
+                  <div className="pb-6 pr-12 leading-relaxed text-muted-foreground">
                     {faq.answer}
                   </div>
                 </div>

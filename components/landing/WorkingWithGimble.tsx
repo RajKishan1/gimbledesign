@@ -101,9 +101,9 @@ const ListItem = ({
 
         opacity,
       }}
-      className="flex h-28  items-center justify-baseline text-sm font-medium text-neutral-700 dark:text-white"
+      className="flex h-28  items-center justify-baseline text-sm font-medium text-foreground"
     >
-      <span className="h-5 w-5 rounded-full bg-purple-500 flex items-center justify-center text-white p-1">
+      <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center p-1">
         <Check />
       </span>{" "}
       <p className="text-lg font-normal px-2">{text}</p>
@@ -119,13 +119,13 @@ const WorkingWithGimble = () => {
   });
 
   return (
-    <div className="flex  h-163 w-full items-center justify-center bg-[#f9f9f9] dark:bg-black p-8">
+    <div className="flex  h-163 w-full items-center justify-center bg-background p-8">
       <div className="text-center w-full flex items-center">
         <div className="flex items-center justify-center gap-2.5 mx-auto">
-          <span className="rounded-full p-2.5 bg-white">
+          <span className="rounded-full p-2.5 bg-card border border-border text-foreground">
             <Wand />
           </span>{" "}
-          <h2 className=" text-3xl font-medium text-neutral-900 dark:text-white">
+          <h2 className=" text-3xl font-medium text-foreground">
             Working with Gimble
           </h2>
         </div>
@@ -134,8 +134,8 @@ const WorkingWithGimble = () => {
           style={{ perspective: "600px" }}
         >
           {/* Fade masks */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-linear-to-b from-gray-50 dark:from-black to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-linear-to-t from-gray-50 dark:from-black to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-linear-to-b from-background to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-linear-to-t from-background to-transparent" />
 
           {[...textItems, ...textItems].map((text, index) => (
             <ListItem key={index} text={text} index={index} baseY={baseY} />

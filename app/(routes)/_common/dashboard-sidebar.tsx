@@ -65,8 +65,15 @@ function DashboardSidebarImpl() {
 
   return (
     <aside
-      onClick={() => {
-        if (isCollapsed) setIsCollapsed(false);
+      onClick={(e) => {
+        if (isCollapsed) {
+          setIsCollapsed(false);
+          return;
+        }
+        // Collapse when clicking blank sidebar area (not a link/button/interactive)
+        const target = e.target as HTMLElement;
+        if (target.closest("a, button, [role='menuitem']")) return;
+        setIsCollapsed(true);
       }}
       className={cn(
         "flex flex-col h-screen border-r border-border bg-background transition-all duration-300 ease-in-out shrink-0 overflow-hidden",

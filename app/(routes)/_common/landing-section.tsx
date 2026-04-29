@@ -555,13 +555,13 @@ const LandingSection = () => {
 
   return (
     <div
-      className={` w-full min-h-screen border-x border-black/5 ${openSauceOne.className}`}
+      className={` w-full min-h-screen bg-background border-x border-border ${openSauceOne.className}`}
     >
       <div className="flex flex-col ">
         <Header />
         <BlurFade>
           <div
-            className={`relative  overflow-hidden py-4 mt-2 border border-zinc-50 dark:border-zinc-900
+            className={`relative  overflow-hidden py-4 mt-2 border border-border
            `}
           >
             <div className="absolute inset-0 z-[-1]"></div>
@@ -570,7 +570,7 @@ const LandingSection = () => {
          items-center justify-center gap-6 
         "
             >
-              <div className="inline-flex items-center gap-3 rounded-full border bg-background px-4 py-1.5 shadow-sm">
+              <div className="inline-flex items-center gap-3 rounded-full border border-border bg-card px-4 py-1.5 shadow-sm">
                 {/* Overlapping avatars */}
                 <div className="flex -space-x-2">
                   {["/men.webp", "/men.webp", "/men.webp"].map((src, i) => (
@@ -578,7 +578,7 @@ const LandingSection = () => {
                       key={i}
                       src={src}
                       alt="founder"
-                      className="size-6 rounded-full border-2 border-background object-cover"
+                      className="size-6 rounded-full border-2 border-card object-cover"
                     />
                   ))}
                 </div>
@@ -608,10 +608,12 @@ const LandingSection = () => {
                 </div> */}
                 <h1
                   className="text-center font-bold  text-6xl
-            tracking-[-0.045em] leading-[1.22em]  bg-black dark:bg-linear-to-r dark:from-white dark:to-zinc-700 bg-clip-text text-transparent  pt-2.5 "
+            tracking-[-0.045em] leading-[1.22em] text-foreground pt-2.5 "
                 >
                   Bring Your{" "}
-                  <span className="text-[#6466E9]">Ideas to Life</span>
+                  <span className="text-[#6466E9] dark:text-[#8b8dff]">
+                    Ideas to Life
+                  </span>
                 </h1>
               </div>
 
@@ -620,10 +622,10 @@ const LandingSection = () => {
             item-center gap-8 relative "
               >
                 <div className="w-full  flex flex-col items-center gap-6 py-2 ">
-                  <div className="relative flex rounded-lg bg-muted p-0.5 mb-4">
+                  <div className="relative flex rounded-lg bg-muted border border-border p-0.5 mb-4">
                     <div
                       className={cn(
-                        "absolute inset-y-0.5 w-1/2 rounded-xl bg-foreground dark:bg-primary transition-transform duration-300 ease-in-out",
+                        "absolute inset-y-0.5 w-1/2 rounded-xl bg-primary transition-transform duration-300 ease-in-out",
                         deviceType === "web"
                           ? "translate-x-full"
                           : "translate-x-0",
@@ -635,7 +637,7 @@ const LandingSection = () => {
                       className={cn(
                         "relative z-10 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors ",
                         deviceType === "mobile"
-                          ? "text-white dark:text-primary-foreground"
+                          ? "text-primary-foreground"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >
@@ -647,7 +649,7 @@ const LandingSection = () => {
                       className={cn(
                         "relative z-10 w-50 flex-1 px-4 py-3 text-sm  font-medium  rounded-xl transition-colors",
                         deviceType === "web"
-                          ? "text-white dark:text-primary-foreground"
+                          ? "text-primary-foreground"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >
@@ -694,7 +696,7 @@ const LandingSection = () => {
         </BlurFade>
         <TrustedBy />
         {userId && (
-          <div className="w-full py-10 border-x border-zinc-200">
+          <div className="w-full py-10 border-x border-border">
             <div className="mx-auto max-w-3xl">
               <div>
                 <h1
@@ -832,10 +834,10 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
   return (
     <div
       role="button"
-      className="w-full flex flex-col bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl cursor-pointer overflow-hidden shadow-sm transition-transform hover:shadow-md hover:-translate-y-0.5"
+      className="w-full flex flex-col bg-card border border-border rounded-xl cursor-pointer overflow-hidden shadow-sm transition-transform hover:shadow-md hover:-translate-y-0.5"
       onClick={onRoute}
     >
-      <div className="h-40 bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden flex items-center justify-center">
+      <div className="h-40 bg-muted relative overflow-hidden flex items-center justify-center">
         {thumbnail ? (
           <img
             src={thumbnail}
@@ -843,16 +845,16 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
           />
         ) : (
           <div className="w-16 h-16 rounded-full flex items-center justify-center text-primary">
-            <FolderOpenDotIcon className="text-white" size={36} />
+            <FolderOpenDotIcon className="text-primary-foreground" size={36} />
           </div>
         )}
       </div>
 
-      <div className="w-full border-t border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 flex flex-col">
-        <h3 className="font-semibold text-[15px] leading-[1.5em] tracking-[-0.035em] mb-1.5 line-clamp-1">
+      <div className="w-full border-t border-border p-4 sm:p-5 flex flex-col">
+        <h3 className="font-semibold text-[15px] leading-[1.5em] tracking-[-0.035em] mb-1.5 line-clamp-1 text-foreground">
           {project.name}
         </h3>
-        <p className="text-xs text-black/60 dark:text-zinc-400">{timeAgo}</p>
+        <p className="text-xs text-muted-foreground">{timeAgo}</p>
       </div>
     </div>
   );

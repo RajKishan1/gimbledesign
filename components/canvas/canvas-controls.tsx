@@ -37,8 +37,10 @@ const CanvasControls = ({
       <div
         className="
           -translate-x-1/2 absolute bottom-4 left-1/2
-          flex items-center gap-3 rounded-full border
-          dark:bg-[#242424] bg-white py-1.5 px-4 shadow-sm text-black! dark:text-white!
+          flex items-center gap-3 rounded-full
+          border border-white/20 dark:border-white/10
+          bg-white/60 dark:bg-white/5 backdrop-blur-xl
+          py-1.5 px-4 shadow-lg text-black! dark:text-white!
         "
       >
         {/* Tools: Select + Grab canvas */}

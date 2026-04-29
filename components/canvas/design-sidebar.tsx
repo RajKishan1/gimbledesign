@@ -13,6 +13,9 @@ import {
   Add01Icon,
   Layers01Icon,
   Link01Icon,
+  Chat,
+  Chat01FreeIcons,
+  ChatIcon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -354,6 +357,7 @@ const ChatInput = memo(function ChatInput({
   const [attachedUrl, setAttachedUrl] = useState<string | null>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInputValue, setUrlInputValue] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Restore model from localStorage
@@ -441,13 +445,14 @@ const ChatInput = memo(function ChatInput({
 
   return (
     <>
-      <div className="px-3 pb-3 shrink-0">
+      <div className="px-3 pb-3 pt-2 shrink-0">
         <div
           className={cn(
             "rounded-xl overflow-hidden",
-            "bg-card border border-border",
-            "ring-1 ring-primary/25 dark:ring-primary/40",
-            "shadow-lg"
+            "bg-card border shadow-lg transition-colors",
+            isFocused
+              ? "border-primary ring-1 ring-primary/30"
+              : "border-border"
           )}
         >
           {/* Attached image preview */}
@@ -525,6 +530,8 @@ const ChatInput = memo(function ChatInput({
               }
             }}
             className="min-h-[72px] max-h-40 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70 text-sm px-3 pt-3 pb-1"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
           />
 
           {/* Bottom toolbar — "+" (left), model (right), send (far right) */}
@@ -704,52 +711,68 @@ const DesignSidebar = ({
         isCollapsed ? "w-12" : "w-[340px]"
       )}
     >
-      {/* Collapse toggle */}
-      <div className="absolute left-3.5 top-3.5 z-10">
-        <button
-          className="text-muted-foreground hover:text-foreground transition-colors"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          <SidebarToggleIcon />
-        </button>
-      </div>
+      {/* Collapsed state — just show the expand toggle */}
+      {isCollapsed && (
+        <div className="flex flex-col items-center pt-3">
+          <button
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setIsCollapsed(false)}
+          >
+            <SidebarToggleIcon />
+          </button>
+        </div>
+      )}
 
       {/* ── Design mode ─────────────────────────────────────────────── */}
       {!isCollapsed && mode === "design" && (
         <div className="flex flex-col flex-1 min-h-0">
 
-          {/* Tab bar */}
-          <div className="flex shrink-0 border-b border-border pt-9">
+          {/* Tab bar — tabs on left, collapse toggle on right */}
+          <div className="flex shrink-0 border-b border-border items-center">
             {(["chat", "theme", "fonts"] as DesignTab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  "flex-1 flex items-center justify-center px-3 py-2.5 text-xs font-medium transition-colors capitalize",
+                  "flex items-center justify-center px-3 py-2.5 text-sm font-medium transition-colors capitalize",
                   activeTab === tab
                     ? "text-foreground border-b-2 border-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {tab === "fonts" ? (
-                  <HugeiconsIcon icon={TypeCursorIcon} size={14} color="currentColor" strokeWidth={1.75} />
+                  <span className="flex items-center gap-1.5">
+                    <HugeiconsIcon icon={TypeCursorIcon} size={14} color="currentColor" strokeWidth={1.75} />
+                    Fonts
+                  </span>
                 ) : tab === "theme" ? (
-                  <span className="flex items-center gap-1">
-                    <HugeiconsIcon icon={ColorsIcon} size={12} color="currentColor" strokeWidth={1.75} />
+                  <span className="flex items-center gap-1.5">
+                    <HugeiconsIcon icon={ColorsIcon} size={14} color="currentColor" strokeWidth={1.75} />
                     Theme
                   </span>
                 ) : (
-                  "Chat"
+                  <span className="flex items-center gap-1.5">
+                    <HugeiconsIcon icon={Chat} size={14} color="currentColor" strokeWidth={1.75} />
+                    Chat
+                  </span>
                 )}
               </button>
             ))}
+            {/* Collapse toggle — flush right inside tab bar */}
+            <button
+              className="ml-auto px-3 py-2.5 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setIsCollapsed(true)}
+              aria-label="Collapse sidebar"
+            >
+              <SidebarToggleIcon />
+            </button>
           </div>
 
           {/* ── Chat tab ────────────────────────────────────────────── */}
           {activeTab === "chat" && (
             <div className="flex flex-col flex-1 min-h-0">
               {/* Messages */}
-              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin px-3 pt-4 pb-3">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide px-3 pt-4 pb-6">
                 <ChatMessages
                   loadingStatus={loadingStatus}
                   frames={frames}
@@ -815,65 +838,76 @@ const DesignSidebar = ({
 
       {/* ── Prototype mode ──────────────────────────────────────────── */}
       {!isCollapsed && mode === "prototype" && (
-        <div className="flex flex-col flex-1 min-h-0 p-3 pt-4">
-          <div className="flex shrink-0 items-center justify-between mb-4 pt-7">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Header row with collapse toggle */}
+          <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2.5">
             <h3 className="font-medium text-sm">Interactions</h3>
-            <span className="text-xs text-muted-foreground">
-              {links.length} Link{links.length !== 1 ? "s" : ""}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">
+                {links.length} Link{links.length !== 1 ? "s" : ""}
+              </span>
+              <button
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setIsCollapsed(true)}
+                aria-label="Collapse sidebar"
+              >
+                <SidebarToggleIcon />
+              </button>
+            </div>
           </div>
+          <div className="flex flex-col flex-1 min-h-0 p-3 pt-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
+              {links.length > 0 && (
+                <div className="flex justify-end mb-2">
+                  <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive hover:text-destructive" onClick={clearLinks}>
+                    Clear All
+                  </Button>
+                </div>
+              )}
 
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
-            {links.length > 0 && (
-              <div className="flex justify-end mb-2">
-                <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive hover:text-destructive" onClick={clearLinks}>
-                  Clear All
-                </Button>
-              </div>
-            )}
-
-            {links.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <p className="text-sm text-muted-foreground">No links yet</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Click elements to start linking</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {links.map((link) => {
-                  const fromScreen = frames.find((f) => f.id === link.fromScreenId);
-                  const toScreen = frames.find((f) => f.id === link.toScreenId);
-                  const isSelected = selectedLinkId === link.id;
-                  return (
-                    <div
-                      key={link.id}
-                      className={cn(
-                        "group p-2.5 rounded-xl border transition-all cursor-pointer",
-                        isSelected
-                          ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700"
-                          : "bg-card border-border hover:border-primary/50"
-                      )}
-                      onClick={() => setSelectedLinkId(isSelected ? null : link.id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1 text-xs font-medium">
-                          <span className="truncate max-w-[65px]" title={fromScreen?.title}>{fromScreen?.title || "?"}</span>
-                          <span className="text-indigo-500">→</span>
-                          <span className="truncate max-w-[65px]" title={toScreen?.title}>{toScreen?.title || "?"}</span>
+              {links.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-sm text-muted-foreground">No links yet</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">Click elements to start linking</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {links.map((link) => {
+                    const fromScreen = frames.find((f) => f.id === link.fromScreenId);
+                    const toScreen = frames.find((f) => f.id === link.toScreenId);
+                    const isSelected = selectedLinkId === link.id;
+                    return (
+                      <div
+                        key={link.id}
+                        className={cn(
+                          "group p-2.5 rounded-xl border transition-all cursor-pointer",
+                          isSelected
+                            ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700"
+                            : "bg-card border-border hover:border-primary/50"
+                        )}
+                        onClick={() => setSelectedLinkId(isSelected ? null : link.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1 text-xs font-medium">
+                            <span className="truncate max-w-[65px]" title={fromScreen?.title}>{fromScreen?.title || "?"}</span>
+                            <span className="text-indigo-500">→</span>
+                            <span className="truncate max-w-[65px]" title={toScreen?.title}>{toScreen?.title || "?"}</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                            onClick={(e) => { e.stopPropagation(); removeLink(link.id); }}
+                          >
+                            <HugeiconsIcon icon={Delete01Icon} size={11} color="currentColor" strokeWidth={2} />
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                          onClick={(e) => { e.stopPropagation(); removeLink(link.id); }}
-                        >
-                          <HugeiconsIcon icon={Delete01Icon} size={11} color="currentColor" strokeWidth={2} />
-                        </Button>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -917,7 +951,7 @@ const FontItem = memo(function FontItem({ font, isSelected, onSelect }: { font: 
         isSelected ? "border-foreground/50 bg-foreground/5 dark:bg-foreground/10" : "border-border hover:bg-accent/50"
       )}
     >
-      <div className="flex flex-col items-start flex-1 min-w-0">
+      <div className="flex flex-col items-start  flex-1 min-w-0">
         <span className="text-xs font-medium text-foreground truncate w-full" style={{ fontFamily: font.family }}>
           {font.name}
         </span>

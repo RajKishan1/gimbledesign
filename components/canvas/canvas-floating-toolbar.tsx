@@ -13,10 +13,12 @@ const CanvasFloatingToolbar = ({
   projectId,
   isScreenshotting,
   onScreenshot,
+  showScreenshotButton = true,
 }: {
   projectId: string;
   isScreenshotting: boolean;
   onScreenshot: () => void;
+  showScreenshotButton?: boolean;
 }) => {
   const { theme: currentTheme } = useCanvas();
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -36,19 +38,21 @@ const CanvasFloatingToolbar = ({
       >
         <div className="flex flex-row items-center gap-2 px-3">
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              className="rounded-none border-none cursor-pointer"
-              disabled={isScreenshotting}
-              onClick={onScreenshot}
-            >
-              {isScreenshotting ? (
-                <Spinner />
-              ) : (
-                <HugeiconsIcon icon={Camera01Icon} size={16} color="currentColor" strokeWidth={1.75} />
-              )}
-            </Button>
+            {showScreenshotButton && (
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="rounded-none border-none cursor-pointer"
+                disabled={isScreenshotting}
+                onClick={onScreenshot}
+              >
+                {isScreenshotting ? (
+                  <Spinner />
+                ) : (
+                  <HugeiconsIcon icon={Camera01Icon} size={16} color="currentColor" strokeWidth={1.75} />
+                )}
+              </Button>
+            )}
             <Button
               variant="default"
               size="sm"
