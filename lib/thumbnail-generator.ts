@@ -2,45 +2,69 @@ import { generateText } from "ai";
 import { openrouter } from "@/lib/openrouter";
 import prisma from "@/lib/prisma";
 import { FAST_MODEL } from "@/constant/models";
+import {
+  TEMPLATES,
+  type TemplateColors,
+  pickTemplateIndex,
+  renderTemplate,
+} from "@/lib/thumbnail-templates";
 
 /**
- * Generates a small, aesthetic SVG thumbnail for a project using an existing
- * text LLM (Gemini Flash via OpenRouter), then stores it as a base64 data URL
- * in `project.thumbnail`.
+ * Builds a small, aesthetic SVG thumbnail for a project by combining a
+ * curated template (picked deterministically from `lib/thumbnail-templates.ts`)
+ * with a 3-color palette extracted from the project idea via a tiny LLM call.
  *
- * Designed to be cheap (one short prompt → ~1–4KB of SVG) and fast (Flash
- * tier model). Returns the data URL on success, or `null` on any failure.
+ * Design goals:
+ * - Production-grade visuals: hand-crafted templates always look good.
+ * - Per-project uniqueness: templates rotate by project id, colors are derived
+ *   from the project's prompt/name.
+ * - Cheap and fast: the LLM only returns ~30 tokens of JSON, not full SVG.
+ * - Resilient: if the LLM call fails or returns garbage, falls back to a
+ *   device-typed palette so every project still gets a polished thumbnail.
  *
- * Intended to be called fire-and-forget from project-creation hooks.
+ * Result is stored as a base64 data URL on `project.thumbnail`. Designed to
+ * be invoked fire-and-forget from project-creation hooks.
  */
 
-const SYSTEM_PROMPT = `You design tiny, abstract SVG thumbnails for a UI-design product gallery.
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+const COLOR_TIMEOUT_MS = 6000;
 
-Strict requirements:
-- Output ONLY raw SVG markup. No markdown fences, no commentary, no <?xml prolog.
-- Use exactly viewBox="0 0 400 300" and preserveAspectRatio="xMidYMid slice".
-- Keep the file tiny: under 2KB, no more than ~12 elements total.
-- Visual style: minimal, modern, soft, professional. Abstract shapes only.
-  Use 2–4 harmonious colors picked to match the project's vibe. Prefer soft
-  gradients (linearGradient or radialGradient) for the background.
-- Composition: a colored gradient background covering the whole canvas, then
-  1–6 overlapping shapes (circles, rounded rects, soft blobs, simple curves).
-  Use translucent fills (opacity 0.4–0.85) for layered depth.
-- NO text, NO words, NO letters, NO logos, NO emoji, NO photographic detail,
-  NO icons of devices/people. Pure abstract geometry only.
-- Do NOT include <script>, <foreignObject>, or external references.
-- The entire output must start with "<svg" and end with "</svg>".`;
+/** Saturated, dashboard-friendly fallbacks per device type. */
+const DEVICE_FALLBACK: Record<string, TemplateColors> = {
+  mobile: { c1: "#f97316", c2: "#f59e0b", c3: "#fde68a" },
+  web: { c1: "#6366f1", c2: "#8b5cf6", c3: "#c4b5fd" },
+  wireframe: { c1: "#3b82f6", c2: "#6366f1", c3: "#bfdbfe" },
+  inspirations: { c1: "#ec4899", c2: "#a855f7", c3: "#fbcfe8" },
+};
 
-function buildUserPrompt(args: {
+function fallbackColors(deviceType: string | null | undefined): TemplateColors {
+  const key = typeof deviceType === "string" ? deviceType : "";
+  return DEVICE_FALLBACK[key] ?? DEVICE_FALLBACK.mobile;
+}
+
+const COLOR_SYSTEM_PROMPT = `You pick color palettes for abstract UI thumbnails.
+
+Output ONLY a JSON object with exactly three keys, each a 6-digit hex color:
+{"c1":"#xxxxxx","c2":"#xxxxxx","c3":"#xxxxxx"}
+
+Rules:
+- c1 = primary background color (rich, saturated).
+- c2 = secondary accent (clearly different hue from c1, harmonious).
+- c3 = highlight or pop color (lighter or brighter than c1/c2).
+- All three must be visually distinct from each other.
+- Avoid pure black, pure white, or near-grey colors unless the brief explicitly demands it.
+- No commentary, no markdown, no code fences. JSON only.`;
+
+function buildColorPrompt(args: {
   projectName: string | null;
   initialPrompt: string | null;
   deviceType: string | null;
 }): string {
   const { projectName, initialPrompt, deviceType } = args;
-
   const lines: string[] = [];
+
   if (initialPrompt && initialPrompt.trim()) {
-    lines.push(`User's idea: "${initialPrompt.trim().slice(0, 240)}"`);
+    lines.push(`Project idea: "${initialPrompt.trim().slice(0, 240)}"`);
   }
   if (
     projectName &&
@@ -61,37 +85,76 @@ function buildUserPrompt(args: {
     lines.push(`Surface: ${surface}`);
   }
   if (lines.length === 0) {
-    lines.push("No specific idea — produce a generic, calm, modern thumbnail.");
+    lines.push("No specific brief — pick a calm, modern, premium palette.");
   }
-  lines.push("Generate the SVG thumbnail now. SVG only.");
+  lines.push("Return JSON only.");
   return lines.join("\n");
 }
 
-/** Strips wrapping fences/whitespace and validates the output is an SVG document. */
-function sanitizeSvg(raw: string): string | null {
+/** Strip code fences and extract the first JSON object substring. */
+function extractJson(raw: string): string | null {
   if (!raw) return null;
   let s = raw.trim();
-  // Strip ```svg ... ``` or ``` ... ``` if the model misbehaves.
   if (s.startsWith("```")) {
-    s = s.replace(/^```(?:svg|xml)?\s*/i, "").replace(/```\s*$/i, "");
-    s = s.trim();
+    s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
   }
-  // Strip optional XML prolog.
-  s = s.replace(/^<\?xml[^?]*\?>\s*/i, "");
-  // Cut off anything after the closing tag (model commentary etc.).
-  const closeIdx = s.lastIndexOf("</svg>");
-  if (closeIdx === -1) return null;
-  s = s.slice(0, closeIdx + "</svg>".length);
-  if (!/^<svg[\s>]/i.test(s)) return null;
-  // Block obviously dangerous content.
-  if (/<script\b/i.test(s) || /<foreignObject\b/i.test(s)) return null;
-  // Hard size cap (defensive): 8KB raw SVG.
-  if (s.length > 8 * 1024) return null;
-  // Inject xmlns if missing — required for base64 data URLs rendered in <img> tags.
-  if (!/\bxmlns\s*=/i.test(s)) {
-    s = s.replace(/^<svg\b/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+  const start = s.indexOf("{");
+  const end = s.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  return s.slice(start, end + 1);
+}
+
+function parseColors(raw: string): TemplateColors | null {
+  const json = extractJson(raw);
+  if (!json) return null;
+  let obj: unknown;
+  try {
+    obj = JSON.parse(json);
+  } catch {
+    return null;
   }
-  return s;
+  if (!obj || typeof obj !== "object") return null;
+  const o = obj as Record<string, unknown>;
+  const c1 = typeof o.c1 === "string" ? o.c1.trim() : "";
+  const c2 = typeof o.c2 === "string" ? o.c2.trim() : "";
+  const c3 = typeof o.c3 === "string" ? o.c3.trim() : "";
+  if (!HEX_RE.test(c1) || !HEX_RE.test(c2) || !HEX_RE.test(c3)) return null;
+  return { c1, c2, c3 };
+}
+
+async function fetchColorsFromLLM(args: {
+  projectName: string | null;
+  initialPrompt: string | null;
+  deviceType: string | null;
+}): Promise<TemplateColors | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), COLOR_TIMEOUT_MS);
+  try {
+    const { text } = await generateText({
+      model: openrouter.chat(FAST_MODEL),
+      system: COLOR_SYSTEM_PROMPT,
+      prompt: buildColorPrompt(args),
+      temperature: 0.85,
+      maxOutputTokens: 120,
+      abortSignal: controller.signal,
+    });
+    return parseColors(text ?? "");
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Lightweight defensive validation before storing the SVG. */
+function validateSvg(svg: string): boolean {
+  if (!svg) return false;
+  if (!svg.startsWith("<svg")) return false;
+  if (!svg.trimEnd().endsWith("</svg>")) return false;
+  if (/<script\b/i.test(svg)) return false;
+  if (/<foreignObject\b/i.test(svg)) return false;
+  if (svg.length > 8 * 1024) return false;
+  return true;
 }
 
 function toDataUrl(svg: string): string {
@@ -110,29 +173,24 @@ export async function generateProjectThumbnail(
         name: true,
         initialPrompt: true,
         deviceType: true,
-        thumbnail: true,
       },
     });
     if (!project) return null;
 
-    const userPrompt = buildUserPrompt({
+    const llmColors = await fetchColorsFromLLM({
       projectName: project.name,
       initialPrompt: project.initialPrompt,
       deviceType: project.deviceType,
     });
+    const colors = llmColors ?? fallbackColors(project.deviceType);
 
-    const { text } = await generateText({
-      model: openrouter.chat(FAST_MODEL),
-      system: SYSTEM_PROMPT,
-      prompt: userPrompt,
-      temperature: 0.9,
-      maxOutputTokens: 2000,
-    });
+    const templateIdx = pickTemplateIndex(project.id);
+    const template = TEMPLATES[templateIdx];
+    const svg = renderTemplate(template, colors);
 
-    const svg = sanitizeSvg(text ?? "");
-    if (!svg) {
+    if (!validateSvg(svg)) {
       console.warn(
-        `[thumbnail] model returned invalid SVG for project ${projectId}`,
+        `[thumbnail] template ${templateIdx} produced invalid SVG for project ${projectId}`,
       );
       return null;
     }

@@ -232,17 +232,17 @@ const DashboardSection = () => {
           {/* Hero */}
           <div className="relative overflow-hidden py-16 sm:py-24">
             <div className="w-full max-w-4xl mx-auto flex flex-col items-center px-6">
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
                 <span className="inline-flex items-center gap-1">
                   <Users className="size-4" />
                 </span>
                 Join 30,000+ app founders building today
               </p>
-              <h1 className="text-center font-bold text-3xl sm:text-4xl md:text-5xl mt-3 mb-8 tracking-tight text-foreground">
+              <h1 className="text-center font-bold text-3xl sm:text-4xl md:text-5xl mt-0 mb-6 tracking-tight leading-tight text-foreground">
                 Bring Your <span className="text-foreground/90">Ideas</span> to
                 Life
               </h1>
-              <div className="w-full flex flex-col items-center gap-5">
+              <div className="w-full flex flex-col items-center gap-6">
               {(deviceType === "wireframe" || deviceType === "inspirations") ? (
                 <div className="w-full max-w-156 mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
                   <div className="flex items-center gap-3">

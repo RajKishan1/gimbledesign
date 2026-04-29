@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Smartphone, Monitor, LayoutTemplate, Sparkles } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { MagicWand01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 type DeviceTypeLike =
@@ -11,51 +12,82 @@ type DeviceTypeLike =
   | null
   | undefined;
 
-/** Deterministic 0-based index into an array, derived from a string. */
-function hashIndex(input: string, length: number): number {
-  let h = 0;
-  for (let i = 0; i < input.length; i++) {
-    h = (h * 31 + input.charCodeAt(i)) | 0;
-  }
-  return ((h >>> 0) % length + length) % length;
+const DEVICE_THEME: Record<string, { from: string; to: string }> = {
+  mobile: { from: "#f97316", to: "#f59e0b" },
+  web: { from: "#6366f1", to: "#8b5cf6" },
+  wireframe: { from: "#3b82f6", to: "#6366f1" },
+  inspirations: { from: "#ec4899", to: "#a855f7" },
+};
+
+function resolveTheme(deviceType: DeviceTypeLike) {
+  const key = typeof deviceType === "string" ? deviceType : "";
+  return DEVICE_THEME[key] ?? DEVICE_THEME.mobile;
 }
 
-/**
- * Curated gradient pairs — vibrant, modern, visually distinct.
- * Each entry is [fromColor, toColor] used in a 135deg linear-gradient.
- */
-const GRADIENT_PAIRS: [string, string][] = [
-  ["#6366f1", "#a855f7"], // indigo → violet
-  ["#0ea5e9", "#6366f1"], // sky → indigo
-  ["#f59e0b", "#ef4444"], // amber → red
-  ["#10b981", "#0ea5e9"], // emerald → sky
-  ["#ec4899", "#8b5cf6"], // pink → purple
-  ["#f97316", "#eab308"], // orange → yellow
-  ["#14b8a6", "#3b82f6"], // teal → blue
-  ["#8b5cf6", "#ec4899"], // purple → pink
-];
+function MobilePhonesIllustration() {
+  return (
+    <div className="relative flex items-end gap-2">
+      <div className="w-10 h-20 rounded-md border border-white/40 bg-white/10 -rotate-6 flex flex-col items-center pt-1.5">
+        <div className="w-3 h-1 rounded-full bg-white/40" />
+      </div>
+      <div className="w-12 h-24 rounded-md border border-white/45 bg-white/15 z-10 flex flex-col items-center pt-2">
+        <div className="w-4 h-1 rounded-full bg-white/50" />
+      </div>
+      <div className="w-10 h-20 rounded-md border border-white/40 bg-white/10 rotate-6 flex flex-col items-center pt-1.5">
+        <div className="w-3 h-1 rounded-full bg-white/40" />
+      </div>
+    </div>
+  );
+}
 
-function pickDeviceIcon(deviceType: DeviceTypeLike) {
+function WireframeIllustration() {
+  return (
+    <div className="flex flex-col gap-2 w-[55%]">
+      <div className="h-3 rounded-md border border-white/40 bg-white/10" />
+      <div className="h-9 rounded-md border border-white/40 bg-white/10" />
+      <div className="h-5 rounded-md border border-white/40 bg-white/10" />
+    </div>
+  );
+}
+
+function ReimagineIllustration() {
+  return (
+    <div className="relative w-24 h-24">
+      <div className="absolute left-0 top-2 w-16 h-16 rounded-lg border border-white/40 bg-white/10" />
+      <div className="absolute right-0 bottom-0 w-16 h-16 rounded-lg border border-white/45 bg-white/15" />
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-white/90 text-neutral-900 shadow-sm">
+        <HugeiconsIcon
+          icon={MagicWand01Icon}
+          size={16}
+          color="currentColor"
+          strokeWidth={1.75}
+        />
+      </div>
+    </div>
+  );
+}
+
+function pickIllustration(deviceType: DeviceTypeLike) {
   switch (deviceType) {
-    case "web":
-      return Monitor;
-    case "wireframe":
-      return LayoutTemplate;
-    case "inspirations":
-      return Sparkles;
     case "mobile":
+      return <MobilePhonesIllustration />;
+    case "web":
+    case "wireframe":
+      return <WireframeIllustration />;
+    case "inspirations":
+      return <ReimagineIllustration />;
     default:
-      return Smartphone;
+      return <MobilePhonesIllustration />;
   }
 }
 
 /**
  * Shown while a project has no AI-generated thumbnail yet (or generation failed).
- * Pure CSS — costs nothing, paints instantly. Each project gets a stable
- * gradient + device icon based on its id.
+ * Pure CSS — costs nothing, paints instantly. Each device type gets a stable
+ * gradient + matching illustration so cards feel intentional, not empty.
  */
 export function DefaultProjectThumbnail({
-  projectId,
+  projectId: _projectId,
   deviceType,
   className,
 }: {
@@ -63,9 +95,7 @@ export function DefaultProjectThumbnail({
   deviceType?: DeviceTypeLike;
   className?: string;
 }) {
-  const Icon = pickDeviceIcon(deviceType);
-  const idx = hashIndex(projectId || "default", GRADIENT_PAIRS.length);
-  const [from, to] = GRADIENT_PAIRS[idx];
+  const { from, to } = resolveTheme(deviceType);
 
   return (
     <div
@@ -86,10 +116,9 @@ export function DefaultProjectThumbnail({
         className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full blur-2xl opacity-30"
         style={{ background: to }}
       />
-      <Icon
-        className="relative size-9 text-white/90 drop-shadow"
-        strokeWidth={1.5}
-      />
+      <div className="relative flex items-center justify-center h-24">
+        {pickIllustration(deviceType)}
+      </div>
     </div>
   );
 }
