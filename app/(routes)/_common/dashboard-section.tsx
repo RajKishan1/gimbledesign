@@ -491,16 +491,16 @@ const cardVariants: Variants = {
 
 function ProjectShimmerCard() {
   return (
-    <div className="flex flex-col rounded-xl overflow-hidden bg-neutral-400 dark:bg-neutral-800">
-      <div className="h-36 relative overflow-hidden bg-neutral-300 dark:bg-neutral-700">
-        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent" />
+    <div className="flex flex-col rounded-xl overflow-hidden bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900">
+      <div className="h-36 relative overflow-hidden bg-white/5">
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/15 to-transparent" />
       </div>
       <div className="p-4 space-y-2.5">
-        <div className="h-4 w-3/4 rounded bg-neutral-200 dark:bg-neutral-700 relative overflow-hidden">
-          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent" />
+        <div className="h-4 w-3/4 rounded bg-white/15 relative overflow-hidden">
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/20 to-transparent" />
         </div>
-        <div className="h-3 w-1/2 rounded bg-neutral-800 dark:bg-neutral-700 relative overflow-hidden">
-          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent" />
+        <div className="h-3 w-1/2 rounded bg-white/10 relative overflow-hidden">
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/15 to-transparent" />
         </div>
       </div>
     </div>
