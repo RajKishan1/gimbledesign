@@ -5,7 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Edit01Icon, CreditCardIcon, ArrowLeft01Icon, Upload01Icon, Cancel01Icon, FolderOpenIcon } from "@hugeicons/core-free-icons";
+import { Edit01Icon, CreditCardIcon, ArrowLeft01Icon, Upload01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 import Header from "../_common/header";
 import { useGetProfile, useUpdateProfile } from "@/features/use-profile";
 import { useGetCredits } from "@/features/use-credits";
@@ -25,6 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { DefaultProjectThumbnail } from "@/components/ui/project-thumbnail";
 import { toast } from "sonner";
 
 const ProfilePage = () => {
@@ -472,7 +473,6 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
   const router = useRouter();
   const createdAtDate = new Date(project.createdAt);
   const timeAgo = formatDistanceToNow(createdAtDate, { addSuffix: true });
-  const thumbnail = project.thumbnail || null;
 
   const onRoute = () => {
     router.push(`/project/${project.id}`);
@@ -484,18 +484,11 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
       className="w-full flex flex-col border rounded-xl cursor-pointer hover:shadow-sm overflow-hidden transition-shadow"
       onClick={onRoute}
     >
-      <div className="h-40 bg-[#eee] dark:bg-[#2b2b2b] relative overflow-hidden flex items-center justify-center">
-        {thumbnail ? (
-          <img
-            src={thumbnail}
-            className="w-full h-full object-cover object-left scale-110"
-            alt={project.name}
-          />
-        ) : (
-          <div className="w-16 h-16 rounded-full flex items-center justify-center text-primary">
-            <HugeiconsIcon icon={FolderOpenIcon} size={36} color="currentColor" strokeWidth={1.75} />
-          </div>
-        )}
+      <div className="h-44 relative overflow-hidden">
+        <DefaultProjectThumbnail
+          projectId={project.id}
+          deviceType={project.deviceType}
+        />
       </div>
 
       <div className="p-4 flex flex-col">

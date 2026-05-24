@@ -5,7 +5,6 @@ import { toast } from "sonner";
 export interface ExploreProject {
   id: string;
   name: string;
-  thumbnail: string | null;
   deviceType: string;
   theme: string | null;
   createdAt: string;

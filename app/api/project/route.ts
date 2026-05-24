@@ -1,10 +1,9 @@
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import { generateProjectName } from "@/app/action/action";
 import { inngest } from "@/inngest/client";
 import { headers } from "next/headers";
-import { generateProjectThumbnail } from "@/lib/thumbnail-generator";
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +31,6 @@ export async function GET(request: Request) {
         select: {
           id: true,
           name: true,
-          thumbnail: true,
           deviceType: true,
           theme: true,
           isFavorite: true,
@@ -149,14 +147,6 @@ export async function POST(request: Request) {
         }),
         ...(userPromptForSidebar && { initialPrompt: userPromptForSidebar }),
       },
-    });
-
-    // Fire-and-forget AI thumbnail generation. Runs after the response is sent so
-    // project creation stays fast. Failures are swallowed inside the generator.
-    after(() => {
-      generateProjectThumbnail(project.id).catch((err) => {
-        console.error("[thumbnail] background generation failed:", err);
-      });
     });
 
     // When createOnly, skip Inngest — project page will run setup (read image → enhance → generate) then trigger

@@ -357,7 +357,8 @@ import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
-import { FolderOpenDotIcon, Sparkle } from "lucide-react";
+import { Sparkle } from "lucide-react";
+import { DefaultProjectThumbnail } from "@/components/ui/project-thumbnail";
 import { Button } from "@/components/ui/button";
 import Faq from "@/components/landing/Faq";
 import HowItWorks from "@/components/landing/HowItWorks";
@@ -825,7 +826,6 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
   const router = useRouter();
   const createdAtDate = new Date(project.createdAt);
   const timeAgo = formatDistanceToNow(createdAtDate, { addSuffix: true });
-  const thumbnail = project.thumbnail || null;
 
   const onRoute = () => {
     router.push(`/project/${project.id}`);
@@ -837,17 +837,11 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
       className="w-full flex flex-col bg-card border border-border rounded-xl cursor-pointer overflow-hidden shadow-sm transition-transform hover:shadow-md hover:-translate-y-0.5"
       onClick={onRoute}
     >
-      <div className="h-40 bg-muted relative overflow-hidden flex items-center justify-center">
-        {thumbnail ? (
-          <img
-            src={thumbnail}
-            className="w-full h-full object-cover object-left scale-110"
-          />
-        ) : (
-          <div className="w-16 h-16 rounded-full flex items-center justify-center text-primary">
-            <FolderOpenDotIcon className="text-primary-foreground" size={36} />
-          </div>
-        )}
+      <div className="h-40 relative overflow-hidden">
+        <DefaultProjectThumbnail
+          projectId={project.id}
+          deviceType={project.deviceType}
+        />
       </div>
 
       <div className="w-full border-t border-border p-4 sm:p-5 flex flex-col">

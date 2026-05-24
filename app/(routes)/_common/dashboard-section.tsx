@@ -357,7 +357,7 @@ const DashboardSection = () => {
 
           {/* Explore — projects moved to explore by admins */}
           <div className="w-full py-12">
-            <div className="w-full max-w-6xl mx-auto px-6">
+            <div className="w-full max-w-7xl mx-auto px-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <div>
                   <h2 className="font-bold text-2xl tracking-tight text-foreground">
@@ -384,7 +384,7 @@ const DashboardSection = () => {
 
           {/* My Projects */}
           <div className="w-full py-10">
-            <div className="w-full max-w-6xl mx-auto px-6">
+            <div className="w-full max-w-7xl mx-auto px-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <h2 className="font-semibold text-2xl tracking-tight text-foreground">
                   My Projects
@@ -426,7 +426,7 @@ const DashboardSection = () => {
                 </div>
               </div>
               {isLoading ? (
-                <ProjectShimmerGrid count={4} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-3" />
+                <ProjectShimmerGrid count={4} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-3" />
               ) : (
                 <>
                   <div className="mt-3">
@@ -491,16 +491,16 @@ const cardVariants: Variants = {
 
 function ProjectShimmerCard() {
   return (
-    <div className="flex flex-col rounded-xl overflow-hidden bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900">
-      <div className="h-36 relative overflow-hidden bg-white/5">
-        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/15 to-transparent" />
+    <div className="flex flex-col rounded-xl overflow-hidden bg-muted border border-border">
+      <div className="h-44 relative overflow-hidden bg-muted-foreground/10">
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-muted-foreground/10 to-transparent" />
       </div>
       <div className="p-4 space-y-2.5">
-        <div className="h-4 w-3/4 rounded bg-white/15 relative overflow-hidden">
-          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/20 to-transparent" />
+        <div className="h-4 w-3/4 rounded bg-muted-foreground/15 relative overflow-hidden">
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-muted-foreground/15 to-transparent" />
         </div>
-        <div className="h-3 w-1/2 rounded bg-white/10 relative overflow-hidden">
-          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-white/15 to-transparent" />
+        <div className="h-3 w-1/2 rounded bg-muted-foreground/10 relative overflow-hidden">
+          <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-linear-to-r from-transparent via-muted-foreground/10 to-transparent" />
         </div>
       </div>
     </div>
@@ -520,7 +520,6 @@ function ProjectShimmerGrid({ count = 10, className = "" }: { count?: number; cl
 type ExploreItem = {
   id: string;
   name: string;
-  thumbnail: string | null;
   deviceType: string;
   updatedAt: string;
 };
@@ -536,7 +535,7 @@ const ExploreGrid = memo(function ExploreGrid({
     return (
       <ProjectShimmerGrid
         count={4}
-        className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+        className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5"
       />
     );
   }
@@ -551,25 +550,24 @@ const ExploreGrid = memo(function ExploreGrid({
     );
   }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       {projects.map((p) => (
         <Link
           key={p.id}
           href={`/project/${p.id}`}
-          className="flex flex-col rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
+          className="flex flex-col rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform bg-card border border-border"
         >
-          <div className="h-36 relative overflow-hidden">
+          <div className="h-44 relative overflow-hidden">
             <ProjectThumbnail
               projectId={p.id}
-              thumbnail={p.thumbnail}
               deviceType={p.deviceType}
             />
           </div>
           <div className="p-4">
-            <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-white">
+            <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-card-foreground">
               {p.name}
             </h3>
-            <p className="text-xs text-white/70">
+            <p className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(p.updatedAt), { addSuffix: true })}{" "}
               •{" "}
               {p.deviceType === "web"
@@ -645,7 +643,7 @@ const ProjectsGridImpl = ({
     <>
       <div
         ref={ref}
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5"
       >
         {projects.map((project: ProjectType, index: number) => (
           <motion.div
@@ -758,7 +756,6 @@ export const ProjectCard = memo(
     isTogglingFavorite: boolean;
   }) => {
     const router = useRouter();
-    const thumbnail = project.thumbnail || null;
 
     const timeAgo = formatDistanceToNow(new Date(project.createdAt), {
       addSuffix: true,
@@ -776,13 +773,12 @@ export const ProjectCard = memo(
     return (
       <div
         role="button"
-        className="w-full flex flex-col rounded-xl cursor-pointer overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform relative bg-linear-to-br from-neutral-900 via-neutral-800 to-neutral-900 dark:from-neutral-800 dark:via-neutral-800 dark:to-neutral-900"
+        className="w-full flex flex-col rounded-xl cursor-pointer overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform relative bg-card border border-border"
         onClick={() => router.push(`/project/${project.id}`)}
       >
-        <div className="h-36 relative overflow-hidden">
+        <div className="h-44 relative overflow-hidden">
           <ProjectThumbnail
             projectId={project.id}
-            thumbnail={thumbnail}
             deviceType={project.deviceType}
           />
           <div
@@ -873,10 +869,10 @@ export const ProjectCard = memo(
         </div>
 
         <div className="w-full p-4 flex flex-col">
-          <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-white">
+          <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-card-foreground">
             {project.name}
           </h3>
-          <p className="text-xs text-white/70">
+          <p className="text-xs text-muted-foreground">
             {timeAgo} • {deviceLabel}
           </p>
         </div>

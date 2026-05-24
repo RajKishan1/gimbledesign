@@ -61,7 +61,6 @@ export async function POST(
         userId,
         name: newName,
         theme: sourceProject.theme ?? undefined,
-        thumbnail: sourceProject.thumbnail ?? undefined,
         deviceType: sourceProject.deviceType,
         wireframeKind: sourceProject.wireframeKind ?? undefined,
         width: sourceProject.width ?? undefined,

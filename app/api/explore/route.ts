@@ -22,7 +22,6 @@ export async function GET(request: Request) {
       select: {
         id: true,
         name: true,
-        thumbnail: true,
         deviceType: true,
         theme: true,
         createdAt: true,

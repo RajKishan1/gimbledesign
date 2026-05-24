@@ -40,7 +40,7 @@ export default function ProjectsPage() {
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-card">
         
         <main className="flex-1 min-h-0 overflow-y-auto">
-          <div className="w-full max-w-6xl mx-auto px-6 py-12">
+          <div className="w-full max-w-7xl mx-auto px-6 py-12">
             <Link
               href="/dashboard"
               className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground mb-8"

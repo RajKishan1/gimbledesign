@@ -40,7 +40,6 @@ export default async function DashboardPage() {
           select: {
             id: true,
             name: true,
-            thumbnail: true,
             deviceType: true,
             theme: true,
             isFavorite: true,
@@ -62,7 +61,6 @@ export default async function DashboardPage() {
           select: {
             id: true,
             name: true,
-            thumbnail: true,
             deviceType: true,
             theme: true,
             createdAt: true,

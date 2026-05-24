@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { generateProjectName } from "@/app/action/action";
 import { inngest } from "@/inngest/client";
@@ -8,7 +8,6 @@ import { describeImageFromBuffer } from "@/lib/describe-image-server";
 import { getImageDimensions } from "@/lib/get-image-dimensions";
 import { PRESETS } from "@/lib/infer-design-dimensions";
 import { getGenerationModel } from "@/constant/models";
-import { generateProjectThumbnail } from "@/lib/thumbnail-generator";
 
 const VALID_IMAGE_TYPES = [
   "image/jpeg",
@@ -155,14 +154,6 @@ User request: ${prompt}`;
         throw e;
       }
     }
-
-    // Fire-and-forget AI thumbnail generation. Runs after the response is sent
-    // so the redesign creation stays fast.
-    after(() => {
-      generateProjectThumbnail(project.id).catch((err) => {
-        console.error("[thumbnail] background generation failed:", err);
-      });
-    });
 
     try {
       await inngest.send({
