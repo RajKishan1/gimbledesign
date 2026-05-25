@@ -371,7 +371,6 @@ import { BlurFade } from "@/components/ui/blur-fade";
 import TrustedBy from "@/components/landing/atoms/TrustedBy";
 import FooterDemo from "@/components/landing/Footer";
 import ExploreTemplates from "@/components/landing/ExploreTemplates";
-import { PiStarFourFill } from "react-icons/pi";
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -595,11 +594,11 @@ const LandingSection = () => {
                  mx-auto text-center tracking-[-0.035em]"
                 >
                   <span className="flex gap-0.75 mr-1.5">
-                    <PiStarFourFill color="#6248FF" size={10} />
-                    <PiStarFourFill color="#6248FF" size={10} />
-                    <PiStarFourFill color="#6248FF" size={10} />
-                    <PiStarFourFill color="#6248FF" size={10} />
-                    <PiStarFourFill color="#6248FF" size={10} />
+                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
+                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
+                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
+                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
+                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
                   </span>
                   <p
                     className={`font-medium text-black/60 dark:text-zinc-200 text-sm leading-[1.55em] tracking-[-0.035em] ${inter.className}`}
