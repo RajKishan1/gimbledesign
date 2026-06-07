@@ -229,18 +229,21 @@ const DashboardSection = () => {
       <DashboardSidebar />
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-card">
         {/* <Header /> */}
-        <NavBar />
         <main className="flex-1 min-h-0 overflow-y-auto">
+          {/* NavBar lives inside <main> as a sticky top-0 element so the
+              backdrop-blur "frosted glass" effect actually sees content
+              scrolling underneath it. */}
+          <NavBar />
           {/* Hero */}
-          <div className="relative overflow-hidden py-16 sm:py-24">
-            <div className="w-full max-w-4xl mx-auto flex flex-col items-center px-6">
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
+          <div className="relative overflow-hidden py-12 sm:py-16 px-4 sm:px-6 lg:px-8 xl:px-10">
+            <div className="w-full max-w-3xl mx-auto flex flex-col items-center">
+              <p className="flex items-center gap-1.5 mb-4 text-xs sm:text-sm font-medium tracking-wide text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
-                  <Users className="size-4" />
+                  <Users className="size-3.5" />
                 </span>
                 Join 30,000+ app founders building today
               </p>
-              <h1 className="text-center font-bold text-3xl sm:text-4xl md:text-5xl mt-0 mb-6 tracking-tight leading-tight text-foreground">
+              <h1 className="text-center font-bold text-[34px] sm:text-[44px] md:text-[56px] mt-0 mb-6 tracking-tight leading-[1.05] text-foreground">
                 Bring Your <span className="text-foreground/90">Ideas</span> to
                 Life
               </h1>
@@ -387,15 +390,19 @@ const DashboardSection = () => {
           {/* TOOLS */}
           <ToolsSection />
 
-          {/* New Model */}
-           <NewModel />
+          {/* New Model — banner needs its own breathing room and the
+              standard horizontal padding so its outer edges line up with
+              the other sections (NewModel itself has no outer padding). */}
+          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-6">
+            <NewModel />
+          </div>
 
-           <ExploreDesign />
+          <ExploreDesign />
           {/* My Projects */}
-          <div className="w-full py-10">
-            <div className="w-full max-w-7xl mx-auto px-6">
+          <div className="w-full py-10 px-4 sm:px-6 lg:px-8 xl:px-10">
+            <div className="w-full">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-                <h2 className="font-semibold text-2xl tracking-tight text-foreground">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
                   My Projects
                 </h2>
                 <div className="flex items-center gap-3">

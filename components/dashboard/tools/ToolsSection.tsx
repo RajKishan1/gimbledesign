@@ -3,46 +3,44 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import ToolCard from "./ToolCard";
-import { TOOLS } from "./tools-data";
+import { TOOLS, type Tool } from "./tools-data";
 
 /**
  * The "Tools" section on the dashboard.
  *
- * Renders:
- *  - Heading on the left (title + subtitle)
- *  - Search input + filter dropdown on the right
- *  - Responsive grid of ToolCards below
- *
- * The search box filters cards client-side by matching the typed text
- * against each tool's title and description.
- *
- * The filter dropdown is currently a visual placeholder. Wire it up
- * when you have categories/tags on `Tool` in `tools-data.ts`.
+ * Layout (two rows):
+ *  - Featured row on top: 6 larger cards (1 row at lg+).
+ *  - Standard row below: 8 compact cards (1 row at xl+, wraps below).
+ *  - Search filters both tiers in place; empty tiers hide themselves so
+ *    results stay dense and aligned.
  */
 export default function ToolsSection() {
   const [query, setQuery] = useState("");
 
-  // Filter the TOOLS list by the search query.
-  const filteredTools = useMemo(() => {
+  // Filter once, then split into tiers for rendering.
+  const { featured, standard } = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return TOOLS;
-    return TOOLS.filter(
-      (tool) =>
-        tool.title.toLowerCase().includes(trimmed) ||
-        tool.description.toLowerCase().includes(trimmed)
-    );
+    const matches = (t: Tool) =>
+      !trimmed || t.title.toLowerCase().includes(trimmed);
+
+    return {
+      featured: TOOLS.filter((t) => t.tier === "featured" && matches(t)),
+      standard: TOOLS.filter((t) => t.tier === "standard" && matches(t)),
+    };
   }, [query]);
+
+  const hasResults = featured.length + standard.length > 0;
 
   return (
     <section className="w-full">
-      <div className="mx-auto w-full max-w-7xl px-6 py-10">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-10">
         {/* ── Section header ──────────────────────────────────── */}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-md">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
               Tools
-            </h1>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            </h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
               Powerful utilities to help you design, reimagine and ship amazing
               products faster.
             </p>
@@ -51,10 +49,7 @@ export default function ToolsSection() {
           <div className="flex shrink-0 items-center gap-3">
             {/* Search input */}
             <div className="flex h-10 items-center gap-2 rounded-full border border-border/60 bg-card px-4 shadow-sm transition-colors focus-within:border-border">
-              <Search
-                className="size-4 text-muted-foreground"
-                aria-hidden
-              />
+              <Search className="size-4 text-muted-foreground" aria-hidden />
               <input
                 type="search"
                 placeholder="Search tools..."
@@ -79,15 +74,31 @@ export default function ToolsSection() {
           </div>
         </div>
 
-        {/* ── Tool cards grid ─────────────────────────────────── */}
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {filteredTools.map((tool) => (
-            <ToolCard key={tool.id} tool={tool} />
-          ))}
-        </div>
+        {/* ── Featured row — 6 cards, 1 row at lg+ ──────────────────── */}
+        {featured.length > 0 && (
+          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {featured.map((tool) => (
+              <ToolCard key={tool.id} tool={tool} />
+            ))}
+          </div>
+        )}
+
+        {/* ── Standard row — 8 cards, 1 row at xl+, wraps below ─── */}
+        {standard.length > 0 && (
+          <div
+            className={
+              (featured.length > 0 ? "mt-4" : "mt-8") +
+              " grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
+            }
+          >
+            {standard.map((tool) => (
+              <ToolCard key={tool.id} tool={tool} />
+            ))}
+          </div>
+        )}
 
         {/* Empty state when search returns nothing. */}
-        {filteredTools.length === 0 && (
+        {!hasResults && (
           <p className="mt-12 text-center text-sm text-muted-foreground">
             No tools match &ldquo;{query}&rdquo;.
           </p>

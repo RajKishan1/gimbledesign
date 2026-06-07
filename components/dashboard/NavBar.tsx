@@ -46,11 +46,13 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative inline-flex items-center gap-1.5 py-3 text-[13.5px] font-medium transition-colors outline-none",
+        "group relative inline-flex items-center gap-1.5 py-2 text-[13.5px] transition-colors outline-none",
         "focus-visible:text-foreground",
+        // Active page is signalled by weight + colour, not a permanent
+        // underline. The underline below is hover/focus only.
         active
-          ? "text-foreground"
-          : "text-muted-foreground hover:text-foreground"
+          ? "font-semibold text-foreground"
+          : "font-medium text-muted-foreground hover:text-foreground",
       )}
     >
       <span>{item.label}</span>
@@ -59,12 +61,12 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
           {item.badge}
         </span>
       )}
-      {active && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-foreground"
-        />
-      )}
+      {/* Hover/focus underline — scales in from centre. Only the hovered
+          link shows one, so there's never more than one underline at a time. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 -bottom-px h-[2px] origin-center scale-x-0 rounded-full bg-foreground transition-transform duration-200 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100"
+      />
     </Link>
   );
 }
@@ -139,7 +141,21 @@ const NavBar = () => {
   return (
     <nav
       aria-label="Primary"
-      className="flex w-full items-center justify-between border-b border-border/60 px-6"
+      className={cn(
+        // Sticky inside <main> so content scrolls *under* the navbar —
+        // this is what makes backdrop-blur actually visible.
+        "sticky top-0 z-30",
+        // Height locked to 68px so the bottom edge aligns exactly with the
+        // sidebar's brand-row bottom edge (sidebar uses py-4 + h-9 = 68px).
+        "flex h-[68px] w-full items-center justify-between",
+        "border-b border-border/60",
+        "px-4 sm:px-6 lg:px-8 xl:px-10",
+        // Smoky glassmorphic surface. Solid-ish fallback for browsers
+        // without backdrop-filter; much more translucent when supported so
+        // the blur reads. Saturation boost gives the "frosted" feel.
+        "bg-background/80 supports-[backdrop-filter]:bg-background/55",
+        "backdrop-blur-xl backdrop-saturate-200",
+      )}
     >
       {/* Left: nav items */}
       <ul className="flex items-center gap-6">

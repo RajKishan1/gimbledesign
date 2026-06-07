@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,22 @@ import {
   useExploreDesigns,
   type ExploreDesign as Design,
 } from "@/features/use-explore-designs";
+
+/**
+ * Inject Cloudinary delivery transforms so we don't ship a 2 MB original
+ * for a 200 px tile. `f_auto` → AVIF/WebP when supported, `q_auto` → smart
+ * quality, `w_500` → resized to roughly the card width. Roughly 10–20×
+ * smaller than the raw upload, with no visible quality loss at this size.
+ */
+function optimizeCloudinaryUrl(url: string, width = 500) {
+  if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
+    return url;
+  }
+  return url.replace(
+    "/upload/",
+    `/upload/f_auto,q_auto,w_${width},c_limit/`,
+  );
+}
 
 /* ─────────────────────── Filter pills ─────────────────────── */
 
@@ -33,10 +49,10 @@ export default function ExploreDesign() {
 
   return (
     <section className="w-full">
-      <div className="mx-auto w-full max-w-7xl px-6 py-10">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-10">
         {/* Header row: title + filter pills + "View all" link */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
             Explore designs
           </h2>
 
@@ -87,14 +103,15 @@ export default function ExploreDesign() {
 
 /* ─────────────────────── Card ─────────────────────── */
 
-function DesignCard({ design }: { design: Design }) {
+const DesignCard = memo(function DesignCard({ design }: { design: Design }) {
   const card = (
     <div className="group relative aspect-[9/16] overflow-hidden rounded-2xl bg-muted shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={design.imageUrl}
+        src={optimizeCloudinaryUrl(design.imageUrl)}
         alt={design.title}
         loading="lazy"
+        decoding="async"
         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
       />
     </div>
@@ -109,7 +126,7 @@ function DesignCard({ design }: { design: Design }) {
     );
   }
   return card;
-}
+});
 
 /* ─────────────────────── Loading + empty states ─────────────────────── */
 

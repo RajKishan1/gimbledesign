@@ -87,30 +87,56 @@ function DashboardSidebarImpl() {
           isCollapsed ? "justify-center py-4 px-3" : "justify-between py-4 px-4"
         )}
       >
-        {!isCollapsed && (
-          <Link href="/" className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-foreground text-background shrink-0">
+        {isCollapsed ? (
+          // Collapsed state: the brand brain doubles as the expand affordance.
+          // (Replaces the previous arrow toggle so the brand is always visible.)
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCollapsed(false);
+            }}
+            aria-label="Expand sidebar"
+            className="flex items-center justify-center h-9 w-9 rounded-lg bg-foreground text-background shrink-0 transition-transform hover:scale-[1.04]"
+          >
+            <HugeiconsIcon
+              icon={Brain01Icon}
+              size={20}
+              color="currentColor"
+              strokeWidth={1.75}
+            />
+          </button>
+        ) : (
+          <>
+            <Link href="/" className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-foreground text-background shrink-0">
+                <HugeiconsIcon
+                  icon={Brain01Icon}
+                  size={20}
+                  color="currentColor"
+                  strokeWidth={1.75}
+                />
+              </div>
+              <span className="font-semibold text-foreground text-lg tracking-tight truncate">
+                gimble
+                <span className="text-primary">.</span>
+              </span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsCollapsed(true)}
+              className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              aria-label="Collapse sidebar"
+            >
               <HugeiconsIcon
-                icon={Brain01Icon}
-                size={20}
+                icon={ArrowLeft01Icon}
+                size={16}
                 color="currentColor"
                 strokeWidth={1.75}
               />
-            </div>
-            <span className="font-semibold text-foreground text-lg tracking-tight truncate">
-              gimble
-              <span className="text-primary">.</span>
-            </span>
-          </Link>
+            </button>
+          </>
         )}
-        <button
-          type="button"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {isCollapsed ? <HugeiconsIcon icon={ArrowRight01Icon} size={16} color="currentColor" strokeWidth={1.75} /> : <HugeiconsIcon icon={ArrowLeft01Icon} size={16} color="currentColor" strokeWidth={1.75} />}
-        </button>
       </div>
 
       {/* Main nav */}

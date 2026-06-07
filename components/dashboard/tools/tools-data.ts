@@ -1,11 +1,16 @@
 /**
  * Single source of truth for the dashboard Tools section.
  *
+ * Tools are arranged in two tiers, both rendered as horizontal rows:
+ *  - `tier: "featured"` — top row, fewer-per-row (so each card is larger),
+ *    slightly heavier typography. The six tools users hit most often.
+ *  - `tier: "standard"` — bottom row, more-per-row (smaller cards),
+ *    lighter typography. Supporting utilities.
+ *
  * To add a new tool:
  *   1. Build an illustration in `illustrations.tsx`.
  *   2. Append a new entry to the `TOOLS` array below.
- *   3. Pick a `tone` value to set the card's color theme.
- *      (See TONE_STYLES at the bottom of this file for the available tones.)
+ *   3. Pick a `tier` ("featured" or "standard") and a `tone` color.
  */
 
 import type { ComponentType } from "react";
@@ -16,7 +21,6 @@ import {
   ContentGeneratorIllustration,
   DesignSystemIllustration,
   DesignToCodeIllustration,
-  ExportAssetsIllustration,
   IconGeneratorIllustration,
   IllustrationGeneratorIllustration,
   ImageGeneratorIllustration,
@@ -38,137 +42,135 @@ export type ToolTone =
   | "cream"
   | "violet";
 
+export type ToolTier = "featured" | "standard";
+
 export type Tool = {
   id: string;
   title: string;
-  description: string;
   href: string;
   tone: ToolTone;
+  tier: ToolTier;
+  /** Optional inline tag — rendered as "(Beta)" next to the title. */
   badge?: string;
   Illustration: ComponentType;
 };
 
 export const TOOLS: Tool[] = [
+  // ────────────────── Featured row (top, 6 tools) ──────────────────
   {
     id: "wireframe",
     title: "Wireframe",
-    description: "Sketch low-fidelity layouts in seconds",
     href: "/dashboard?mini=wireframe",
     tone: "lavender",
+    tier: "featured",
     Illustration: WireframeIllustration,
   },
   {
     id: "reimagine",
     title: "Reimagine",
-    description: "Turn any screenshot into a better design",
     href: "/dashboard?mini=inspirations",
     tone: "pink",
+    tier: "featured",
     Illustration: ReimagineIllustration,
   },
   {
     id: "app-store-screens",
     title: "App Store Screens",
-    description: "Generate marketing-ready store screenshots",
     href: "/mini-tools/app-store-screens",
     tone: "amber",
+    tier: "featured",
     Illustration: AppStoreScreensIllustration,
   },
   {
     id: "magic-edit",
     title: "Magic Edit",
-    description: "Edit any part of your design with simple prompts",
     href: "#",
     tone: "mint",
+    tier: "featured",
     badge: "Beta",
     Illustration: MagicEditIllustration,
   },
   {
     id: "design-system",
     title: "Design System",
-    description: "Create consistent styles and components",
     href: "#",
     tone: "sky",
+    tier: "featured",
     Illustration: DesignSystemIllustration,
   },
   {
-    id: "image-generator",
-    title: "Image Generator",
-    description: "Generate original images for your projects",
+    id: "design-to-code",
+    title: "Design to Code",
     href: "#",
-    tone: "sky",
-    Illustration: ImageGeneratorIllustration,
+    tone: "rose",
+    tier: "featured",
+    Illustration: DesignToCodeIllustration,
   },
+
+  // ────────────────── Standard row (bottom, 8 tools) ──────────────────
   {
     id: "ai-mockups",
     title: "AI Mockups",
-    description: "Create realistic device mockups instantly",
     href: "#",
     tone: "lavender",
+    tier: "standard",
     Illustration: AIMockupsIllustration,
   },
   {
     id: "icon-generator",
     title: "Icon Generator",
-    description: "Generate beautiful icons in any style",
     href: "#",
     tone: "peach",
+    tier: "standard",
     Illustration: IconGeneratorIllustration,
   },
   {
-    id: "remove-background",
-    title: "Remove Background",
-    description: "Remove image backgrounds in one click",
+    id: "image-generator",
+    title: "Image Generator",
     href: "#",
-    tone: "rose",
-    Illustration: RemoveBackgroundIllustration,
+    tone: "sky",
+    tier: "standard",
+    Illustration: ImageGeneratorIllustration,
   },
   {
     id: "brand-kit",
     title: "Brand Kit Extractor",
-    description: "Extract colors, fonts and assets from any brand",
     href: "#",
     tone: "mint",
+    tier: "standard",
     Illustration: BrandKitIllustration,
+  },
+  {
+    id: "remove-background",
+    title: "Remove Background",
+    href: "#",
+    tone: "rose",
+    tier: "standard",
+    Illustration: RemoveBackgroundIllustration,
   },
   {
     id: "illustration-generator",
     title: "Illustration Generator",
-    description: "Create stunning illustrations in seconds",
     href: "#",
     tone: "lavender",
+    tier: "standard",
     Illustration: IllustrationGeneratorIllustration,
   },
   {
     id: "landing-page",
     title: "Landing Page Generator",
-    description: "Generate high-converting landing pages",
     href: "#",
     tone: "violet",
+    tier: "standard",
     Illustration: LandingPageIllustration,
   },
   {
     id: "content-generator",
     title: "Content Generator",
-    description: "Generate content blocks for your designs",
     href: "#",
     tone: "cream",
+    tier: "standard",
     Illustration: ContentGeneratorIllustration,
-  },
-  {
-    id: "design-to-code",
-    title: "Design to Code",
-    description: "Convert designs into clean frontend code",
-    href: "#",
-    tone: "rose",
-    Illustration: DesignToCodeIllustration,
-  },
-  {
-    id: "export-assets",
-    title: "Export Assets",
-    description: "Export assets in all formats and sizes",
-    href: "#",
-    tone: "sky",
-    Illustration: ExportAssetsIllustration,
   },
 ];
 
