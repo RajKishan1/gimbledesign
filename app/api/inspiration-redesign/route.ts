@@ -104,7 +104,7 @@ User request: ${prompt}`;
     });
     if (!userRecord) {
       userRecord = await prisma.user.create({
-        data: { userId: user.id, credits: 30.0 },
+        data: { userId: user.id, credits: 100.0 },
       });
     }
     if (userRecord.credits < creditCost) {

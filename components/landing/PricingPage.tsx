@@ -27,7 +27,7 @@ const plans: Plan[] = [
     tagline: "For quick experiments",
     monthly: { price: 0, label: "forever free" },
     yearly: { price: 0, label: "forever free" },
-    credits: 30,
+    credits: 100,
     screens: 3,
     buttonText: "Try Free",
     popular: false,

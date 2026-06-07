@@ -89,7 +89,7 @@ model User {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   userId        String   @unique
   role          String   @default("user") // "user" | "admin" — admin can only be set at DB level
-  credits       Float    @default(25.0)
+  credits       Float    @default(100.0)
   totalCreditsUsed Float @default(0.0)
   name          String?
   email         String?

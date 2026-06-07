@@ -79,7 +79,7 @@ export default async function DashboardPage() {
           userRecord = await prisma.user.create({
             data: {
               userId,
-              credits: 30.0,
+              credits: 100.0,
               totalCreditsUsed: 0.0,
               name: user.name ?? null,
               email: user.email ?? null,

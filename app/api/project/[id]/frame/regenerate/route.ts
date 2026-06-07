@@ -47,11 +47,11 @@ export async function POST(
     });
 
     if (!userRecord) {
-      // Create user with 30 free credits (3 screens)
+      // Create user with 100 free credits
       userRecord = await prisma.user.create({
         data: {
           userId: user.id,
-          credits: 30.0,
+          credits: 100.0,
         },
       });
     }

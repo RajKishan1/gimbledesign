@@ -53,7 +53,7 @@ export async function POST(
       userRecord = await prisma.user.create({
         data: {
           userId: user.id,
-          credits: 30.0,
+          credits: 100.0,
         },
       });
     }
