@@ -108,3 +108,21 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/// Admin-curated design tiles shown on the dashboard "Explore designs" section.
+/// Uploaded via /api/admin/explore-designs (Cloudinary). Public fetch via /api/explore-designs.
+model ExploreDesign {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  imageUrl  String   // Cloudinary secure_url
+  publicId  String   // Cloudinary public_id — kept so we can remove the asset on delete
+  link      String?  // Optional click-through (project path, route, or external URL)
+  category  String   @default("mobile") // "mobile" | "web"
+  width     Int?     // Intrinsic image dimensions (from Cloudinary response)
+  height    Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, createdAt])
+}

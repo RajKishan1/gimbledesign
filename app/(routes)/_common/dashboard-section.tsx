@@ -33,6 +33,7 @@ import {
   ArrowRight,
   Compass,
   Star,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useInView, Variants } from "framer-motion";
@@ -57,12 +58,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { ProjectThumbnail } from "@/components/ui/project-thumbnail";
+import NavBar from "@/components/dashboard/NavBar";
+import ToolsSection from "@/components/dashboard/tools/ToolsSection";
+import NewModel from "@/components/dashboard/NewModel";
+import ExploreDesign from "@/components/dashboard/ExploreDesign";
 
 type LoadingState = "idle" | "enhancing" | "designing";
 
 const getLoadingText = (
   state: LoadingState,
-  deviceType: DeviceType
+  deviceType: DeviceType,
 ): string | undefined => {
   switch (state) {
     case "enhancing":
@@ -70,10 +75,10 @@ const getLoadingText = (
         deviceType === "web"
           ? "web app"
           : deviceType === "inspirations"
-          ? "inspirations"
-          : deviceType === "wireframe"
-          ? "wireframe"
-          : "mobile app";
+            ? "inspirations"
+            : deviceType === "wireframe"
+              ? "wireframe"
+              : "mobile app";
       return `Enhancing for ${typeLabel}...`;
     case "designing":
       return "Generating designs...";
@@ -93,10 +98,10 @@ const DashboardSection = () => {
   const [deviceType, setDeviceType] = useState<DeviceType>("mobile");
   const [wireframeKind, setWireframeKind] = useState<"web" | "mobile">("web");
   const [inspirationKind, setInspirationKind] = useState<"web" | "mobile">(
-    "web"
+    "web",
   );
   const [projectsFilter, setProjectsFilter] = useState<"all" | "favorites">(
-    "all"
+    "all",
   );
   const userId = user?.id;
 
@@ -111,11 +116,7 @@ const DashboardSection = () => {
     data: projects,
     isLoading,
     isError,
-  } = useGetProjects(
-    userId,
-    10,
-    projectsFilter === "favorites"
-  );
+  } = useGetProjects(userId, 10, projectsFilter === "favorites");
   const { mutate, isPending } = useCreateProject();
   const { data: profile } = useGetProfile();
   const { data: exploreProjects = [], isLoading: exploreLoading } =
@@ -228,6 +229,7 @@ const DashboardSection = () => {
       <DashboardSidebar />
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-card">
         {/* <Header /> */}
+        <NavBar />
         <main className="flex-1 min-h-0 overflow-y-auto">
           {/* Hero */}
           <div className="relative overflow-hidden py-16 sm:py-24">
@@ -243,120 +245,120 @@ const DashboardSection = () => {
                 Life
               </h1>
               <div className="w-full flex flex-col items-center gap-6">
-              {(deviceType === "wireframe" || deviceType === "inspirations") ? (
-                <div className="w-full max-w-156 mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-foreground">
-                      {deviceType === "wireframe" ? "Wireframe" : "Reimagine"}
-                    </span>
-                    <div className="flex rounded-lg bg-muted p-0.5">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deviceType === "wireframe"
-                            ? setWireframeKind("web")
-                            : setInspirationKind("web")
-                        }
-                        className={cn(
-                          "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
-                          (deviceType === "wireframe"
-                            ? wireframeKind
-                            : inspirationKind) === "web"
-                            ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        Web
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deviceType === "wireframe"
-                            ? setWireframeKind("mobile")
-                            : setInspirationKind("mobile")
-                        }
-                        className={cn(
-                          "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
-                          (deviceType === "wireframe"
-                            ? wireframeKind
-                            : inspirationKind) === "mobile"
-                            ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        Mobile
-                      </button>
+                {deviceType === "wireframe" || deviceType === "inspirations" ? (
+                  <div className="w-full max-w-156 mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-foreground">
+                        {deviceType === "wireframe" ? "Wireframe" : "Reimagine"}
+                      </span>
+                      <div className="flex rounded-lg bg-muted p-0.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deviceType === "wireframe"
+                              ? setWireframeKind("web")
+                              : setInspirationKind("web")
+                          }
+                          className={cn(
+                            "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
+                            (deviceType === "wireframe"
+                              ? wireframeKind
+                              : inspirationKind) === "web"
+                              ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          Web
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deviceType === "wireframe"
+                              ? setWireframeKind("mobile")
+                              : setInspirationKind("mobile")
+                          }
+                          className={cn(
+                            "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
+                            (deviceType === "wireframe"
+                              ? wireframeKind
+                              : inspirationKind) === "mobile"
+                              ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          Mobile
+                        </button>
+                      </div>
                     </div>
+                    <Link
+                      href="/dashboard"
+                      onClick={(e) => {
+                        setDeviceType("mobile");
+                      }}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      ← Back to main
+                    </Link>
                   </div>
-                  <Link
-                    href="/dashboard"
-                    onClick={(e) => {
-                      setDeviceType("mobile");
-                    }}
-                    className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    ← Back to main
-                  </Link>
-                </div>
-              ) : (
-                <div className="relative flex rounded-lg bg-muted p-0.5">
-                  <div
-                    className={cn(
-                      "absolute inset-y-0.5 w-1/2 rounded-xl bg-foreground dark:bg-primary transition-transform duration-300 ease-in-out",
-                      deviceType === "web"
-                        ? "translate-x-full"
-                        : "translate-x-0"
-                    )}
+                ) : (
+                  <div className="relative flex rounded-lg bg-muted p-0.5">
+                    <div
+                      className={cn(
+                        "absolute inset-y-0.5 w-1/2 rounded-xl bg-foreground dark:bg-primary transition-transform duration-300 ease-in-out",
+                        deviceType === "web"
+                          ? "translate-x-full"
+                          : "translate-x-0",
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setDeviceType("mobile")}
+                      className={cn(
+                        "relative z-10 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
+                        deviceType === "mobile"
+                          ? "text-white dark:text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      Mobile App
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeviceType("web")}
+                      className={cn(
+                        "relative z-10 w-50 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
+                        deviceType === "web"
+                          ? "text-white dark:text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      Web Platform
+                    </button>
+                  </div>
+                )}
+                <div className="w-full">
+                  <PromptInput
+                    isLoading={loadingState !== "idle" || isPending}
+                    loadingText={getLoadingText(loadingState, deviceType)}
+                    onSubmit={handleSubmit}
+                    selectedModel={selectedModel}
+                    onModelChange={handleModelChange}
+                    deviceType={deviceType}
+                    onDeviceTypeChange={setDeviceType}
+                    wireframeKind={wireframeKind}
+                    onWireframeKindChange={setWireframeKind}
+                    inspirationKind={inspirationKind}
+                    onInspirationKindChange={setInspirationKind}
+                    referenceFile={referenceFile}
+                    onReferenceChange={setReferenceFile}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setDeviceType("mobile")}
-                    className={cn(
-                      "relative z-10 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
-                      deviceType === "mobile"
-                        ? "text-white dark:text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    Mobile App
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeviceType("web")}
-                    className={cn(
-                      "relative z-10 w-50 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
-                      deviceType === "web"
-                        ? "text-white dark:text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    Web Platform
-                  </button>
                 </div>
-              )}
-              <div className="w-full">
-                <PromptInput
-                  isLoading={loadingState !== "idle" || isPending}
-                  loadingText={getLoadingText(loadingState, deviceType)}
-                  onSubmit={handleSubmit}
-                  selectedModel={selectedModel}
-                  onModelChange={handleModelChange}
-                  deviceType={deviceType}
-                  onDeviceTypeChange={setDeviceType}
-                  wireframeKind={wireframeKind}
-                  onWireframeKindChange={setWireframeKind}
-                  inspirationKind={inspirationKind}
-                  onInspirationKindChange={setInspirationKind}
-                  referenceFile={referenceFile}
-                  onReferenceChange={setReferenceFile}
-                />
-              </div>
               </div>
             </div>
           </div>
 
           {/* Explore — projects moved to explore by admins */}
-          <div className="w-full py-12">
+          {/* <div className="w-full py-12">
             <div className="w-full max-w-7xl mx-auto px-6">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <div>
@@ -380,8 +382,15 @@ const DashboardSection = () => {
                 isLoading={exploreLoading}
               />
             </div>
-          </div>
+          </div> */}
 
+          {/* TOOLS */}
+          <ToolsSection />
+
+          {/* New Model */}
+           <NewModel />
+
+           <ExploreDesign />
           {/* My Projects */}
           <div className="w-full py-10">
             <div className="w-full max-w-7xl mx-auto px-6">
@@ -398,7 +407,7 @@ const DashboardSection = () => {
                         "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
                         projectsFilter === "all"
                           ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       All Projects
@@ -410,7 +419,7 @@ const DashboardSection = () => {
                         "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
                         projectsFilter === "favorites"
                           ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
                       )}
                     >
                       Favourites
@@ -426,7 +435,10 @@ const DashboardSection = () => {
                 </div>
               </div>
               {isLoading ? (
-                <ProjectShimmerGrid count={4} className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-3" />
+                <ProjectShimmerGrid
+                  count={4}
+                  className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-3"
+                />
               ) : (
                 <>
                   <div className="mt-3">
@@ -507,7 +519,13 @@ function ProjectShimmerCard() {
   );
 }
 
-function ProjectShimmerGrid({ count = 10, className = "" }: { count?: number; className?: string }) {
+function ProjectShimmerGrid({
+  count = 10,
+  className = "",
+}: {
+  count?: number;
+  className?: string;
+}) {
   return (
     <div className={`grid ${className}`}>
       {Array.from({ length: count }, (_, i) => (
@@ -558,10 +576,7 @@ const ExploreGrid = memo(function ExploreGrid({
           className="flex flex-col rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform bg-card border border-border"
         >
           <div className="h-44 relative overflow-hidden">
-            <ProjectThumbnail
-              projectId={p.id}
-              deviceType={p.deviceType}
-            />
+            <ProjectThumbnail projectId={p.id} deviceType={p.deviceType} />
           </div>
           <div className="p-4">
             <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-card-foreground">
@@ -573,8 +588,8 @@ const ExploreGrid = memo(function ExploreGrid({
               {p.deviceType === "web"
                 ? "Web"
                 : p.deviceType === "mobile"
-                ? "Mobile"
-                : p.deviceType}
+                  ? "Mobile"
+                  : p.deviceType}
             </p>
           </div>
         </Link>
@@ -602,11 +617,15 @@ const ProjectsGridImpl = ({
   // ── Shared mutations (called ONCE, not per-card) ────────────────────
   const { mutate: renameProject, isPending: isRenaming } = useRenameProject();
   const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
-  const { mutate: duplicateProject, isPending: isDuplicating } = useDuplicateProject();
-  const { mutate: setFavorite, isPending: isTogglingFavorite } = useSetProjectFavorite();
+  const { mutate: duplicateProject, isPending: isDuplicating } =
+    useDuplicateProject();
+  const { mutate: setFavorite, isPending: isTogglingFavorite } =
+    useSetProjectFavorite();
 
   // ── Shared dialog state (1 rename + 1 delete dialog for ALL cards) ──
-  const [dialogProject, setDialogProject] = React.useState<ProjectType | null>(null);
+  const [dialogProject, setDialogProject] = React.useState<ProjectType | null>(
+    null,
+  );
   const [renameOpen, setRenameOpen] = React.useState(false);
   const [renameValue, setRenameValue] = React.useState("");
   const [deleteOpen, setDeleteOpen] = React.useState(false);
@@ -628,14 +647,22 @@ const ProjectsGridImpl = ({
     if (!name) return;
     renameProject(
       { projectId: dialogProject.id, name },
-      { onSuccess: () => { setRenameOpen(false); setDialogProject(null); } }
+      {
+        onSuccess: () => {
+          setRenameOpen(false);
+          setDialogProject(null);
+        },
+      },
     );
   };
 
   const handleDeleteConfirm = () => {
     if (!dialogProject) return;
     deleteProject(dialogProject.id, {
-      onSuccess: () => { setDeleteOpen(false); setDialogProject(null); },
+      onSuccess: () => {
+        setDeleteOpen(false);
+        setDialogProject(null);
+      },
     });
   };
 
@@ -650,7 +677,9 @@ const ProjectsGridImpl = ({
             key={project.id}
             custom={index}
             initial="hidden"
-            animate={index < INITIAL_VISIBLE_COUNT || isInView ? "visible" : "hidden"}
+            animate={
+              index < INITIAL_VISIBLE_COUNT || isInView ? "visible" : "hidden"
+            }
             variants={cardVariants}
           >
             <ProjectCard
@@ -690,10 +719,17 @@ const ProjectsGridImpl = ({
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameOpen(false)} disabled={isRenaming}>
+            <Button
+              variant="outline"
+              onClick={() => setRenameOpen(false)}
+              disabled={isRenaming}
+            >
               Cancel
             </Button>
-            <Button onClick={handleRenameSubmit} disabled={isRenaming || !renameValue.trim()}>
+            <Button
+              onClick={handleRenameSubmit}
+              disabled={isRenaming || !renameValue.trim()}
+            >
               {isRenaming ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
@@ -711,13 +747,22 @@ const ProjectsGridImpl = ({
             <DialogTitle>Delete project</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete &quot;{dialogProject?.name}&quot;? This cannot be undone.
+            Are you sure you want to delete &quot;{dialogProject?.name}&quot;?
+            This cannot be undone.
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={isDeleting}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteOpen(false)}
+              disabled={isDeleting}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={isDeleting}>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
               {isDeleting ? "Deleting…" : "Delete"}
             </Button>
           </DialogFooter>
@@ -752,7 +797,10 @@ export const ProjectCard = memo(
     onDelete: (p: ProjectType) => void;
     onDuplicate: (id: string) => void;
     isDuplicating: boolean;
-    onToggleFavorite: (args: { projectId: string; isFavorite: boolean }) => void;
+    onToggleFavorite: (args: {
+      projectId: string;
+      isFavorite: boolean;
+    }) => void;
     isTogglingFavorite: boolean;
   }) => {
     const router = useRouter();
@@ -765,10 +813,10 @@ export const ProjectCard = memo(
       project.deviceType === "web"
         ? "Web App"
         : project.deviceType === "mobile"
-        ? "iOS"
-        : project.deviceType === "wireframe"
-        ? "Wireframe"
-        : "Inspirations";
+          ? "iOS"
+          : project.deviceType === "wireframe"
+            ? "Wireframe"
+            : "Inspirations";
 
     return (
       <div
@@ -811,7 +859,10 @@ export const ProjectCard = memo(
                   disabled={isTogglingFavorite}
                 >
                   <Star
-                    className={cn("size-4", project.isFavorite && "fill-current")}
+                    className={cn(
+                      "size-4",
+                      project.isFavorite && "fill-current",
+                    )}
                   />
                   {project.isFavorite
                     ? "Remove from Favorites"
@@ -878,7 +929,7 @@ export const ProjectCard = memo(
         </div>
       </div>
     );
-  }
+  },
 );
 ProjectCard.displayName = "ProjectCard";
 
