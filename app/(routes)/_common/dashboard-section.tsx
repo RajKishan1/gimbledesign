@@ -18,7 +18,7 @@ import {
   useExploreProjects,
   useMoveProjectToExplore,
 } from "@/features/use-explore";
-import { useGetProfile } from "@/features/use-profile";
+import { useProfile } from "@/context/profile-provider";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
@@ -118,7 +118,7 @@ const DashboardSection = () => {
     isError,
   } = useGetProjects(userId, 10, projectsFilter === "favorites");
   const { mutate, isPending } = useCreateProject();
-  const { data: profile } = useGetProfile();
+  const { data: profile } = useProfile();
   const { data: exploreProjects = [], isLoading: exploreLoading } =
     useExploreProjects(8);
   const moveToExplore = useMoveProjectToExplore();
@@ -237,16 +237,31 @@ const DashboardSection = () => {
           {/* Hero */}
           <div className="relative overflow-hidden py-12 sm:py-16 px-4 sm:px-6 lg:px-8 xl:px-10">
             <div className="w-full max-w-3xl mx-auto flex flex-col items-center">
-              <p className="flex items-center gap-1.5 mb-4 text-xs sm:text-sm font-medium tracking-wide text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Users className="size-3.5" />
+              {/* Personalized welcome chip — pulls the first name from the
+                  server-prefetched profile, falls back to the session, then
+                  to a friendly "there" if nothing's available. */}
+              <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-border/60 bg-card/80 px-4 py-1.5 shadow-sm backdrop-blur-sm">
+                <span
+                  aria-hidden
+                  className="inline-block size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25"
+                />
+                <p className="text-sm font-medium text-foreground/85">
+                  Welcome back,{" "}
+                  <span className="font-semibold text-foreground">
+                    {(profile?.name || user?.name || "")
+                      .toString()
+                      .trim()
+                      .split(" ")[0] || "there"}
+                  </span>
+                </p>
+              </div>
+              <h1 className="text-center font-bold text-[34px] sm:text-[44px] md:text-6xl mt-0 mb-6 tracking-tight leading-[1.05] text-foreground">
+                Bring Your{" "}
+                <span className="text-[#6466E9] dark:text-[#8b8dff]">
+                  Ideas to Life
                 </span>
-                Join 30,000+ app founders building today
-              </p>
-              <h1 className="text-center font-bold text-[34px] sm:text-[44px] md:text-[56px] mt-0 mb-6 tracking-tight leading-[1.05] text-foreground">
-                Bring Your <span className="text-foreground/90">Ideas</span> to
-                Life
               </h1>
+
               <div className="w-full flex flex-col items-center gap-6">
                 {deviceType === "wireframe" || deviceType === "inspirations" ? (
                   <div className="w-full max-w-156 mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-border bg-card/80 px-4 py-3">

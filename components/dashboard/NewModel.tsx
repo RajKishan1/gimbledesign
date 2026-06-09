@@ -105,7 +105,10 @@ export default function NewModel({
     >
       <PerspectiveGrid />
 
-      <div className="relative grid grid-cols-1 items-center gap-12 px-8 py-12 md:px-12 md:py-14 lg:grid-cols-[1fr_auto] lg:gap-16 lg:px-16">
+      {/* Side-by-side switches at xl (not lg) because at lg with the sidebar
+          open on a laptop, the deck + text pair overflows. Below xl we stack
+          vertically so the deck gets full width and never compresses. */}
+      <div className="relative grid grid-cols-1 items-center gap-12 px-8 py-12 md:px-12 md:py-14 xl:grid-cols-[1fr_auto] xl:gap-16 xl:px-16">
         <LeftCopy
           badge={badge}
           modelName={modelName}
@@ -256,7 +259,7 @@ function FloatingDeck({
         {left.map((card, i) => (
           <div
             key={`l-${i}`}
-            className={i === 0 ? "hidden md:block" : "hidden sm:block"}
+            className={i === 0 ? "hidden xl:block" : "hidden sm:block"}
           >
             <FloatingImageCard card={card} delay={0.2 + i * 0.06} />
           </div>
@@ -265,7 +268,7 @@ function FloatingDeck({
         {right.map((card, i) => (
           <div
             key={`r-${i}`}
-            className={i === 1 ? "hidden md:block" : "hidden sm:block"}
+            className={i === 1 ? "hidden xl:block" : "hidden sm:block"}
           >
             <FloatingImageCard card={card} delay={0.38 + i * 0.06} />
           </div>
@@ -360,16 +363,18 @@ function CenterPodium({
         className="relative"
       >
         {/* Ambient halo behind the card.
-            Wider + brighter on hover — this is the "interactive glow". */}
+            Subtle at rest, *slightly* brighter on hover — the previous
+            version blew out at hover and looked amateur. Tightened margin,
+            blur, and the hover scale so the glow stays contained. */}
         <motion.div
           aria-hidden
           variants={{
-            rest: { opacity: 0.55, scale: 1 },
-            hover: { opacity: 0.95, scale: 1.3 },
-            tap: { opacity: 0.6, scale: 1.05 },
+            rest: { opacity: 0.4, scale: 1 },
+            hover: { opacity: 0.6, scale: 1.1 },
+            tap: { opacity: 0.45, scale: 1.02 },
           }}
-          transition={{ duration: 0.35, ease: EASE }}
-          className="pointer-events-none absolute inset-0 -m-12 rounded-full blur-3xl"
+          transition={{ duration: 0.3, ease: EASE }}
+          className="pointer-events-none absolute inset-0 -m-6 rounded-full blur-xl"
           style={{ background: ACCENT }}
         />
 
@@ -377,24 +382,24 @@ function CenterPodium({
         <motion.div
           variants={{
             rest: { scale: 1, rotate: 0 },
-            hover: { scale: 1.05, rotate: -2 },
+            hover: { scale: 1.04, rotate: -1.5 },
             tap: { scale: 0.97, rotate: 0 },
           }}
           transition={{ duration: 0.25, ease: EASE }}
           className="relative flex h-40 w-40 items-center justify-center rounded-[34px] sm:h-44 sm:w-44"
           style={{
             background: ACCENT,
-            // Layered shadows for a physical pillow:
-            //   - Tight inner glow so the card itself looks lit
+            // Refined layered shadows — meaningful depth without the glow blowout.
+            //   - Modest outer halo (was 60px opacity 88 → 36px opacity 55)
             //   - Grounded drop shadow tinted lime
             //   - Thin lime ring to define the silhouette
             //   - Inset top highlight (light from above)
             //   - Inset bottom shadow (weight)
             boxShadow: `
-              0 0 60px 0 ${ACCENT}88,
-              0 28px 56px -10px ${ACCENT}66,
-              0 0 0 1px ${ACCENT}dd,
-              inset 0 3px 0 0 rgba(255,255,255,0.4),
+              0 0 36px 0 ${ACCENT}55,
+              0 22px 44px -12px ${ACCENT}4d,
+              0 0 0 1px ${ACCENT}cc,
+              inset 0 3px 0 0 rgba(255,255,255,0.35),
               inset 0 -4px 0 0 rgba(0,0,0,0.2)
             `,
           }}
@@ -445,29 +450,67 @@ function CenterPodium({
  * at the horizon. No pulse, no flicker — the source is a still image.
  */
 function PerspectiveGrid() {
+  // Pre-computed line positions. Vertical lines converge toward a vanishing
+  // point near (100, 0); horizontals are spaced with a 1/n-style falloff so
+  // closer-to-viewer lines sit further apart than horizon lines.
+  const verticalsX = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200];
+  const horizontalsY = [100, 88, 76, 65, 55, 46, 38, 32, 27, 23, 20];
+
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-[78%] overflow-hidden"
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-[60%] overflow-hidden"
     >
-      {/* Tilted grid */}
+      {/*
+        SVG perspective grid — replaces the CSS approach (perspective +
+        rotateX + mask + two linear-gradients). SVG renders once into a
+        single paint layer, no GPU composite, no mask filter.
+      */}
+      <svg
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 200 100"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient
+            id="ng-grid-fade"
+            x1="0"
+            y1="1"
+            x2="0"
+            y2="0"
+          >
+            <stop offset="0%" stopColor={ACCENT} stopOpacity="0.45" />
+            <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <g
+          stroke="url(#ng-grid-fade)"
+          fill="none"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        >
+          {/* Verticals converging toward (100, 0) */}
+          {verticalsX.map((x) => (
+            <line
+              key={`v-${x}`}
+              x1={x}
+              y1={100}
+              x2={100 + (x - 100) * 0.15}
+              y2={0}
+            />
+          ))}
+          {/* Horizontals — perspective-spaced (closer = wider gap) */}
+          {horizontalsY.map((y) => (
+            <line key={`h-${y}`} x1={0} y1={y} x2={200} y2={y} />
+          ))}
+        </g>
+      </svg>
+
+      {/* Horizon ambient glow — blur dropped from 3xl → 2xl to cut paint
+          cost. Still readable as an atmospheric haze behind the podium. */}
       <div
-        className="absolute inset-x-0 bottom-0 h-[160%] origin-bottom"
-        style={{
-          transform: "perspective(720px) rotateX(64deg)",
-          backgroundImage:
-            "linear-gradient(to right, rgba(163, 230, 53, 0.28) 1px, transparent 1px), linear-gradient(to bottom, rgba(163, 230, 53, 0.28) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
-          maskImage:
-            "linear-gradient(to top, rgba(0,0,0,1) 18%, rgba(0,0,0,0) 80%)",
-          WebkitMaskImage:
-            "linear-gradient(to top, rgba(0,0,0,1) 18%, rgba(0,0,0,0) 80%)",
-        }}
-      />
-      {/* Static horizon glow — sits behind the podium */}
-      <div
-        className="absolute -bottom-28 left-1/2 h-80 w-[34rem] -translate-x-1/2 rounded-[50%] blur-3xl"
-        style={{ background: ACCENT, opacity: 0.42 }}
+        className="absolute -bottom-24 left-1/2 h-64 w-[30rem] -translate-x-1/2 rounded-[50%] blur-2xl"
+        style={{ background: ACCENT, opacity: 0.4 }}
       />
     </div>
   );

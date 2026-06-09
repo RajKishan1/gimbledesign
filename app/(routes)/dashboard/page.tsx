@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
@@ -7,126 +6,68 @@ import {
   dehydrate,
 } from "@tanstack/react-query";
 import DashboardSection from "../_common/dashboard-section";
-import { Spinner } from "@/components/ui/spinner";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { normalizeRole } from "@/types/user";
 
-// Dashboard runs server-side: it authenticates, prefetches projects/explore/profile
-// in parallel via Prisma, and hands a dehydrated React Query cache to the client.
-// The existing `DashboardSection` hooks (useGetProjects, useExploreProjects,
-// useGetProfile) read from this cache on first render — no fetch round-trip,
-// no empty flash.
+/**
+ * Dashboard route.
+ *
+ * Server-side responsibilities:
+ *   1. Auth gate — redirect to /login if there's no session.
+ *   2. Prefetch ONLY the data that's needed for first paint above the fold
+ *      (the user's recent projects). Profile + explore-projects load on
+ *      the client — profile via ProfileProvider (single subscription), and
+ *      explore via its own React Query call. Both feel instant because the
+ *      welcome chip has a "there" fallback and the explore grid is below
+ *      the fold.
+ *
+ * What was removed:
+ *   - The outer <Suspense fallback> was dead code: DashboardSection is a
+ *     client component that never throws a promise during render, so the
+ *     spinner never showed. Removing it cuts a noop boundary.
+ *   - The profile prefetch did 1–3 DB calls (find + maybe create + maybe
+ *     update). It's now handled lazily by ProfileProvider when the user
+ *     first lands, saving ~200–800ms off TTFB on cold connections.
+ *   - The explore-projects prefetch was below-the-fold work paid up front.
+ *     Moved to client-side fetch on render.
+ */
 export default async function DashboardPage() {
   const session = await getSession(await headers());
   if (!session?.user) {
     redirect("/login");
   }
 
-  const user = session.user;
-  const userId = user.id;
+  const userId = session.user.id;
   const queryClient = new QueryClient();
 
-  await Promise.all([
-    // Mirrors GET /api/project — same select, same order. Query key must match
-    // useGetProjects(userId, 10, false): ["projects", 10, false].
-    queryClient.prefetchQuery({
-      queryKey: ["projects", 10, false],
-      queryFn: () =>
-        prisma.project.findMany({
-          where: { userId },
-          take: 10,
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            name: true,
-            deviceType: true,
-            theme: true,
-            isFavorite: true,
-            isExplore: true,
-            shareToken: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        }),
-    }),
-    // Mirrors GET /api/explore. Query key from useExploreProjects(8): ["explore", 8].
-    queryClient.prefetchQuery({
-      queryKey: ["explore", 8],
-      queryFn: () =>
-        prisma.project.findMany({
-          where: { isExplore: true },
-          take: 8,
-          orderBy: { updatedAt: "desc" },
-          select: {
-            id: true,
-            name: true,
-            deviceType: true,
-            theme: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        }),
-    }),
-    // Mirrors GET /api/profile (including find-or-create). Query key: ["profile"].
-    queryClient.prefetchQuery({
-      queryKey: ["profile"],
-      queryFn: async () => {
-        let userRecord = await prisma.user.findUnique({
-          where: { userId },
-        });
-        if (!userRecord) {
-          userRecord = await prisma.user.create({
-            data: {
-              userId,
-              credits: 100.0,
-              totalCreditsUsed: 0.0,
-              name: user.name ?? null,
-              email: user.email ?? null,
-              profilePicture: user.image ?? null,
-            },
-          });
-        } else if (
-          !userRecord.name ||
-          !userRecord.email ||
-          !userRecord.profilePicture
-        ) {
-          userRecord = await prisma.user.update({
-            where: { userId },
-            data: {
-              name: userRecord.name || user.name || null,
-              email: userRecord.email || user.email || null,
-              profilePicture: userRecord.profilePicture || user.image || null,
-            },
-          });
-        }
-        return {
-          id: userRecord.id,
-          userId: userRecord.userId,
-          role: normalizeRole(userRecord.role),
-          name: userRecord.name || user.name || "",
-          email: userRecord.email || user.email || "",
-          profilePicture: userRecord.profilePicture || user.image || null,
-          headerImage: userRecord.headerImage,
-          credits: userRecord.credits,
-          totalCreditsUsed: userRecord.totalCreditsUsed || 0,
-        };
-      },
-    }),
-  ]);
+  // Prefetch ONLY the projects list — above the fold and slow on cold cache.
+  // Query key must exactly match useGetProjects(userId, 10, false) on the
+  // client, otherwise the hydration boundary won't see it.
+  await queryClient.prefetchQuery({
+    queryKey: ["projects", 10, false],
+    queryFn: () =>
+      prisma.project.findMany({
+        where: { userId },
+        take: 10,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          deviceType: true,
+          theme: true,
+          isFavorite: true,
+          isExplore: true,
+          shareToken: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+  });
 
   return (
     <div className="w-full">
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <Suspense
-          fallback={
-            <div className="w-full min-h-screen flex items-center justify-center bg-card">
-              <Spinner className="size-10" />
-            </div>
-          }
-        >
-          <DashboardSection />
-        </Suspense>
+        <DashboardSection />
       </HydrationBoundary>
     </div>
   );

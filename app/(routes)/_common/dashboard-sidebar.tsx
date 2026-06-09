@@ -19,7 +19,7 @@ import {
   Logout01Icon,
   MagicWand01Icon,
 } from "@hugeicons/core-free-icons";
-import { useGetProfile } from "@/features/use-profile";
+import { useProfile } from "@/context/profile-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +50,7 @@ function DashboardSidebarImpl() {
   const pathname = usePathname();
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const { data: profile } = useGetProfile();
+  const { data: profile } = useProfile();
   const { data: credits, isLoading: isLoadingCredits } = useGetCredits(user?.id);
 
   const profilePicture = profile?.profilePicture || user?.image || "";

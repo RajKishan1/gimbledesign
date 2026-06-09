@@ -7,7 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import DashboardSidebar from "../_common/dashboard-sidebar";
 import Header from "../_common/header";
 import { useGetProjects } from "@/features/use-project";
-import { useGetProfile } from "@/features/use-profile";
+import { useProfile } from "@/context/profile-provider";
 import {
   useMoveProjectToExplore,
 } from "@/features/use-explore";
@@ -22,7 +22,7 @@ export default function ProjectsPage() {
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const router = useRouter();
-  const { data: profile } = useGetProfile();
+  const { data: profile } = useProfile();
   const { data: projects = [], isLoading } = useGetProjects(user?.id, undefined);
   const moveToExplore = useMoveProjectToExplore();
   const isAdmin = profile?.role === "admin";

@@ -7,7 +7,8 @@ import { formatDistanceToNow } from "date-fns";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Edit01Icon, CreditCardIcon, ArrowLeft01Icon, Upload01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 import Header from "../_common/header";
-import { useGetProfile, useUpdateProfile } from "@/features/use-profile";
+import { useUpdateProfile } from "@/features/use-profile";
+import { useProfile } from "@/context/profile-provider";
 import { useGetCredits } from "@/features/use-credits";
 import { useGetProjects } from "@/features/use-project";
 import { ProjectType } from "@/types/project";
@@ -32,7 +33,7 @@ const ProfilePage = () => {
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const router = useRouter();
-  const { data: profile, isLoading: isLoadingProfile } = useGetProfile();
+  const { data: profile, isLoading: isLoadingProfile } = useProfile();
   const { data: credits } = useGetCredits(user?.id);
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects(
     user?.id,

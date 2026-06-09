@@ -8,7 +8,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
-import { useGetProfile } from "@/features/use-profile";
+import { useProfile } from "@/context/profile-provider";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -102,7 +102,7 @@ function SearchBar() {
 }
 
 function ProfileAvatar() {
-  const { data: profile } = useGetProfile();
+  const { data: profile } = useProfile();
 
   const initials = (profile?.name || profile?.email || "U")
     .split(" ")
