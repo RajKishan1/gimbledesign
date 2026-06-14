@@ -8,6 +8,7 @@ import {
   useExploreDesigns,
   type ExploreDesign as Design,
 } from "@/features/use-explore-designs";
+/*print*/
 
 /**
  * Inject Cloudinary delivery transforms so we don't ship a 2 MB original
