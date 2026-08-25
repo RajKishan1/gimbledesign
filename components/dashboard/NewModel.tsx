@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ArrowRight, Brain, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -36,51 +37,55 @@ type NewModelProps = {
 
 /* ───────────────────────── Tokens ───────────────────────── */
 
-// Single source of truth for the lime accent. Used by the badge, headline
+// Single source of truth for the accent. Used by the badge, headline
 // highlight, button, brain pillow, podium disc, grid, and ambient glow.
-const ACCENT = "#a3e635"; // Tailwind lime-400 — matches the source
+// Sky-400 — matches the product's sky-blue theme.
+const ACCENT = "#38bdf8";
 
 // Standard ease used everywhere. Snappy, no overshoot.
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /* ───────────────────────── Defaults ───────────────────────── */
 
+/* Brand imagery — same photographic family as the landing hero and login
+   panel (meadow, bougainvillea, twilight, blossom). Gradients underneath
+   match each photo's palette so nothing flashes if an image is slow. */
 const DEFAULT_CARDS: FloatingCardData[] = [
   {
     // Position 1 — outer-left
-    src: "/newmodel/card-1.png",
-    alt: "Showcase 1",
+    src: "/newmodel/card-meadow.webp",
+    alt: "Summer meadow under a blue sky",
     rotate: -11,
     offsetY: 28,
     placeholderGradient:
-      "linear-gradient(140deg, #1c1c1f 0%, #3a0d0d 55%, #7a1818 100%)",
+      "linear-gradient(140deg, #38bdf8 0%, #7dd3fc 55%, #86efac 100%)",
   },
   {
     // Position 2 — inner-left
-    src: "/newmodel/card-2.png",
-    alt: "Showcase 2",
+    src: "/newmodel/card-bougainvillea.webp",
+    alt: "Pink bougainvillea against a blue sky",
     rotate: -3,
     offsetY: 12,
     placeholderGradient:
-      "linear-gradient(155deg, #ffffff 0%, #f3f4f6 60%, #e5e7eb 100%)",
+      "linear-gradient(155deg, #7dd3fc 0%, #bae6fd 60%, #fbcfe8 100%)",
   },
   {
     // Position 3 — inner-right
-    src: "/newmodel/card-3.png",
-    alt: "Showcase 3",
+    src: "/newmodel/card-twilight.webp",
+    alt: "Starry twilight sky over a dark meadow",
     rotate: 4,
     offsetY: 14,
     placeholderGradient:
-      "linear-gradient(140deg, #0d0d0f 0%, #0b1f12 55%, #143d22 100%)",
+      "linear-gradient(140deg, #0b1030 0%, #1a1f4d 55%, #141433 100%)",
   },
   {
     // Position 4 — outer-right
-    src: "/newmodel/card-4.png",
-    alt: "Showcase 4",
+    src: "/newmodel/card-blossom.webp",
+    alt: "Cherry blossoms at golden hour",
     rotate: 11,
     offsetY: 26,
     placeholderGradient:
-      "linear-gradient(140deg, #312018 0%, #4a2a20 55%, #6a3a2a 100%)",
+      "linear-gradient(140deg, #fda4af 0%, #fecdd3 55%, #bae6fd 100%)",
   },
 ];
 
@@ -91,19 +96,37 @@ export default function NewModel({
   modelName = "Claude",
   modelVersion = "4.8",
   subtitle = "Our most powerful model yet. Smarter, faster and better at bringing your ideas to life.",
-  primaryCta = { label: "Try Claude 4.8", href: "#" },
-  secondaryCta = { label: "Learn more", href: "#" },
+  primaryCta = { label: "Try Claude 4.8", href: "#new-design" },
+  secondaryCta = { label: "Learn more", href: "/Howitworks" },
   cards = DEFAULT_CARDS,
   className,
 }: NewModelProps) {
   return (
     <section
       className={cn(
-        "relative w-full overflow-hidden rounded-3xl bg-black text-white",
+        "relative w-full overflow-hidden rounded-3xl bg-[#05070f] text-white",
         className,
       )}
     >
-      <PerspectiveGrid />
+      {/* Photographic night-sky backdrop — same twilight family as the
+          landing hero's dark theme. Sits under a left scrim so the copy
+          keeps AAA contrast. */}
+      <Image
+        src="/newmodel/banner-night-sky.webp"
+        alt=""
+        fill
+        sizes="(max-width: 1536px) 100vw, 1536px"
+        className="object-cover object-[70%_68%]"
+      />
+      {/* Left scrim for the copy + bottom vignette to seat the deck. */}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-linear-to-r from-[#05070f] from-15% via-[#05070f]/75 via-45% to-transparent"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-[#05070f]/80 to-transparent"
+      />
 
       {/* Side-by-side switches at xl (not lg) because at lg with the sidebar
           open on a laptop, the deck + text pair overflows. Below xl we stack
@@ -421,7 +444,7 @@ function CenterPodium({
         className="relative -mt-3 h-5 w-52 rounded-full sm:w-60"
         style={{
           background:
-            "linear-gradient(to bottom, #b5e858 0%, #a3e635 30%, #82b82a 70%, #6a9e1f 100%)",
+            "linear-gradient(to bottom, #7dd3fc 0%, #38bdf8 30%, #0ea5e9 70%, #0284c7 100%)",
           boxShadow: `
             0 16px 40px -6px ${ACCENT}80,
             0 0 90px 0 ${ACCENT}55,
@@ -442,76 +465,5 @@ function CenterPodium({
         Powered by {`Claude ${version}`}
       </motion.div>
     </motion.div>
-  );
-}
-
-/* ───────────────────────── Perspective grid ─────────────────────────
- * Lime grid receding into the distance + a single static ambient glow
- * at the horizon. No pulse, no flicker — the source is a still image.
- */
-function PerspectiveGrid() {
-  // Pre-computed line positions. Vertical lines converge toward a vanishing
-  // point near (100, 0); horizontals are spaced with a 1/n-style falloff so
-  // closer-to-viewer lines sit further apart than horizon lines.
-  const verticalsX = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200];
-  const horizontalsY = [100, 88, 76, 65, 55, 46, 38, 32, 27, 23, 20];
-
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-[60%] overflow-hidden"
-    >
-      {/*
-        SVG perspective grid — replaces the CSS approach (perspective +
-        rotateX + mask + two linear-gradients). SVG renders once into a
-        single paint layer, no GPU composite, no mask filter.
-      */}
-      <svg
-        className="absolute inset-0 h-full w-full"
-        viewBox="0 0 200 100"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient
-            id="ng-grid-fade"
-            x1="0"
-            y1="1"
-            x2="0"
-            y2="0"
-          >
-            <stop offset="0%" stopColor={ACCENT} stopOpacity="0.45" />
-            <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <g
-          stroke="url(#ng-grid-fade)"
-          fill="none"
-          strokeWidth={1}
-          vectorEffect="non-scaling-stroke"
-        >
-          {/* Verticals converging toward (100, 0) */}
-          {verticalsX.map((x) => (
-            <line
-              key={`v-${x}`}
-              x1={x}
-              y1={100}
-              x2={100 + (x - 100) * 0.15}
-              y2={0}
-            />
-          ))}
-          {/* Horizontals — perspective-spaced (closer = wider gap) */}
-          {horizontalsY.map((y) => (
-            <line key={`h-${y}`} x1={0} y1={y} x2={200} y2={y} />
-          ))}
-        </g>
-      </svg>
-
-      {/* Horizon ambient glow — blur dropped from 3xl → 2xl to cut paint
-          cost. Still readable as an atmospheric haze behind the podium. */}
-      <div
-        className="absolute -bottom-24 left-1/2 h-64 w-[30rem] -translate-x-1/2 rounded-[50%] blur-2xl"
-        style={{ background: ACCENT, opacity: 0.4 }}
-      />
-    </div>
   );
 }

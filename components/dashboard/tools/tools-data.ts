@@ -189,40 +189,48 @@ export const TONE_STYLES: Record<
   { background: string; glow: string }
 > = {
   lavender: {
-    background: "bg-gradient-to-br from-violet-100 via-fuchsia-50/70 to-white",
-    glow: "bg-violet-300/50",
+    background:
+      "bg-linear-to-br from-violet-100 via-fuchsia-50/70 to-white dark:from-violet-500/20 dark:via-violet-500/8 dark:to-zinc-900",
+    glow: "bg-violet-300/50 dark:bg-violet-500/25",
   },
   pink: {
-    background: "bg-gradient-to-br from-pink-100 via-rose-50/60 to-white",
-    glow: "bg-pink-300/50",
+    background:
+      "bg-linear-to-br from-pink-100 via-rose-50/60 to-white dark:from-pink-500/20 dark:via-pink-500/8 dark:to-zinc-900",
+    glow: "bg-pink-300/50 dark:bg-pink-500/25",
   },
   amber: {
-    background: "bg-gradient-to-br from-amber-100 via-orange-50/60 to-white",
-    glow: "bg-amber-300/50",
+    background:
+      "bg-linear-to-br from-amber-100 via-orange-50/60 to-white dark:from-amber-500/20 dark:via-amber-500/8 dark:to-zinc-900",
+    glow: "bg-amber-300/50 dark:bg-amber-500/25",
   },
   mint: {
     background:
-      "bg-gradient-to-br from-emerald-100 via-emerald-50/60 to-white",
-    glow: "bg-emerald-300/50",
+      "bg-linear-to-br from-emerald-100 via-emerald-50/60 to-white dark:from-emerald-500/20 dark:via-emerald-500/8 dark:to-zinc-900",
+    glow: "bg-emerald-300/50 dark:bg-emerald-500/25",
   },
   sky: {
-    background: "bg-gradient-to-br from-sky-100 via-blue-50/60 to-white",
-    glow: "bg-sky-300/50",
+    background:
+      "bg-linear-to-br from-sky-100 via-blue-50/60 to-white dark:from-sky-500/20 dark:via-sky-500/8 dark:to-zinc-900",
+    glow: "bg-sky-300/50 dark:bg-sky-500/25",
   },
   peach: {
-    background: "bg-gradient-to-br from-orange-100 via-amber-50/60 to-white",
-    glow: "bg-orange-300/50",
+    background:
+      "bg-linear-to-br from-orange-100 via-amber-50/60 to-white dark:from-orange-500/20 dark:via-orange-500/8 dark:to-zinc-900",
+    glow: "bg-orange-300/50 dark:bg-orange-500/25",
   },
   rose: {
-    background: "bg-gradient-to-br from-rose-100 via-pink-50/60 to-white",
-    glow: "bg-rose-300/50",
+    background:
+      "bg-linear-to-br from-rose-100 via-pink-50/60 to-white dark:from-rose-500/20 dark:via-rose-500/8 dark:to-zinc-900",
+    glow: "bg-rose-300/50 dark:bg-rose-500/25",
   },
   cream: {
-    background: "bg-gradient-to-br from-yellow-50 via-amber-50/40 to-white",
-    glow: "bg-amber-200/50",
+    background:
+      "bg-linear-to-br from-yellow-50 via-amber-50/40 to-white dark:from-yellow-500/15 dark:via-yellow-500/8 dark:to-zinc-900",
+    glow: "bg-amber-200/50 dark:bg-amber-500/20",
   },
   violet: {
-    background: "bg-gradient-to-br from-purple-100 via-violet-50/60 to-white",
-    glow: "bg-purple-300/50",
+    background:
+      "bg-linear-to-br from-purple-100 via-violet-50/60 to-white dark:from-purple-500/20 dark:via-purple-500/8 dark:to-zinc-900",
+    glow: "bg-purple-300/50 dark:bg-purple-500/25",
   },
 };

@@ -1,391 +1,30 @@
-// "use client";
-// import React, { memo, useState } from "react";
-// import { formatDistanceToNow } from "date-fns";
-// import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
-// import PromptInput from "@/components/prompt-input";
-// import Header from "./header";
-// import { useCreateProject, useGetProjects } from "@/features/use-project";
-// import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
-// import { Spinner } from "@/components/ui/spinner";
-// import { ProjectType } from "@/types/project";
-// import { useRouter } from "next/navigation";
-// import { FolderOpen, FolderOpenDotIcon } from "lucide-react";
-// import { Button } from "@/components/ui/button";
-// import Faq from "@/components/landing/Faq";
-// import HowItWorks from "@/components/landing/HowItWorks";
-// import PricingPage from "@/components/landing/PricingPage";
-// import FeaturesBento from "@/components/landing/FeaturesBento";
-// import { Inter_Tight } from "next/font/google";
-// import { DeviceTypeModal } from "@/components/device-type-modal";
-// import { BlurFade } from "@/components/ui/blur-fade";
-// import ArcScrollAnimation from "@/components/landing/atoms/ArcScrollAnimaton";
-// const inter = Inter_Tight({ subsets: ["latin"] });
-
-// const LandingSection = () => {
-//   const { user } = useKindeBrowserClient();
-//   const [promptText, setPromptText] = useState<string>("");
-//   const [selectedModel, setSelectedModel] = useState<string>(
-//     "google/gemini-3-pro-preview",
-//   );
-//   const [showAllProjects, setShowAllProjects] = useState(false);
-//   const [isEnhancing, setIsEnhancing] = useState(false);
-//   const [showDeviceTypeModal, setShowDeviceTypeModal] = useState(false);
-//   const [pendingPrompt, setPendingPrompt] = useState<string>("");
-//   const userId = user?.id;
-
-//   // Fetch limited projects initially, all projects when showAllProjects is true
-//   const {
-//     data: projects,
-//     isLoading,
-//     isError,
-//   } = useGetProjects(userId, showAllProjects ? undefined : 10);
-//   const { mutate, isPending } = useCreateProject();
-
-//   // Load model from localStorage on mount
-//   React.useEffect(() => {
-//     if (typeof window !== "undefined") {
-//       const savedModel = localStorage.getItem("selectedModel");
-//       if (savedModel) {
-//         setSelectedModel(savedModel);
-//       }
-//     }
-//   }, []);
-
-//   // Save model selection to localStorage
-//   const handleModelChange = (modelId: string) => {
-//     setSelectedModel(modelId);
-//     if (typeof window !== "undefined") {
-//       localStorage.setItem("selectedModel", modelId);
-//     }
-//   };
-
-//   const suggestions = [
-//     {
-//       label: "Finance Tracker",
-//       icon: "💸",
-//       value: `Finance app statistics screen. Current balance at top with dollar amount, bar chart showing spending over months (Oct-Mar) with month selector pills below, transaction list with app icons, amounts, and categories. Bottom navigation bar. Mobile app, single screen. Style: Dark theme, chunky rounded cards, playful but professional, modern sans-serif typography, Gen Z fintech vibe. Fun and fresh, not corporate.`,
-//     },
-//     {
-//       label: "Fitness Activity",
-//       icon: "🔥",
-//       value: `Fitness tracker summary screen. Large central circular progress ring showing steps and calories with neon glow. Line graph showing heart rate over time. Bottom section with grid of health metrics (Sleep, Water, SpO2). Mobile app, single screen. Style: Deep Dark Mode (OLED friendly). Pitch black background with electric neon green and vibrant blue accents. High contrast, data-heavy but organized, sleek and sporty aesthetic.`,
-//     },
-//     {
-//       label: "Food Delivery",
-//       icon: "🍔",
-//       value: `Food delivery home feed. Top search bar with location pin. Horizontal scrolling hero carousel of daily deals. Vertical list of restaurants with large delicious food thumbnails, delivery time badges, and rating stars. Floating Action Button (FAB) for cart. Mobile app, single screen. Style: Vibrant and Appetizing. Warm colors (orange, red, yellow), rounded card corners, subtle drop shadows to create depth. Friendly and inviting UI.`,
-//     },
-//     {
-//       label: "Travel Booking",
-//       icon: "✈️",
-//       value: `Travel destination detail screen. Full-screen immersive photography of a tropical beach. Bottom sheet overlay with rounded top corners containing hotel title, star rating, price per night, and a large "Book Now" button. Horizontal scroll of amenity icons. Mobile app, single screen. Style: Minimalist Luxury. ample whitespace, elegant serif typography for headings, clean sans-serif for body text. Sophisticated, airy, high-end travel vibe.`,
-//     },
-//     {
-//       label: "E-Commerce",
-//       icon: "👟",
-//       value: `Sneaker product page. Large high-quality product image on a light gray background. Color selector swatches, size selector grid, and a sticky "Add to Cart" button at the bottom. Title and price in bold, oversized typography. Mobile app, single screen. Style: Neo-Brutalism. High contrast, thick black outlines on buttons and cards, hard shadows (no blur), unrefined geometry, bold solid colors (yellow and black). Trendy streetwear aesthetic.`,
-//     },
-//     {
-//       label: "Meditation",
-//       icon: "🧘",
-//       value: `Meditation player screen. Central focus is a soft, abstract breathing bubble animation. Play/Pause controls and a time slider below. Background is a soothing solid pastel sage green. Mobile app, single screen. Style: Soft Minimal. Rounded corners on everything, low contrast text for relaxation, pastel color palette, very little UI clutter. Zen, calming, and therapeutic atmosphere.`,
-//     },
-//   ];
-
-//   const handleSuggestionClick = (val: string) => {
-//     setPromptText(val);
-//   };
-
-//   const handleSubmit = async () => {
-//     if (!promptText) return;
-
-//     // Show device type modal first
-//     setPendingPrompt(promptText);
-//     setShowDeviceTypeModal(true);
-//   };
-
-//   const handleDeviceTypeSelect = async (deviceType: "web" | "mobile") => {
-//     setShowDeviceTypeModal(false);
-
-//     // Start enhancing the prompt
-//     setIsEnhancing(true);
-
-//     try {
-//       const enhanceResponse = await fetch("/api/enhance-prompt", {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           prompt: pendingPrompt,
-//           model: selectedModel,
-//         }),
-//       });
-
-//       const enhanceData = await enhanceResponse.json();
-
-//       // Use the enhanced prompt if available, otherwise fallback to original
-//       const finalPrompt = enhanceData.enhancedPrompt || pendingPrompt;
-
-//       // Stop enhancing state, start designing
-//       setIsEnhancing(false);
-
-//       // Create project with enhanced prompt and device type
-//       mutate({ prompt: finalPrompt, model: selectedModel, deviceType });
-//     } catch (error) {
-//       console.error("Error enhancing prompt:", error);
-//       // If enhancement fails, proceed with original prompt
-//       setIsEnhancing(false);
-//       mutate({ prompt: pendingPrompt, model: selectedModel, deviceType });
-//     }
-//   };
-
-//   return (
-//     <div className=" w-full min-h-screen">
-//       <DeviceTypeModal
-//         open={showDeviceTypeModal}
-//         onOpenChange={setShowDeviceTypeModal}
-//         onSelect={handleDeviceTypeSelect}
-//       />
-
-//       <div className="flex flex-col ">
-//         <Header />
-
-//         <BlurFade>
-//           <div
-//             className={`relative overflow-hidden py-28 border border-zinc-900
-//            ${inter.className}`}
-//           >
-//             <div
-//               className="absolute inset-0  top-[-50]
-//            z-[-1]"
-//             >
-//               {" "}
-//             </div>
-//             <div
-//               className="max-w-6xl mx-auto flex flex-col
-//          items-center justify-center gap-8
-//         "
-//             >
-//               <div className="space-y-3">
-//                 <h1
-//                   className="text-center font-semibold text-4xl
-//             tracking-tight sm:text-5xl bg-linear-to-r from-zinc-900 dark:from-white to-zinc-800 bg-clip-text text-transparent pb-1
-//             "
-//                 >
-//                   Design mobile & web apps <br className="md:hidden" />
-//                   <span className="text-primary">in minutes</span>
-//                 </h1>
-
-//                 <div className="mx-auto max-w-2xl ">
-//                   <p className="text-center font-normal text-foreground leading-relaxed sm:text-lg">
-//                     Go from idea to beautiful mobile or web mockups in minutes
-//                     by chatting with AI.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <div
-//                 className="flex w-full max-w-3xl flex-col
-//             item-center gap-8 relative
-//             "
-//               >
-//                 <div className="w-full">
-//                   <PromptInput
-//                     className=""
-//                     promptText={promptText}
-//                     setPromptText={setPromptText}
-//                     isLoading={isEnhancing || isPending}
-//                     loadingText={
-//                       isEnhancing
-//                         ? "Enhancing..."
-//                         : isPending
-//                           ? "Designing..."
-//                           : undefined
-//                     }
-//                     onSubmit={handleSubmit}
-//                     selectedModel={selectedModel}
-//                     onModelChange={handleModelChange}
-//                   />
-//                 </div>
-
-//                 <div className="flex flex-wrap justify-center">
-//                   <Suggestions>
-//                     {suggestions.map((s) => (
-//                       <Suggestion
-//                         key={s.label}
-//                         suggestion={s.label}
-//                         className="text-sm! h-7!   dark:bg-zinc-900 border border-zinc-900
-//                       "
-//                         onClick={() => handleSuggestionClick(s.value)}
-//                       >
-//                         {s.icon}
-//                         <span>{s.label}</span>
-//                       </Suggestion>
-//                     ))}
-//                   </Suggestions>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </BlurFade>
-//         <div className="w-full py-10 border-x border-zinc-900">
-//           <div className="mx-auto max-w-3xl">
-//             {userId && (
-//               <div>
-//                 <h1
-//                   className="font-medium text-xl
-//               tracking-tight
-//               "
-//                 >
-//                   Recent Projects
-//                 </h1>
-
-//                 {isLoading ? (
-//                   <div
-//                     className="flex items-center
-//                   justify-center py-2
-//                   "
-//                   >
-//                     <Spinner className="size-10" />
-//                   </div>
-//                 ) : (
-//                   <>
-//                     <div
-//                       className="grid grid-cols-1 sm:grid-cols-2
-//                     md:grid-cols-3 gap-3 mt-3
-//                       "
-//                     >
-//                       {projects?.map((project: ProjectType) => (
-//                         <ProjectCard key={project.id} project={project} />
-//                       ))}
-//                     </div>
-//                     {!showAllProjects && projects && projects.length >= 9 && (
-//                       <div className="flex justify-center mt-6">
-//                         <Button
-//                           variant="outline"
-//                           onClick={() => setShowAllProjects(true)}
-//                           className="px-6 rounded-none"
-//                         >
-//                           Show All Projects
-//                         </Button>
-//                       </div>
-//                     )}
-//                   </>
-//                 )}
-//               </div>
-//             )}
-
-//             {isError && <p className="text-red-500">Failed to load projects</p>}
-//           </div>
-//         </div>
-//       </div>
-//       <ArcScrollAnimation />
-//       <FeaturesBento />
-//       <PricingPage />
-//       <HowItWorks />
-//       <Faq />
-//     </div>
-//   );
-// };
-
-// const ProjectCard = memo(({ project }: { project: ProjectType }) => {
-//   const router = useRouter();
-//   const createdAtDate = new Date(project.createdAt);
-//   const timeAgo = formatDistanceToNow(createdAtDate, { addSuffix: true });
-//   const thumbnail = project.thumbnail || null;
-
-//   const onRoute = () => {
-//     router.push(`/project/${project.id}`);
-//   };
-
-//   return (
-//     <div
-//       role="button"
-//       className="w-full flex flex-col border border-zinc-900 rounded-none cursor-pointer
-//     hover:shadow-sm overflow-hidden
-//     "
-//       onClick={onRoute}
-//     >
-//       <div
-//         className="h-40 bg-[#eee] dark:bg-zinc-800 relative overflow-hidden
-//         flex items-center justify-center
-//         "
-//       >
-//         {thumbnail ? (
-//           <img
-//             src={thumbnail}
-//             className="w-full h-full object-cover object-left
-//            scale-110
-//           "
-//           />
-//         ) : (
-//           <div
-//             className="w-16 h-16 rounded-full
-//               flex items-center justify-center text-primary
-//             "
-//           >
-//             <FolderOpen strokeWidth={1.25} className="text-white" size={40} />
-//           </div>
-//         )}
-//       </div>
-
-//       <div className="p-4 flex flex-col">
-//         <h3
-//           className="font-medium
-//          text-sm truncate w-full mb-1 line-clamp-1"
-//         >
-//           {project.name}
-//         </h3>
-//         <p className="text-xs text-muted-foreground">{timeAgo}</p>
-//       </div>
-//     </div>
-//   );
-// });
-
-// ProjectCard.displayName = "ProjectCard";
-
-// export default LandingSection;
 "use client";
 import React, { memo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
-import PromptInput from "@/components/prompt-input";
-import Header from "./header";
+import PromptInput, { DeviceType } from "@/components/prompt-input";
 import { useCreateProject, useGetProjects } from "@/features/use-project";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
-import { Sparkle } from "lucide-react";
 import { DefaultProjectThumbnail } from "@/components/ui/project-thumbnail";
 import { Button } from "@/components/ui/button";
-import Faq from "@/components/landing/Faq";
-import HowItWorks from "@/components/landing/HowItWorks";
-import PricingPage from "@/components/landing/PricingPage";
-import FeaturesBento from "@/components/landing/FeaturesBento";
-import { Inter_Tight } from "next/font/google";
-import { Inter } from "next/font/google";
 import { motion, useInView, Variants } from "framer-motion";
-import { BlurFade } from "@/components/ui/blur-fade";
-import TrustedBy from "@/components/landing/atoms/TrustedBy";
-import FooterDemo from "@/components/landing/Footer";
-import ExploreTemplates from "@/components/landing/ExploreTemplates";
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-import { DeviceType } from "@/components/prompt-input";
-import WorkingWithGimble from "@/components/landing/WorkingWithGimble";
-import LatestPost from "@/components/landing/LatestPost";
-import UsersFeedback from "@/components/landing/UsersFeedback";
-import { openSauceOne } from "@/app/fonts";
-import WhatYouGet from "@/components/landing/WhatYouGet";
+import { openSauceOne, instrumentSerif } from "@/app/fonts";
 import { getGenerationModel } from "@/constant/models";
-import Lines from "@/components/landing/atoms/Lines";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+import LandingNav from "@/components/landing/v2/nav";
+import LandingHero from "@/components/landing/v2/hero";
+import LandingModelsStrip from "@/components/landing/v2/models-strip";
+import LandingShowcase from "@/components/landing/v2/showcase";
+import LandingCapabilities from "@/components/landing/v2/capabilities";
+import LandingPricing from "@/components/landing/v2/pricing";
+import LandingTestimonials from "@/components/landing/v2/testimonials";
+import LandingFaq from "@/components/landing/v2/faq";
+import LandingCta from "@/components/landing/v2/cta";
+import LandingFooter from "@/components/landing/v2/footer";
 
 // Loading state type for the design process
 type LoadingState = "idle" | "enhancing" | "designing";
@@ -412,6 +51,39 @@ const getLoadingText = (
       return undefined;
   }
 };
+
+const SUGGESTIONS = [
+  {
+    label: "Finance Tracker",
+    icon: "💸",
+    value: `Finance app statistics screen. Current balance at top with dollar amount, bar chart showing spending over months (Oct-Mar) with month selector pills below, transaction list with app icons, amounts, and categories. Bottom navigation bar. Mobile app, single screen. Style: Dark theme, chunky rounded cards, playful but professional, modern sans-serif typography, Gen Z fintech vibe. Fun and fresh, not corporate.`,
+  },
+  {
+    label: "Fitness Activity",
+    icon: "🔥",
+    value: `Fitness tracker summary screen. Large central circular progress ring showing steps and calories with neon glow. Line graph showing heart rate over time. Bottom section with grid of health metrics (Sleep, Water, SpO2). Mobile app, single screen. Style: Deep Dark Mode (OLED friendly). Pitch black background with electric neon green and vibrant blue accents. High contrast, data-heavy but organized, sleek and sporty aesthetic.`,
+  },
+  {
+    label: "Food Delivery",
+    icon: "🍔",
+    value: `Food delivery home feed. Top search bar with location pin. Horizontal scrolling hero carousel of daily deals. Vertical list of restaurants with large delicious food thumbnails, delivery time badges, and rating stars. Floating Action Button (FAB) for cart. Mobile app, single screen. Style: Vibrant and Appetizing. Warm colors (orange, red, yellow), rounded card corners, subtle drop shadows to create depth. Friendly and inviting UI.`,
+  },
+  {
+    label: "Travel Booking",
+    icon: "✈️",
+    value: `Travel destination detail screen. Full-screen immersive photography of a tropical beach. Bottom sheet overlay with rounded top corners containing hotel title, star rating, price per night, and a large "Book Now" button. Horizontal scroll of amenity icons. Mobile app, single screen. Style: Minimalist Luxury. ample whitespace, elegant serif typography for headings, clean sans-serif for body text. Sophisticated, airy, high-end travel vibe.`,
+  },
+  {
+    label: "E-Commerce",
+    icon: "👟",
+    value: `Sneaker product page. Large high-quality product image on a light gray background. Color selector swatches, size selector grid, and a sticky "Add to Cart" button at the bottom. Title and price in bold, oversized typography. Mobile app, single screen. Style: Neo-Brutalism. High contrast, thick black outlines on buttons and cards, hard shadows (no blur), unrefined geometry, bold solid colors (yellow and black). Trendy streetwear aesthetic.`,
+  },
+  {
+    label: "Meditation",
+    icon: "🧘",
+    value: `Meditation player screen. Central focus is a soft, abstract breathing bubble animation. Play/Pause controls and a time slider below. Background is a soothing solid pastel sage green. Mobile app, single screen. Style: Soft Minimal. Rounded corners on everything, low contrast text for relaxation, pastel color palette, very little UI clutter. Zen, calming, and therapeutic atmosphere.`,
+  },
+];
 
 const LandingSection = () => {
   const { data: session } = authClient.useSession();
@@ -463,43 +135,6 @@ const LandingSection = () => {
     if (typeof window !== "undefined") {
       localStorage.setItem("selectedModel", modelId);
     }
-  };
-
-  const suggestions = [
-    {
-      label: "Finance Tracker",
-      icon: "💸",
-      value: `Finance app statistics screen. Current balance at top with dollar amount, bar chart showing spending over months (Oct-Mar) with month selector pills below, transaction list with app icons, amounts, and categories. Bottom navigation bar. Mobile app, single screen. Style: Dark theme, chunky rounded cards, playful but professional, modern sans-serif typography, Gen Z fintech vibe. Fun and fresh, not corporate.`,
-    },
-    {
-      label: "Fitness Activity",
-      icon: "🔥",
-      value: `Fitness tracker summary screen. Large central circular progress ring showing steps and calories with neon glow. Line graph showing heart rate over time. Bottom section with grid of health metrics (Sleep, Water, SpO2). Mobile app, single screen. Style: Deep Dark Mode (OLED friendly). Pitch black background with electric neon green and vibrant blue accents. High contrast, data-heavy but organized, sleek and sporty aesthetic.`,
-    },
-    {
-      label: "Food Delivery",
-      icon: "🍔",
-      value: `Food delivery home feed. Top search bar with location pin. Horizontal scrolling hero carousel of daily deals. Vertical list of restaurants with large delicious food thumbnails, delivery time badges, and rating stars. Floating Action Button (FAB) for cart. Mobile app, single screen. Style: Vibrant and Appetizing. Warm colors (orange, red, yellow), rounded card corners, subtle drop shadows to create depth. Friendly and inviting UI.`,
-    },
-    {
-      label: "Travel Booking",
-      icon: "✈️",
-      value: `Travel destination detail screen. Full-screen immersive photography of a tropical beach. Bottom sheet overlay with rounded top corners containing hotel title, star rating, price per night, and a large "Book Now" button. Horizontal scroll of amenity icons. Mobile app, single screen. Style: Minimalist Luxury. ample whitespace, elegant serif typography for headings, clean sans-serif for body text. Sophisticated, airy, high-end travel vibe.`,
-    },
-    {
-      label: "E-Commerce",
-      icon: "👟",
-      value: `Sneaker product page. Large high-quality product image on a light gray background. Color selector swatches, size selector grid, and a sticky "Add to Cart" button at the bottom. Title and price in bold, oversized typography. Mobile app, single screen. Style: Neo-Brutalism. High contrast, thick black outlines on buttons and cards, hard shadows (no blur), unrefined geometry, bold solid colors (yellow and black). Trendy streetwear aesthetic.`,
-    },
-    {
-      label: "Meditation",
-      icon: "🧘",
-      value: `Meditation player screen. Central focus is a soft, abstract breathing bubble animation. Play/Pause controls and a time slider below. Background is a soothing solid pastel sage green. Mobile app, single screen. Style: Soft Minimal. Rounded corners on everything, low contrast text for relaxation, pastel color palette, very little UI clutter. Zen, calming, and therapeutic atmosphere.`,
-    },
-  ];
-
-  const handleSuggestionClick = (val: string) => {
-    setPromptText(val);
   };
 
   const handleSubmit = async () => {
@@ -555,220 +190,146 @@ const LandingSection = () => {
 
   return (
     <div
-      className={` w-full min-h-screen bg-background border-x border-border ${openSauceOne.className}`}
+      className={`w-full min-h-screen bg-background ${openSauceOne.className} ${instrumentSerif.variable}`}
     >
-      <div className="flex flex-col ">
-        <Header />
-        <BlurFade>
+      <LandingNav />
+
+      <LandingHero>
+        <div className="flex w-full flex-col items-center gap-5">
+          {/* Device type segmented control (glass, over the sky) */}
           <div
-            className={`relative  overflow-hidden py-4 mt-2 border border-border
-           `}
+            role="group"
+            aria-label="Design type"
+            className="relative grid grid-cols-2 rounded-full border border-white/30 bg-white/15 p-1 backdrop-blur-md"
           >
-            <div className="absolute inset-0 z-[-1]"></div>
             <div
-              className="max-w-6xl mx-auto flex flex-col
-         items-center justify-center gap-6 
-        "
-            >
-              <div className="inline-flex items-center gap-3 rounded-full border border-border bg-card px-4 py-1.5 shadow-sm">
-                {/* Overlapping avatars */}
-                <div className="flex -space-x-2">
-                  {["/men.webp", "/men.webp", "/men.webp"].map((src, i) => (
-                    <img
-                      key={i}
-                      src={src}
-                      alt="founder"
-                      className="size-6 rounded-full border-2 border-card object-cover"
-                    />
-                  ))}
-                </div>
-
-                <span className="text-xs font-medium text-foreground">
-                  Join 30,000+ app founders building today
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center ">
-                {/* <div
-                  className="flex items-center gap-2
-                 mx-auto text-center tracking-[-0.035em]"
-                >
-                  <span className="flex gap-0.75 mr-1.5">
-                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
-                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
-                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
-                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
-                    <Sparkle size={10} fill="#6248FF" color="#6248FF" />
-                  </span>
-                  <p
-                    className={`font-medium text-black/60 dark:text-zinc-200 text-sm leading-[1.55em] tracking-[-0.035em] ${inter.className}`}
-                  >
-                    5.0 rating . 110+ reviews
-                  </p>
-                </div> */}
-                <h1
-                  className="text-center font-bold  text-6xl
-            tracking-[-0.045em] leading-[1.22em] text-foreground pt-2.5 "
-                >
-                  Bring Your{" "}
-                  <span className="text-[#6466E9] dark:text-[#8b8dff]">
-                    Ideas to Life
-                  </span>
-                </h1>
-              </div>
-
-              <div
-                className=" flex w-full flex-col
-            item-center gap-8 relative "
-              >
-                <div className="w-full  flex flex-col items-center gap-6 py-2 ">
-                  <div className="relative flex rounded-lg bg-muted border border-border p-0.5 mb-4">
-                    <div
-                      className={cn(
-                        "absolute inset-y-0.5 w-1/2 rounded-xl bg-primary transition-transform duration-300 ease-in-out",
-                        deviceType === "web"
-                          ? "translate-x-full"
-                          : "translate-x-0",
-                      )}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setDeviceType("mobile")}
-                      className={cn(
-                        "relative z-10 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors ",
-                        deviceType === "mobile"
-                          ? "text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      Mobile App
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeviceType("web")}
-                      className={cn(
-                        "relative z-10 w-50 flex-1 px-4 py-3 text-sm  font-medium  rounded-xl transition-colors",
-                        deviceType === "web"
-                          ? "text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      Web Platform
-                    </button>
-                  </div>
-                  <PromptInput
-                    className=""
-                    promptText={promptText}
-                    setPromptText={setPromptText}
-                    isLoading={loadingState !== "idle" || isPending}
-                    loadingText={getLoadingText(loadingState, deviceType)}
-                    onSubmit={handleSubmit}
-                    selectedModel={selectedModel}
-                    onModelChange={handleModelChange}
-                    deviceType={deviceType}
-                    onDeviceTypeChange={setDeviceType}
-                    wireframeKind={wireframeKind}
-                    onWireframeKindChange={setWireframeKind}
-                    inspirationKind={inspirationKind}
-                    onInspirationKindChange={setInspirationKind}
-                  />
-                </div>
-
-                <div className="flex flex-wrap justify-center">
-                  {/* <Suggestions>
-                    {suggestions.map((s) => (
-                      <Suggestion
-                        key={s.label}
-                        suggestion={s.label}
-                        className="text-sm! h-7!   dark:bg-zinc-900 border border-zinc-900
-                      "
-                        onClick={() => handleSuggestionClick(s.value)}
-                      >
-                        {s.icon}
-                        <span>{s.label}</span>
-                      </Suggestion>
-                    ))}
-                  </Suggestions> */}
-                </div>
-              </div>
-            </div>
-          </div>
-        </BlurFade>
-        <TrustedBy />
-        {userId && (
-          <div className="w-full py-10 border-x border-border">
-            <div className="mx-auto max-w-3xl">
-              <div>
-                <h1
-                  className="font-medium text-xl
-              tracking-tight
-              "
-                >
-                  Recent Projects
-                </h1>
-
-                {isLoading ? (
-                  <div
-                    className="flex items-center
-                  justify-center py-2
-                  "
-                  >
-                    <Spinner className="size-10" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="mt-3">
-                      {projects && projects.length <= 10 ? (
-                        <ProjectsArc projects={projects} />
-                      ) : (
-                        <div
-                          className="grid grid-cols-1 sm:grid-cols-2
-                    md:grid-cols-3 gap-3 overflow-y-auto max-h-[80vh]"
-                        >
-                          {projects?.map((project: ProjectType) => (
-                            <ProjectCard key={project.id} project={project} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {!showAllProjects && projects && projects.length >= 9 && (
-                      <div className="flex justify-center mt-6">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowAllProjects(true)}
-                          className="px-6 rounded-none"
-                        >
-                          Show All Projects
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {isError && (
-                <p className="text-red-500">Failed to load projects</p>
+              aria-hidden
+              className={cn(
+                "absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-white shadow-sm transition-transform duration-300 ease-out",
+                deviceType === "web" ? "translate-x-full" : "translate-x-0",
               )}
-            </div>
+            />
+            <button
+              type="button"
+              onClick={() => setDeviceType("mobile")}
+              aria-pressed={deviceType !== "web"}
+              className={cn(
+                "relative z-10 whitespace-nowrap rounded-full px-6 py-2 text-center text-sm font-semibold transition-colors",
+                deviceType !== "web"
+                  ? "text-sky-700"
+                  : "text-white/90 hover:text-white",
+              )}
+            >
+              Mobile App
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeviceType("web")}
+              aria-pressed={deviceType === "web"}
+              className={cn(
+                "relative z-10 whitespace-nowrap rounded-full px-6 py-2 text-center text-sm font-semibold transition-colors",
+                deviceType === "web"
+                  ? "text-sky-700"
+                  : "text-white/90 hover:text-white",
+              )}
+            >
+              Web Platform
+            </button>
           </div>
-        )}
-      </div>
-      <ExploreTemplates />
-      <Lines />
-      <WhatYouGet />
-      <Lines />
-      <WorkingWithGimble />
-      {/* <FeaturesBento /> */}
 
-      <PricingPage />
-      {/* <HowItWorks /> */}
-      <Lines />
-      <LatestPost />
-      <Lines />
-      <UsersFeedback />
-      <Lines />
-      <Faq />
-      <FooterDemo />
+          <PromptInput
+            className="shadow-2xl"
+            promptText={promptText}
+            setPromptText={setPromptText}
+            isLoading={loadingState !== "idle" || isPending}
+            loadingText={getLoadingText(loadingState, deviceType)}
+            onSubmit={handleSubmit}
+            selectedModel={selectedModel}
+            onModelChange={handleModelChange}
+            deviceType={deviceType}
+            onDeviceTypeChange={setDeviceType}
+            wireframeKind={wireframeKind}
+            onWireframeKindChange={setWireframeKind}
+            inspirationKind={inspirationKind}
+            onInspirationKindChange={setInspirationKind}
+          />
+
+          {/* Prompt starters */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => setPromptText(s.value)}
+                className="rounded-full border border-white/30 bg-white/15 px-3.5 py-1.5 text-xs font-medium text-white backdrop-blur-md transition-colors hover:bg-white/30"
+              >
+                <span aria-hidden className="mr-1.5">
+                  {s.icon}
+                </span>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </LandingHero>
+
+      <LandingModelsStrip />
+
+      {/* Recent projects (signed-in users only) */}
+      {userId && (
+        <section className="w-full py-10">
+          <div className="mx-auto max-w-5xl px-6">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">
+              Recent Projects
+            </h2>
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Spinner className="size-10" />
+              </div>
+            ) : (
+              <>
+                <div className="mt-4">
+                  {projects && projects.length <= 10 ? (
+                    <ProjectsArc projects={projects} />
+                  ) : (
+                    <div className="grid max-h-[80vh] grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2 md:grid-cols-3">
+                      {projects?.map((project: ProjectType) => (
+                        <ProjectCard key={project.id} project={project} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {!showAllProjects && projects && projects.length >= 9 && (
+                  <div className="mt-6 flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAllProjects(true)}
+                      className="rounded-full px-6"
+                    >
+                      Show All Projects
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {isError && (
+              <p className="mt-4 text-sm text-red-500">
+                Failed to load projects
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
+      <LandingShowcase />
+      <LandingCapabilities />
+      <LandingPricing />
+      <LandingTestimonials />
+      <LandingFaq />
+      <LandingCta />
+      <LandingFooter />
     </div>
   );
 };
@@ -782,7 +343,7 @@ const cardVariants: Variants = {
     transition: {
       duration: 0.6,
       delay: index * 0.1,
-      ease: [0.22, 1, 0.36, 1], // Custom ease for futuristic feel
+      ease: [0.22, 1, 0.36, 1],
     },
   }),
 };
@@ -794,7 +355,7 @@ const ProjectsArc = ({ projects }: { projects: ProjectType[] }) => {
   return (
     <div
       ref={ref}
-      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3"
     >
       {projects.map((project: ProjectType, index: number) => (
         <motion.div
@@ -803,17 +364,7 @@ const ProjectsArc = ({ projects }: { projects: ProjectType[] }) => {
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
           variants={cardVariants}
-          whileHover={{ scale: 1.05, transition: { duration: 0.3 } }} // Subtle hover for modern feel
-          className="relative overflow-hidden" // Add futuristic glow on hover via CSS
-          style={
-            { "--glow-color": "rgba(0, 255, 255, 0.2)" } as React.CSSProperties
-          } // Cyan glow for futuristic
         >
-          <style>{`
-            .relative.overflow-hidden:hover {
-              box-shadow: 0 0 15px var(--glow-color);
-            }
-          `}</style>
           <ProjectCard project={project} />
         </motion.div>
       ))}
@@ -833,18 +384,18 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
   return (
     <div
       role="button"
-      className="w-full flex flex-col bg-card border border-border rounded-xl cursor-pointer overflow-hidden shadow-sm transition-transform hover:shadow-md hover:-translate-y-0.5"
+      className="flex w-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
       onClick={onRoute}
     >
-      <div className="h-40 relative overflow-hidden">
+      <div className="relative h-40 overflow-hidden">
         <DefaultProjectThumbnail
           projectId={project.id}
           deviceType={project.deviceType}
         />
       </div>
 
-      <div className="w-full border-t border-border p-4 sm:p-5 flex flex-col">
-        <h3 className="font-semibold text-[15px] leading-[1.5em] tracking-[-0.035em] mb-1.5 line-clamp-1 text-foreground">
+      <div className="flex w-full flex-col border-t border-border p-4 sm:p-5">
+        <h3 className="mb-1.5 line-clamp-1 text-[15px] font-semibold leading-[1.5em] tracking-[-0.035em] text-foreground">
           {project.name}
         </h3>
         <p className="text-xs text-muted-foreground">{timeAgo}</p>

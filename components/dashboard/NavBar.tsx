@@ -1,43 +1,37 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search } from "lucide-react";
+import { useTheme } from "next-themes";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import { useProfile } from "@/context/profile-provider";
+  Coins01Icon,
+  Moon01Icon,
+  SparklesIcon,
+  Sun01Icon,
+} from "@hugeicons/core-free-icons";
+import { authClient } from "@/lib/auth-client";
+import { useGetCredits } from "@/features/use-credits";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
   href: string;
   label: string;
   badge?: string;
-  /** Optional additional paths under which this item is considered active. */
-  matchPrefixes?: string[];
 };
 
-// Single source of truth for the top nav — reorder / extend here.
+/* Only real destinations — no placeholder links. */
 const NAV_ITEMS: NavItem[] = [
-  { href: "/explore", label: "Explore" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/projects", label: "Projects" },
   { href: "/mini-tools", label: "Mini Tools", badge: "New" },
-  { href: "/dashboard", label: "Mobile App" },
-  // No dedicated /web route yet — points at dashboard. Update when one exists.
-  { href: "/dashboard?type=web", label: "Web Platform" },
-  // Placeholder until an /assets route exists.
-  { href: "#", label: "Assets" },
-  { href: "/Pricing", label: "Pricing" },
+  { href: "/explore", label: "Explore" },
 ];
 
 function isItemActive(pathname: string, item: NavItem): boolean {
-  if (item.href === "#") return false;
   const base = item.href.split("?")[0];
-  if (base === "/") return pathname === "/";
-  if (pathname === base) return true;
-  if (pathname.startsWith(`${base}/`)) return true;
-  return item.matchPrefixes?.some((p) => pathname.startsWith(p)) ?? false;
+  return pathname === base || pathname.startsWith(`${base}/`);
 }
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
@@ -48,8 +42,6 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       className={cn(
         "group relative inline-flex items-center gap-1.5 py-2 text-[13.5px] transition-colors outline-none",
         "focus-visible:text-foreground",
-        // Active page is signalled by weight + colour, not a permanent
-        // underline. The underline below is hover/focus only.
         active
           ? "font-semibold text-foreground"
           : "font-medium text-muted-foreground hover:text-foreground",
@@ -57,80 +49,73 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     >
       <span>{item.label}</span>
       {item.badge && (
-        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+        <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
           {item.badge}
         </span>
       )}
-      {/* Hover/focus underline — scales in from centre. Only the hovered
-          link shows one, so there's never more than one underline at a time. */}
+      {/* Hover/focus underline — scales in from centre. */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 -bottom-px h-[2px] origin-center scale-x-0 rounded-full bg-foreground transition-transform duration-200 ease-out group-hover:scale-x-100 group-focus-visible:scale-x-100"
+        className={cn(
+          "pointer-events-none absolute inset-x-0 -bottom-px h-0.5 origin-center rounded-full transition-transform duration-200 ease-out",
+          active
+            ? "scale-x-100 bg-sky-500"
+            : "scale-x-0 bg-foreground group-hover:scale-x-100 group-focus-visible:scale-x-100",
+        )}
       />
     </Link>
   );
 }
 
-function SearchBar() {
+/** Live credit balance — links to pricing, where credits come from. */
+function CreditsPill() {
+  const { data: session } = authClient.useSession();
+  const { data: credits, isLoading } = useGetCredits(session?.user?.id);
+  const value = isLoading
+    ? "…"
+    : `${credits != null ? Math.max(0, Math.floor(Number(credits))) : 0}`;
+
   return (
-    <div
-      className={cn(
-        "group flex h-9 items-center gap-2 rounded-full border border-border/60 bg-muted/60 pl-3 pr-1.5",
-        "transition-colors hover:bg-muted focus-within:border-border focus-within:bg-background"
-      )}
+    <Link
+      href="/Pricing"
+      title="Credits remaining"
+      className="flex h-9 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 text-[13px] font-semibold tabular-nums text-foreground shadow-sm transition-colors hover:border-sky-300 dark:hover:border-sky-500/40"
     >
-      <Search
-        className="size-4 text-muted-foreground"
-        strokeWidth={2}
-        aria-hidden
+      <HugeiconsIcon
+        icon={Coins01Icon}
+        size={15}
+        color="currentColor"
+        strokeWidth={1.75}
+        className="text-sky-600 dark:text-sky-400"
       />
-      <input
-        type="search"
-        placeholder="Search"
-        aria-label="Search"
-        className="w-40 bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none"
-      />
-      <kbd
-        aria-hidden
-        className="hidden items-center gap-0.5 rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-[10.5px] font-medium text-muted-foreground sm:inline-flex"
-      >
-        <span className="text-[12px] leading-none">⌘</span>
-        <span>K</span>
-      </kbd>
-    </div>
+      {value}
+    </Link>
   );
 }
 
-function ProfileAvatar() {
-  const { data: profile } = useProfile();
-
-  const initials = (profile?.name || profile?.email || "U")
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
     <button
       type="button"
-      aria-label="Open profile menu"
-      className="relative inline-flex size-9 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
     >
-      <Avatar className="size-9">
-        <AvatarImage
-          src={profile?.profilePicture ?? undefined}
-          alt={profile?.name ?? "User avatar"}
+      {mounted ? (
+        <HugeiconsIcon
+          icon={isDark ? Sun01Icon : Moon01Icon}
+          size={18}
+          color="currentColor"
+          strokeWidth={1.75}
         />
-        <AvatarFallback className="bg-neutral-900 text-[11px] font-semibold text-white dark:bg-neutral-700">
-          {initials}
-        </AvatarFallback>
-      </Avatar>
-      <span
-        aria-hidden
-        className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-background bg-emerald-500"
-      />
+      ) : (
+        <span className="size-4.5" />
+      )}
     </button>
   );
 }
@@ -145,38 +130,39 @@ const NavBar = () => {
         // Sticky inside <main> so content scrolls *under* the navbar —
         // this is what makes backdrop-blur actually visible.
         "sticky top-0 z-30",
-        // Height locked to 68px so the bottom edge aligns exactly with the
-        // sidebar's brand-row bottom edge (sidebar uses py-4 + h-9 = 68px).
-        "flex h-[68px] w-full items-center justify-between",
+        // Height matches the sidebar brand row (h-17) so the borders align.
+        "flex h-17 w-full items-center justify-between",
         "border-b border-border/60",
         "px-4 sm:px-6 lg:px-8 xl:px-10",
-        // Smoky glassmorphic surface. Solid-ish fallback for browsers
-        // without backdrop-filter; much more translucent when supported so
-        // the blur reads. Saturation boost gives the "frosted" feel.
-        "bg-background/80 supports-[backdrop-filter]:bg-background/55",
+        "bg-background/80 supports-backdrop-filter:bg-background/55",
         "backdrop-blur-xl backdrop-saturate-200",
       )}
     >
       {/* Left: nav items */}
       <ul className="flex items-center gap-6">
         {NAV_ITEMS.map((item) => (
-          <li key={`${item.label}-${item.href}`}>
+          <li key={item.href}>
             <NavLink item={item} active={isItemActive(pathname, item)} />
           </li>
         ))}
       </ul>
 
-      {/* Right: search, notifications, avatar */}
+      {/* Right: credits, theme, upgrade */}
       <div className="flex items-center gap-2">
-        <SearchBar />
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        <CreditsPill />
+        <ThemeToggle />
+        <Link
+          href="/Pricing"
+          className="flex h-9 items-center gap-1.5 rounded-full bg-sky-500 px-4 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-sky-600"
         >
-          <Bell className="size-[18px]" strokeWidth={1.75} aria-hidden />
-        </button>
-        <ProfileAvatar />
+          <HugeiconsIcon
+            icon={SparklesIcon}
+            size={15}
+            color="currentColor"
+            strokeWidth={2}
+          />
+          Upgrade
+        </Link>
       </div>
     </nav>
   );

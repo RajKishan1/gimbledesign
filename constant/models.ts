@@ -8,10 +8,10 @@ export interface ModelOption {
 
 export const AI_MODELS: ModelOption[] = [
   {
-    id: "anthropic/claude-sonnet-4.5",
-    name: "Claude Sonnet 4.5",
+    id: "anthropic/claude-opus-4.8",
+    name: "Claude Opus 4.8",
     provider: "Anthropic",
-    description: "Latest Claude Sonnet model - high quality",
+    description: "Anthropic's most powerful model - highest quality",
     useCase: "generation",
   },
   {
@@ -47,7 +47,7 @@ export const AI_MODELS: ModelOption[] = [
 // Auto = use Gemini 3 Pro by default (no GPT or others)
 export const AUTO_MODEL_ID = "auto";
 
-/** Models shown in the prompt input dropdown: Auto, Gemini Pro, Gemini Flash, Sonnet (no GPT) */
+/** Models shown in the prompt input dropdown: Auto, Gemini Pro, Gemini Flash, Opus (no GPT) */
 export const SELECTABLE_MODELS: ModelOption[] = [
   {
     id: AUTO_MODEL_ID,
@@ -71,10 +71,10 @@ export const SELECTABLE_MODELS: ModelOption[] = [
     useCase: "analysis",
   },
   {
-    id: "anthropic/claude-sonnet-4.5",
-    name: "Claude Sonnet 4.5",
+    id: "anthropic/claude-opus-4.8",
+    name: "Claude Opus 4.8",
     provider: "Anthropic",
-    description: "Latest Claude Sonnet - high quality",
+    description: "Anthropic's most powerful model - highest quality",
     useCase: "generation",
   },
   {

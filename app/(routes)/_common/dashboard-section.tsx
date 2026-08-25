@@ -23,22 +23,24 @@ import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  FolderOpenDotIcon,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Copy,
-  Users,
-  ArrowRight,
-  Compass,
-  Star,
-  Search,
-} from "lucide-react";
+  Copy01Icon,
+  CompassIcon,
+  Delete02Icon,
+  MoreVerticalIcon,
+  PencilEdit01Icon,
+  SmartPhone01Icon,
+  StarIcon,
+  WebDesign01Icon,
+  Layout01Icon,
+  Image01Icon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { motion, useInView, Variants } from "framer-motion";
 import { DeviceType } from "@/components/prompt-input";
-import { openSauceOne } from "@/app/fonts";
+import { openSauceOne, instrumentSerif } from "@/app/fonts";
 import { getGenerationModel } from "@/constant/models";
 import { toast } from "sonner";
 import {
@@ -234,32 +236,30 @@ const DashboardSection = () => {
               backdrop-blur "frosted glass" effect actually sees content
               scrolling underneath it. */}
           <NavBar />
-          {/* Hero */}
-          <div className="relative overflow-hidden py-12 sm:py-16 px-4 sm:px-6 lg:px-8 xl:px-10">
+          {/* Hero — id anchors the NewModel banner's "Try" CTA. */}
+          <div
+            id="new-design"
+            className={`relative overflow-hidden py-12 sm:py-16 px-4 sm:px-6 lg:px-8 xl:px-10 ${instrumentSerif.variable}`}
+          >
+            {/* Quiet sky wash behind the prompt area — ties to the landing. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-0 -z-10 h-80 w-200 -translate-x-1/2 rounded-full bg-sky-100/60 blur-[100px] dark:bg-sky-500/8"
+            />
             <div className="w-full max-w-3xl mx-auto flex flex-col items-center">
-              {/* Personalized welcome chip — pulls the first name from the
-                  server-prefetched profile, falls back to the session, then
-                  to a friendly "there" if nothing's available. */}
-              <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-border/60 bg-card/80 px-4 py-1.5 shadow-sm backdrop-blur-sm">
-                <span
-                  aria-hidden
-                  className="inline-block size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25"
-                />
-                <p className="text-sm font-medium text-foreground/85">
-                  Welcome back,{" "}
-                  <span className="font-semibold text-foreground">
-                    {(profile?.name || user?.name || "")
-                      .toString()
-                      .trim()
-                      .split(" ")[0] || "there"}
-                  </span>
-                </p>
-              </div>
-              <h1 className="text-center font-bold text-[34px] sm:text-[44px] md:text-6xl mt-0 mb-6 tracking-tight leading-[1.05] text-foreground">
-                Bring Your{" "}
-                <span className="text-[#6466E9] dark:text-[#8b8dff]">
-                  Ideas to Life
-                </span>
+              <p className="mb-2.5 text-sm font-medium text-muted-foreground">
+                Welcome back,{" "}
+                {(profile?.name || user?.name || "")
+                  .toString()
+                  .trim()
+                  .split(" ")[0] || "there"}
+              </p>
+              <h1 className="font-display mb-7 text-center text-[38px] leading-[1.08] text-foreground sm:text-5xl md:text-[56px]">
+                What will you design{" "}
+                <em className="italic text-sky-600 dark:text-sky-400">
+                  today
+                </em>
+                ?
               </h1>
 
               <div className="w-full flex flex-col items-center gap-6">
@@ -282,7 +282,7 @@ const DashboardSection = () => {
                             (deviceType === "wireframe"
                               ? wireframeKind
                               : inspirationKind) === "web"
-                              ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                              ? "bg-sky-500 text-white shadow-sm"
                               : "text-muted-foreground hover:text-foreground",
                           )}
                         >
@@ -300,7 +300,7 @@ const DashboardSection = () => {
                             (deviceType === "wireframe"
                               ? wireframeKind
                               : inspirationKind) === "mobile"
-                              ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                              ? "bg-sky-500 text-white shadow-sm"
                               : "text-muted-foreground hover:text-foreground",
                           )}
                         >
@@ -319,10 +319,17 @@ const DashboardSection = () => {
                     </Link>
                   </div>
                 ) : (
-                  <div className="relative flex rounded-lg bg-muted p-0.5">
+                  <div
+                    role="group"
+                    aria-label="Design type"
+                    className="relative grid grid-cols-2 rounded-full border border-border/60 bg-muted p-1"
+                  >
+                    {/* Sliding thumb — exactly one grid cell wide, so it
+                        always matches the segment above it. */}
                     <div
+                      aria-hidden
                       className={cn(
-                        "absolute inset-y-0.5 w-1/2 rounded-xl bg-foreground dark:bg-primary transition-transform duration-300 ease-in-out",
+                        "absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-card shadow-[0_1px_2px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.06)] ring-1 ring-black/4 transition-transform duration-300 ease-out dark:ring-white/10",
                         deviceType === "web"
                           ? "translate-x-full"
                           : "translate-x-0",
@@ -331,25 +338,39 @@ const DashboardSection = () => {
                     <button
                       type="button"
                       onClick={() => setDeviceType("mobile")}
+                      aria-pressed={deviceType === "mobile"}
                       className={cn(
-                        "relative z-10 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
+                        "relative z-10 flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-5 py-2 text-sm transition-colors",
                         deviceType === "mobile"
-                          ? "text-white dark:text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground",
+                          ? "font-semibold text-sky-600 dark:text-sky-400"
+                          : "font-medium text-muted-foreground hover:text-foreground",
                       )}
                     >
+                      <HugeiconsIcon
+                        icon={SmartPhone01Icon}
+                        size={15}
+                        color="currentColor"
+                        strokeWidth={deviceType === "mobile" ? 2 : 1.75}
+                      />
                       Mobile App
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeviceType("web")}
+                      aria-pressed={deviceType === "web"}
                       className={cn(
-                        "relative z-10 w-50 flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
+                        "relative z-10 flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-5 py-2 text-sm transition-colors",
                         deviceType === "web"
-                          ? "text-white dark:text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground",
+                          ? "font-semibold text-sky-600 dark:text-sky-400"
+                          : "font-medium text-muted-foreground hover:text-foreground",
                       )}
                     >
+                      <HugeiconsIcon
+                        icon={WebDesign01Icon}
+                        size={15}
+                        color="currentColor"
+                        strokeWidth={deviceType === "web" ? 2 : 1.75}
+                      />
                       Web Platform
                     </button>
                   </div>
@@ -421,14 +442,15 @@ const DashboardSection = () => {
                   My Projects
                 </h2>
                 <div className="flex items-center gap-3">
-                  <div className="flex rounded-lg bg-muted p-0.5">
+                  <div className="flex rounded-full border border-border bg-muted p-1">
                     <button
                       type="button"
                       onClick={() => setProjectsFilter("all")}
+                      aria-pressed={projectsFilter === "all"}
                       className={cn(
-                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                        "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
                         projectsFilter === "all"
-                          ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                          ? "bg-sky-500 text-white shadow-sm"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >
@@ -437,21 +459,22 @@ const DashboardSection = () => {
                     <button
                       type="button"
                       onClick={() => setProjectsFilter("favorites")}
+                      aria-pressed={projectsFilter === "favorites"}
                       className={cn(
-                        "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                        "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
                         projectsFilter === "favorites"
-                          ? "bg-foreground text-white dark:bg-primary dark:text-primary-foreground"
+                          ? "bg-sky-500 text-white shadow-sm"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      Favourites
+                      Favorites
                     </button>
                   </div>
                   <Link
                     href="/projects"
-                    className="text-sm font-medium text-foreground hover:text-primary transition-colors shrink-0 flex items-center gap-1"
+                    className="flex shrink-0 items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-sky-600 dark:hover:text-sky-400"
                   >
-                    Browse All
+                    View all
                     <ArrowRight className="size-4" />
                   </Link>
                 </div>
@@ -831,19 +854,19 @@ export const ProjectCard = memo(
       addSuffix: true,
     });
 
-    const deviceLabel =
+    const device =
       project.deviceType === "web"
-        ? "Web App"
+        ? { label: "Web", icon: WebDesign01Icon }
         : project.deviceType === "mobile"
-          ? "iOS"
+          ? { label: "Mobile", icon: SmartPhone01Icon }
           : project.deviceType === "wireframe"
-            ? "Wireframe"
-            : "Inspirations";
+            ? { label: "Wireframe", icon: Layout01Icon }
+            : { label: "Inspirations", icon: Image01Icon };
 
     return (
       <div
         role="button"
-        className="w-full flex flex-col rounded-xl cursor-pointer overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-transform duration-200 will-change-transform relative bg-card border border-border"
+        className="group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-200 will-change-transform hover:-translate-y-0.5 hover:border-sky-300/60 hover:shadow-lg dark:hover:border-sky-500/30"
         onClick={() => router.push(`/project/${project.id}`)}
       >
         <div className="h-44 relative overflow-hidden">
@@ -851,8 +874,26 @@ export const ProjectCard = memo(
             projectId={project.id}
             deviceType={project.deviceType}
           />
+
+          {/* Favorite marker — only when set, quiet amber. */}
+          {project.isFavorite && (
+            <span
+              className="absolute left-2 top-2 z-10 flex size-7 items-center justify-center rounded-full bg-black/45 text-amber-300 backdrop-blur-sm"
+              title="Favorite"
+            >
+              <HugeiconsIcon
+                icon={StarIcon}
+                size={14}
+                color="currentColor"
+                strokeWidth={2}
+                fill="currentColor"
+              />
+            </span>
+          )}
+
+          {/* Options — revealed on hover/focus so cards stay quiet at rest. */}
           <div
-            className="absolute top-2 right-2 z-10"
+            className="absolute top-2 right-2 z-10 opacity-0 transition-opacity duration-200 focus-within:opacity-100 group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
             <DropdownMenu>
@@ -860,10 +901,15 @@ export const ProjectCard = memo(
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white border-0 shadow-sm"
+                  className="h-8 w-8 rounded-full border-0 bg-black/45 text-white shadow-sm backdrop-blur-sm hover:bg-black/60"
                   aria-label="Project options"
                 >
-                  <MoreVertical className="size-4" />
+                  <HugeiconsIcon
+                    icon={MoreVerticalIcon}
+                    size={16}
+                    color="currentColor"
+                    strokeWidth={2}
+                  />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -880,11 +926,12 @@ export const ProjectCard = memo(
                   }}
                   disabled={isTogglingFavorite}
                 >
-                  <Star
-                    className={cn(
-                      "size-4",
-                      project.isFavorite && "fill-current",
-                    )}
+                  <HugeiconsIcon
+                    icon={StarIcon}
+                    size={16}
+                    color="currentColor"
+                    strokeWidth={1.75}
+                    fill={project.isFavorite ? "currentColor" : "none"}
                   />
                   {project.isFavorite
                     ? "Remove from Favorites"
@@ -896,7 +943,12 @@ export const ProjectCard = memo(
                     onRename(project);
                   }}
                 >
-                  <Pencil className="size-4" />
+                  <HugeiconsIcon
+                    icon={PencilEdit01Icon}
+                    size={16}
+                    color="currentColor"
+                    strokeWidth={1.75}
+                  />
                   Rename
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -906,7 +958,12 @@ export const ProjectCard = memo(
                   }}
                   disabled={isDuplicating}
                 >
-                  <Copy className="size-4" />
+                  <HugeiconsIcon
+                    icon={Copy01Icon}
+                    size={16}
+                    color="currentColor"
+                    strokeWidth={1.75}
+                  />
                   Duplicate
                 </DropdownMenuItem>
                 {isAdmin && onMoveToExplore && (
@@ -920,7 +977,12 @@ export const ProjectCard = memo(
                     }}
                     disabled={isMovingToExplore}
                   >
-                    <Compass className="size-4" />
+                    <HugeiconsIcon
+                      icon={CompassIcon}
+                      size={16}
+                      color="currentColor"
+                      strokeWidth={1.75}
+                    />
                     {project.isExplore
                       ? "Remove from Explore"
                       : "Move to Explore"}
@@ -933,7 +995,12 @@ export const ProjectCard = memo(
                     onDelete(project);
                   }}
                 >
-                  <Trash2 className="size-4" />
+                  <HugeiconsIcon
+                    icon={Delete02Icon}
+                    size={16}
+                    color="currentColor"
+                    strokeWidth={1.75}
+                  />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -941,13 +1008,22 @@ export const ProjectCard = memo(
           </div>
         </div>
 
-        <div className="w-full p-4 flex flex-col">
-          <h3 className="font-semibold text-[15px] leading-[1.4] mb-1 line-clamp-1 text-card-foreground">
-            {project.name}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {timeAgo} • {deviceLabel}
-          </p>
+        <div className="flex w-full items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <h3 className="mb-1 line-clamp-1 text-[15px] font-semibold leading-[1.4] text-card-foreground">
+              {project.name}
+            </h3>
+            <p className="text-xs text-muted-foreground">{timeAgo}</p>
+          </div>
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+            <HugeiconsIcon
+              icon={device.icon}
+              size={13}
+              color="currentColor"
+              strokeWidth={1.75}
+            />
+            {device.label}
+          </span>
         </div>
       </div>
     );

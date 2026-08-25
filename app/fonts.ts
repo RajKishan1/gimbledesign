@@ -1,4 +1,14 @@
 import localFont from "next/font/local";
+import { Instrument_Serif } from "next/font/google";
+
+/** Serif display face for landing-page headlines. */
+export const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
 
 export const openSauceOne = localFont({
   src: [

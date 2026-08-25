@@ -323,6 +323,7 @@ function SidebarToggleIcon() {
 function modelShortLabel(modelId: string) {
   if (modelId === "auto") return "Auto";
   if (modelId.includes("flash")) return "Flash";
+  if (modelId.includes("opus")) return "Opus";
   if (modelId.includes("sonnet")) return "Sonnet";
   if (modelId.includes("3.1-pro") || modelId.includes("gemini-3.1")) return "Pro";
   if (modelId.includes("3-pro") || modelId.includes("gemini-3")) return "Pro";

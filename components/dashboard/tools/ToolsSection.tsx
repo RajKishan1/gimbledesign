@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 import ToolCard from "./ToolCard";
 import { TOOLS, type Tool } from "./tools-data";
 
@@ -48,8 +49,15 @@ export default function ToolsSection() {
 
           <div className="flex shrink-0 items-center gap-3">
             {/* Search input */}
-            <div className="flex h-10 items-center gap-2 rounded-full border border-border/60 bg-card px-4 shadow-sm transition-colors focus-within:border-border">
-              <Search className="size-4 text-muted-foreground" aria-hidden />
+            <div className="flex h-10 items-center gap-2 rounded-full border border-border/60 bg-card px-4 shadow-sm transition-colors focus-within:border-sky-300 dark:focus-within:border-sky-500/40">
+              <HugeiconsIcon
+                icon={Search01Icon}
+                size={16}
+                color="currentColor"
+                strokeWidth={1.75}
+                className="text-muted-foreground"
+                aria-hidden
+              />
               <input
                 type="search"
                 placeholder="Search tools..."
@@ -59,18 +67,6 @@ export default function ToolsSection() {
                 className="w-40 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none sm:w-48"
               />
             </div>
-
-            {/* Filter dropdown — placeholder, wire up later. */}
-            <button
-              type="button"
-              className="flex h-10 items-center gap-2 rounded-full border border-border/60 bg-card px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted"
-            >
-              All Tools
-              <ChevronDown
-                className="size-4 text-muted-foreground"
-                aria-hidden
-              />
-            </button>
           </div>
         </div>
 

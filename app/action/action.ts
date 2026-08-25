@@ -17,9 +17,21 @@ export async function generateProjectName(
       `,
       prompt: prompt,
     });
-    return text?.trim() || "Untitled Project";
+    return text?.trim() || fallbackName(prompt);
   } catch (error) {
     console.log(error);
-    return "Untitled Project";
+    return fallbackName(prompt);
   }
+}
+
+/** Title-cased first words of the prompt — better than "Untitled Project"
+ *  when the naming model is unavailable. */
+function fallbackName(prompt: string): string {
+  const words = prompt
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 4)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  return words.join(" ") || "Untitled Project";
 }

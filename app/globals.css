@@ -3,10 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* 60-30-10 design system: 60% base, 30% secondary, 10% accent (neon) */
+/* 60-30-10 design system: 60% base, 30% secondary, 10% accent (sky) */
 :root {
-  --neon: #39FF14;
-  /* Light theme: #f2f2f2 (60%), white (30%), neon (10%) */
+  /* Brand accent — sky-600. (Var keeps its historical name; the old neon
+     green is gone.) White text on this passes WCAG AA. */
+  --neon: #0284c7;
+  /* Light theme: #f2f2f2 (60%), white (30%), sky (10%) */
   --background: #f2f2f2;
   --foreground: #1a1a1a;
   --card: #ffffff;
@@ -14,7 +16,7 @@
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
   --primary: var(--neon);
-  --primary-foreground: #0a0a0a;
+  --primary-foreground: #ffffff;
   --secondary: #ffffff;
   --secondary-foreground: #1a1a1a;
   --muted: #ffffff;
@@ -27,14 +29,14 @@
   --input: #e5e5e5;
   --ring: var(--neon);
   --chart-1: var(--neon);
-  --chart-2: #00d4aa;
-  --chart-3: #00ffcc;
-  --chart-4: #00ffb3;
-  --chart-5: #00e68a;
+  --chart-2: #38bdf8;
+  --chart-3: #7dd3fc;
+  --chart-4: #0369a1;
+  --chart-5: #6366f1;
   --sidebar: #ffffff;
   --sidebar-foreground: #1a1a1a;
   --sidebar-primary: var(--neon);
-  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f2f2f2;
   --sidebar-accent-foreground: #1a1a1a;
   --sidebar-border: #e5e5e5;
@@ -74,7 +76,9 @@
 }
 
 .dark {
-  /* Dark theme: #141414 (60%), #262626 (30%), neon (10%) */
+  /* Dark theme: #141414 (60%), #262626 (30%), sky (10%) */
+  /* Lighter sky on dark surfaces; deep sky-950 text keeps it readable. */
+  --neon: #38bdf8;
   --black: #0a0a0a;
   --background: #141414;
   --foreground: #f2f2f2;
@@ -83,7 +87,7 @@
   --popover: #262626;
   --popover-foreground: #f2f2f2;
   --primary: var(--neon);
-  --primary-foreground: #0a0a0a;
+  --primary-foreground: #082f49;
   --secondary: #202020;
   --secondary-foreground: #f2f2f2;
   --muted: #262626;
@@ -96,14 +100,14 @@
   --input: #404040;
   --ring: var(--neon);
   --chart-1: var(--neon);
-  --chart-2: #00d4aa;
-  --chart-3: #00ffcc;
-  --chart-4: #00ffb3;
-  --chart-5: #00e68a;
+  --chart-2: #38bdf8;
+  --chart-3: #7dd3fc;
+  --chart-4: #0369a1;
+  --chart-5: #6366f1;
   --sidebar: #262626;
   --sidebar-foreground: #f2f2f2;
   --sidebar-primary: var(--neon);
-  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-primary-foreground: #082f49;
   --sidebar-accent: #333333;
   --sidebar-accent-foreground: #f2f2f2;
   --sidebar-border: #404040;
@@ -276,6 +280,67 @@
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(150, 150, 150, 0.5);
+}
+
+/* ---------- Landing v2 ---------- */
+
+/* Serif display face for landing headlines */
+.font-display {
+  font-family: var(--font-instrument-serif), ui-serif, Georgia, serif;
+}
+
+/* Infinite marquee for the showcase gallery (track holds 2 copies of the row) */
+@keyframes landing-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.landing-marquee {
+  animation: landing-marquee var(--marquee-duration, 60s) linear infinite;
+}
+.landing-marquee-reverse {
+  animation-direction: reverse;
+}
+.landing-marquee-group:hover .landing-marquee {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquee {
+    animation: none;
+  }
+}
+
+/* Soft edge fade on marquee rows */
+.landing-fade-x {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+}
+
+/* Gentle float for decorative flower accents */
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(4deg);
+  }
+}
+.landing-float {
+  animation: landing-float 7s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-float {
+    animation: none;
+  }
 }
 
 /* Generate button shimmer while loading */

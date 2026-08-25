@@ -19,7 +19,8 @@ import { ArrowLeft } from "lucide-react";
 import { ProjectsGrid } from "../_common/dashboard-section";
 
 export default function ProjectsPage() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const user = session?.user;
   const router = useRouter();
   const { data: profile } = useProfile();
@@ -27,9 +28,20 @@ export default function ProjectsPage() {
   const moveToExplore = useMoveProjectToExplore();
   const isAdmin = profile?.role === "admin";
 
+  // Redirect as an effect, not during render — pushing mid-render touches
+  // `location` during prerender and throws on the server.
+  React.useEffect(() => {
+    if (!isSessionPending && !user) {
+      router.push("/login");
+    }
+  }, [isSessionPending, user, router]);
+
   if (!user) {
-    router.push("/login");
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Spinner className="size-8 text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
