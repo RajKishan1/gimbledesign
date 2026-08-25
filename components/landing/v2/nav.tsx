@@ -9,7 +9,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { label: "How it works", href: "/Howitworks" },
+  
   { label: "Showcases", href: "/explore" },
   { label: "Pricing", href: "/Pricing" },
   { label: "FAQ", href: "/FAQ" },
@@ -50,7 +50,7 @@ const LandingNav = () => {
           gimble<span className="text-sky-600 dark:text-sky-400">.</span>
         </Link>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden xl:pl-16 items-center gap-1 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
