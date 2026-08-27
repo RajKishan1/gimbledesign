@@ -18,18 +18,18 @@ const models: Model[] = [
     bg: "#",
     glow: "",
     icon: (
-        <img src="/landing/clogo.webp" className="" alt="" />
-    //   <svg
-    //     viewBox="0 0 24 24"
-    //     fill="none"
-    //     stroke="#F97316"
-    //     strokeWidth="1.8"
-    //     strokeLinecap="round"
-    //     className="h-5 w-5"
-    //   >
-    //     <path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
-    //     <circle cx="12" cy="12" r="3.2" fill="#F97316" stroke="none" />
-    //   </svg>
+      <img src="/landing/clogo.webp" className="" alt="" />
+      //   <svg
+      //     viewBox="0 0 24 24"
+      //     fill="none"
+      //     stroke="#F97316"
+      //     strokeWidth="1.8"
+      //     strokeLinecap="round"
+      //     className="h-5 w-5"
+      //   >
+      //     <path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+      //     <circle cx="12" cy="12" r="3.2" fill="#F97316" stroke="none" />
+      //   </svg>
     ),
   },
   {
@@ -38,10 +38,10 @@ const models: Model[] = [
     bg: "#",
     glow: "rgba(139,92,246,0.35)",
     icon: (
-        <img src="/landing/glogo.webp" alt="" />
-    //   <svg viewBox="0 0 24 24" fill="#8B5CF6" className="h-5 w-5">
-    //     <path d="M12 2c.6 4.6 2.8 6.8 7.4 7.4-4.6.6-6.8 2.8-7.4 7.4-.6-4.6-2.8-6.8-7.4-7.4C9.2 8.8 11.4 6.6 12 2z" />
-    //   </svg>
+      <img src="/landing/glogo.webp" alt="" />
+      //   <svg viewBox="0 0 24 24" fill="#8B5CF6" className="h-5 w-5">
+      //     <path d="M12 2c.6 4.6 2.8 6.8 7.4 7.4-4.6.6-6.8 2.8-7.4 7.4-.6-4.6-2.8-6.8-7.4-7.4C9.2 8.8 11.4 6.6 12 2z" />
+      //   </svg>
     ),
   },
   {
@@ -50,9 +50,10 @@ const models: Model[] = [
     bg: "#0F172A",
     glow: "rgba(15,23,42,0.35)",
     icon: (
-      <svg viewBox="0 0 24 24" fill="#ffffff" className="h-5 w-5">
-        <path d="M14 3a9 9 0 1 0 7 14.6A9 9 0 0 1 14 3z" />
-      </svg>
+      <img src="/landing/klogo.webp" alt="" />
+      // <svg viewBox="0 0 24 24" fill="#ffffff" className="h-5 w-5">
+      //   <path d="M14 3a9 9 0 1 0 7 14.6A9 9 0 0 1 14 3z" />
+      // </svg>
     ),
   },
   {
@@ -61,15 +62,78 @@ const models: Model[] = [
     bg: "#F1F0FA",
     glow: "rgba(109,93,211,0.35)",
     icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#6D5DD3"
-        strokeWidth="1.6"
-        className="h-5 w-5"
-      >
-        <path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z" />
-      </svg>
+      <img src="/landing/qlogo.webp" alt="" />
+      // <svg
+      //   viewBox="0 0 24 24"
+      //   fill="none"
+      //   stroke="#6D5DD3"
+      //   strokeWidth="1.6"
+      //   className="h-5 w-5"
+      // >
+      //   <path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z" />
+      // </svg>
+    ),
+  },
+  {
+    name: "Claude Opus 4.8",
+    provider: "Anthropic",
+    bg: "#",
+    glow: "",
+    icon: (
+      <img src="/landing/clogo.webp" className="" alt="" />
+      //   <svg
+      //     viewBox="0 0 24 24"
+      //     fill="none"
+      //     stroke="#F97316"
+      //     strokeWidth="1.8"
+      //     strokeLinecap="round"
+      //     className="h-5 w-5"
+      //   >
+      //     <path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+      //     <circle cx="12" cy="12" r="3.2" fill="#F97316" stroke="none" />
+      //   </svg>
+    ),
+  },
+  {
+    name: "Gemini 3 Pro",
+    provider: "Google",
+    bg: "#",
+    glow: "rgba(139,92,246,0.35)",
+    icon: (
+      <img src="/landing/glogo.webp" alt="" />
+      //   <svg viewBox="0 0 24 24" fill="#8B5CF6" className="h-5 w-5">
+      //     <path d="M12 2c.6 4.6 2.8 6.8 7.4 7.4-4.6.6-6.8 2.8-7.4 7.4-.6-4.6-2.8-6.8-7.4-7.4C9.2 8.8 11.4 6.6 12 2z" />
+      //   </svg>
+    ),
+  },
+  {
+    name: "Kimi 2.5",
+    provider: "Moonshot AI",
+    bg: "#0F172A",
+    glow: "rgba(15,23,42,0.35)",
+    icon: (
+      <img src="/landing/klogo.webp" alt="" />
+      // <svg viewBox="0 0 24 24" fill="#ffffff" className="h-5 w-5">
+      //   <path d="M14 3a9 9 0 1 0 7 14.6A9 9 0 0 1 14 3z" />
+      // </svg>
+    ),
+  },
+  {
+    name: "Qwen 3.5 Plus",
+    provider: "Alibaba",
+    bg: "#F1F0FA",
+    glow: "rgba(109,93,211,0.35)",
+    icon: (
+      <img src="/landing/qlogo.webp" alt="" />
+      // <svg
+      //   viewBox="0 0 24 24"
+      //   fill="none"
+      //   stroke="#6D5DD3"
+      //   strokeWidth="1.6"
+      //   className="h-5 w-5"
+      // >
+      //   <path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z" />
+      // </svg>
     ),
   },
 ];
@@ -125,7 +189,7 @@ interface LandingModelsProps {
 }
 
 export default function LandingModels({
-  speedSeconds = 22,
+  speedSeconds = 60,
   className = "",
 }: LandingModelsProps) {
   // Duplicate the models so the loop is seamless once the track scrolls -50%.
@@ -142,7 +206,7 @@ export default function LandingModels({
             content for a seamless loop, which would otherwise be
             announced twice. */}
         <div className="sr-only">
-          <p >Powered by these AI models:</p>
+          <p>Powered by these AI models:</p>
           <ul>
             {models.map((m) => (
               <li key={m.name}>
@@ -171,8 +235,8 @@ export default function LandingModels({
         </div>
 
         <p className="mt-[30px] text-sm text-slate-500">
-          <strong className="font-bold text-slate-900">Auto mode</strong>{" "}
-          picks the best model for every prompt — or{" "}
+          <strong className="font-bold text-slate-900">Auto mode</strong> picks
+          the best model for every prompt — or{" "}
           <a
             href="#"
             className="text-blue-500 no-underline transition-colors hover:text-blue-600 hover:underline"

@@ -242,7 +242,7 @@ const PremiumProcessSection: React.FC = () => {
         <div className="mt-10 flex justify-center">
           <button
             type="button"
-            className="group flex items-center gap-3 rounded-full border border-[#0F172A]/10 bg-white px-8 py-4 text-base font-medium text-[#0F172A] shadow-md transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg"
+            className="group flex items-center gap-3 rounded-full border border-[#0F172A]/10 bg-white px-8 py-3 text-base font-medium text-[#0F172A] shadow-md transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg"
           >
             <span>
               From a single prompt using{" "}
