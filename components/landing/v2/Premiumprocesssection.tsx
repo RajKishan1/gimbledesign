@@ -132,14 +132,14 @@ const PremiumProcessSection: React.FC = () => {
       <div className="relative mx-auto max-w-7xl">
         {/* Heading */}
         <div className="mx-auto max-w-lg text-center">
-          <h2 className="font-display text-4xl leading-tight tracking-tight text-[#0F172A] sm:text-5xl">
+          <h2 className="font-display text-4xl leading-tight tracking-tight text-[#202020] dark:text-gray-300 sm:text-5xl">
             You don&apos;t need a design team to bring an{" "}
             <span className="italic text-[#3B82F6]">idea</span> to life.
           </h2>
         </div>
 
         {/* Glassmorphism process card */}
-        <div className="relative mx-auto mt-14 max-w-5xl rounded-3xl border border-white/20 bg-white/80 p-8 shadow-xl backdrop-blur-xl sm:p-10 md:p-12">
+        <div className="relative mx-auto mt-14 max-w-5xl rounded-3xl border border-white/20 bg-white/80 dark:bg-white/2 p-8 shadow-xl backdrop-blur-xl sm:p-10 md:p-12">
           {/* Everything below shares one relative wrapper so the connector
               line's coordinate system (0-300 viewBox) maps exactly onto the
               3 equal-width columns of the grid: column centers sit at
@@ -226,10 +226,10 @@ const PremiumProcessSection: React.FC = () => {
                     </span>
                   </div>
 
-                  <h3 className="mt-2 text-lg font-bold text-[#202020]">
+                  <h3 className="mt-2 text-lg font-bold text-[#202020] dark:text-gray-300">
                     {step.title}
                   </h3>
-                  <p className="mt-1 max-w-[16rem] text-sm leading-relaxed text-[#64748B]">
+                  <p className="mt-1 max-w-[16rem] text-sm leading-relaxed text-[#64748B] dark:text-gray-500">
                     {step.description}
                   </p>
                 </div>
@@ -242,13 +242,13 @@ const PremiumProcessSection: React.FC = () => {
         <div className="mt-10 flex justify-center">
           <button
             type="button"
-            className="group flex items-center gap-3 rounded-full border border-[#0F172A]/10 bg-white px-8 py-3 text-base font-medium text-[#0F172A] shadow-md transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg"
+            className="group flex items-center gap-3 rounded-full border border-[#0F172A]/10 bg-white dark:bg-white/2 backdrop-blur-2xl px-8 py-3 text-base font-medium text-[#0F172A] shadow-md transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg dark:border-white/20"
           >
-            <span>
+            <span className="text-[#0F172A] dark:text-gray-300">
               From a single prompt using{" "}
               <span className="font-semibold text-[#3B82F6]">gimble</span>.
             </span>
-            <ArrowIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            <ArrowIcon className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1.5 text-[#0F172A] dark:text-gray-300" />
           </button>
         </div>
       </div>

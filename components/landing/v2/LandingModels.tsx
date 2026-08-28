@@ -145,11 +145,11 @@ function ModelChip({ model }: { model: Model }) {
         gimble-model-chip group/chip relative shrink-0
         flex min-w-[190px] items-center gap-3
         overflow-hidden rounded-2xl
-        border border-slate-900/[0.06] bg-slate-50/80
+        border border-slate-900/[0.06] dark:border-white/15 bg-white/10
         px-5 py-3.5 pl-3.5 backdrop-blur-2xl
         transition-transform duration-300 ease-out
         hover:scale-[1.06]
-        after:absolute after:bottom-0 after:left-3.5 after:right-5 after:h-[3px]
+        after:absolute after:bottom-0 after:left-3.5 after:right-5 after:h-0.75  
         after:origin-left after:scale-x-0 after:rounded-t-full
         after:bg-gradient-to-r after:from-blue-500 after:via-violet-500 after:to-pink-500
         after:transition-transform after:duration-300
@@ -171,10 +171,10 @@ function ModelChip({ model }: { model: Model }) {
       </div>
 
       <div className="flex flex-col text-left">
-        <span className="text-sm font-bold leading-[1.3] text-slate-900">
+        <span className="text-sm font-bold leading-[1.3] text-[#202020] dark:text-gray-300">
           {model.name}
         </span>
-        <span className="text-xs leading-[1.3] text-slate-500">
+        <span className="text-xs leading-[1.3] text-gray-400">
           {model.provider}
         </span>
       </div>

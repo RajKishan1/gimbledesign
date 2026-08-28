@@ -97,7 +97,7 @@ export default DesignShowcase;
 export const DesignCard = ({ src, text }: Card) => {
   return (
     <div>
-      <h1 className="text-center py-6 text-[16px] text-[#202020] font-semibold">
+      <h1 className="text-center py-6 text-[16px] text-[#202020] dark:text-gray-300 font-semibold">
         {text}
       </h1>
       <div className=" h-145 w-67  rounded-3xl border-gray-400">
