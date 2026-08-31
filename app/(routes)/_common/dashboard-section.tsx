@@ -8,22 +8,16 @@ import Header from "./header";
 import DashboardSidebar from "./dashboard-sidebar";
 import {
   useCreateProject,
-  useGetProjects,
   useRenameProject,
   useDeleteProject,
   useDuplicateProject,
   useSetProjectFavorite,
 } from "@/features/use-project";
-import {
-  useExploreProjects,
-  useMoveProjectToExplore,
-} from "@/features/use-explore";
 import { useProfile } from "@/context/profile-provider";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Copy01Icon,
@@ -102,29 +96,24 @@ const DashboardSection = () => {
   const [inspirationKind, setInspirationKind] = useState<"web" | "mobile">(
     "web",
   );
-  const [projectsFilter, setProjectsFilter] = useState<"all" | "favorites">(
-    "all",
-  );
-  const userId = user?.id;
 
-  // When arriving from Mini Tools (?mini=wireframe or ?mini=inspirations), set device type
+  // When arriving from Mini Tools (?mini=wireframe or ?mini=inspirations), set device type.
+  // The navbar's Mobile App / Web Platform tabs use ?type= and jump to the prompt.
   React.useEffect(() => {
     const mini = searchParams.get("mini");
     if (mini === "wireframe") setDeviceType("wireframe");
     else if (mini === "inspirations") setDeviceType("inspirations");
+    const type = searchParams.get("type");
+    if (type === "web" || type === "mobile") {
+      setDeviceType(type);
+      document
+        .getElementById("new-design")
+        ?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [searchParams]);
 
-  const {
-    data: projects,
-    isLoading,
-    isError,
-  } = useGetProjects(userId, 10, projectsFilter === "favorites");
   const { mutate, isPending } = useCreateProject();
   const { data: profile } = useProfile();
-  const { data: exploreProjects = [], isLoading: exploreLoading } =
-    useExploreProjects(8);
-  const moveToExplore = useMoveProjectToExplore();
-  const isAdmin = profile?.role === "admin";
 
   React.useEffect(() => {
     if (!isPending && loadingState === "designing") {
@@ -236,6 +225,10 @@ const DashboardSection = () => {
               backdrop-blur "frosted glass" effect actually sees content
               scrolling underneath it. */}
           <NavBar />
+
+          {/* Explore designs — first thing on the page, like the reference. */}
+          <ExploreDesign />
+
           {/* Hero — id anchors the NewModel banner's "Try" CTA. */}
           <div
             id="new-design"
@@ -433,99 +426,6 @@ const DashboardSection = () => {
             <NewModel />
           </div>
 
-          <ExploreDesign />
-          {/* My Projects */}
-          <div className="w-full py-10 px-4 sm:px-6 lg:px-8 xl:px-10">
-            <div className="w-full">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-                  My Projects
-                </h2>
-                <div className="flex items-center gap-3">
-                  <div className="flex rounded-full border border-border bg-muted p-1">
-                    <button
-                      type="button"
-                      onClick={() => setProjectsFilter("all")}
-                      aria-pressed={projectsFilter === "all"}
-                      className={cn(
-                        "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-                        projectsFilter === "all"
-                          ? "bg-sky-500 text-white shadow-sm"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      All Projects
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setProjectsFilter("favorites")}
-                      aria-pressed={projectsFilter === "favorites"}
-                      className={cn(
-                        "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-                        projectsFilter === "favorites"
-                          ? "bg-sky-500 text-white shadow-sm"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      Favorites
-                    </button>
-                  </div>
-                  <Link
-                    href="/projects"
-                    className="flex shrink-0 items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-sky-600 dark:hover:text-sky-400"
-                  >
-                    View all
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </div>
-              </div>
-              {isLoading ? (
-                <ProjectShimmerGrid
-                  count={4}
-                  className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-3"
-                />
-              ) : (
-                <>
-                  <div className="mt-3">
-                    {(() => {
-                      const list = projects ?? [];
-                      if (projectsFilter === "favorites" && list.length === 0) {
-                        return (
-                          <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
-                            <p className="text-sm text-muted-foreground">
-                              No favorites yet. Star projects to see them here.
-                            </p>
-                          </div>
-                        );
-                      }
-                      if (list.length === 0) {
-                        return (
-                          <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
-                            <p className="text-sm text-muted-foreground">
-                              No projects yet. Create one above.
-                            </p>
-                          </div>
-                        );
-                      }
-                      return (
-                        <ProjectsGrid
-                          projects={list}
-                          isAdmin={isAdmin}
-                          onMoveToExplore={moveToExplore.mutate}
-                          isMovingToExplore={moveToExplore.isPending}
-                        />
-                      );
-                    })()}
-                  </div>
-                </>
-              )}
-              {isError && (
-                <p className="text-destructive text-sm">
-                  Failed to load projects
-                </p>
-              )}
-            </div>
-          </div>
         </main>
       </div>
     </div>

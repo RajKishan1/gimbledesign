@@ -25,7 +25,7 @@ export default function AppStoreScreensPage() {
                 color="currentColor"
                 strokeWidth={2}
               />
-              Back to Mini Tools
+              Back to Tools
             </Link>
 
             <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-border/60 mb-6">

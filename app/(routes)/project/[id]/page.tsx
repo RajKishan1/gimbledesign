@@ -165,7 +165,7 @@ const PageContent = ({
         finalPrompt =
           enhanceData.enhancedPrompt ||
           (imageContext
-            ? `${imageContext}${payload.prompt ? `\n\n${payload.prompt}` : ""}`
+            ? `REFERENCE DESIGN (uploaded by user — preserve its layout structure):\n${imageContext}${payload.prompt ? `\n\n${payload.prompt}` : ""}`
             : payload.prompt);
       } catch (e) {
         console.error("Enhance prompt error:", e);
@@ -198,7 +198,7 @@ const PageContent = ({
         });
         const describeData = await describeRes.json();
         if (describeRes.ok && describeData?.description) {
-          finalPrompt = `${describeData.description}${promptText ? `\n\n${promptText}` : ""}`;
+          finalPrompt = `REFERENCE DESIGN (uploaded by user — preserve its layout structure):\n${describeData.description}${promptText ? `\n\n${promptText}` : ""}`;
         }
       } catch (e) {
         console.error("Describe image error:", e);

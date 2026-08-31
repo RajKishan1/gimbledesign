@@ -34,7 +34,32 @@ const Canvas = ({
     customDimensions,
     wireframeKind,
     updateFrame,
+    setChatImage,
   } = useCanvas();
+
+  // Hand a canvas image to the chat input as an "@" attachment so it can be
+  // used as a generation reference. Converts remote srcs to data URLs.
+  const attachImageToChat = useCallback(
+    async (src: string) => {
+      try {
+        let dataUrl = src;
+        if (!src.startsWith("data:")) {
+          const blob = await (await fetch(src)).blob();
+          dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+        }
+        setChatImage({ dataUrl, name: "Canvas image" });
+        toast.success("Image attached to chat — describe what to design with it");
+      } catch {
+        toast.error("Failed to attach image to chat");
+      }
+    },
+    [setChatImage],
+  );
 
   // Web wireframe: one responsive frame shown at 3 viewport sizes (same HTML, different container widths)
   const isWireframeWebResponsive =
@@ -89,9 +114,28 @@ const Canvas = ({
       const res = await axios.patch(`/api/project/${projectId}/canvas-image`, data);
       return res.data.image;
     },
-    // Don't invalidate on success — the Rnd component already shows the correct position.
-    // Only refetch on error to recover from stale state.
-    onError: () => queryClient.invalidateQueries({ queryKey: ["canvasImages", projectId] }),
+    // Rnd's position/size props are CONTROLLED by this cache, so it must be
+    // updated optimistically — otherwise the next re-render feeds the old
+    // coordinates back in and the image snaps back to where it was.
+    onMutate: async ({ imageId, ...fields }) => {
+      await queryClient.cancelQueries({ queryKey: ["canvasImages", projectId] });
+      const previous = queryClient.getQueryData<
+        { id: string; src: string; x: number; y: number; width: number; height: number }[]
+      >(["canvasImages", projectId]);
+      queryClient.setQueryData<
+        { id: string; src: string; x: number; y: number; width: number; height: number }[]
+      >(["canvasImages", projectId], (old = []) =>
+        old.map((img) => (img.id === imageId ? { ...img, ...fields } : img)),
+      );
+      return { previous };
+    },
+    // Roll back to the server's last known state if the save fails.
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["canvasImages", projectId], context.previous);
+      }
+      queryClient.invalidateQueries({ queryKey: ["canvasImages", projectId] });
+    },
   });
 
   const deleteImageMutation = useMutation({
@@ -115,12 +159,12 @@ const Canvas = ({
   const {
     transform,
     attachWheelListener,
+    attachTransformElement,
     startDrag,
     updateDrag,
     endDrag,
     zoomIn,
     zoomOut,
-    cssTransform,
     zoomPercent,
   } = useCanvasTransform({
     initialScale: 0.53,
@@ -351,16 +395,21 @@ const Canvas = ({
           onPointerLeave={handlePointerUp}
           onClick={handleCanvasClick}
         >
-          {/* The single transformed layer — GPU-composited via transform */}
+          {/* The single transformed layer — GPU-composited via transform.
+              The transform itself is written directly by the hook (per-frame
+              DOM writes during gestures); React must NOT set it here or a
+              stale value would be re-applied on every state commit. */}
           <div
-            ref={canvasRootRef}
+            ref={(el) => {
+              canvasRootRef.current = el;
+              attachTransformElement(el);
+            }}
             style={{
               position: "absolute",
               top: 0,
               left: 0,
               width: "4000px",
               height: "3000px",
-              transform: cssTransform,
               transformOrigin: "0 0",
               // Use will-change so the browser promotes this to its own GPU layer
               willChange: "transform",
@@ -493,16 +542,28 @@ const Canvas = ({
                       draggable={false}
                     />
                     {isSelected && (
-                      <button
-                        className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs shadow-md z-10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteCanvasImage(img.id);
-                        }}
-                        title="Remove image"
-                      >
-                        &times;
-                      </button>
+                      <>
+                        <button
+                          className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs shadow-md z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteCanvasImage(img.id);
+                          }}
+                          title="Remove image"
+                        >
+                          &times;
+                        </button>
+                        <button
+                          className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-neutral-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-md z-10 whitespace-nowrap hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            attachImageToChat(img.src);
+                          }}
+                          title="Attach this image to the chat as a design reference"
+                        >
+                          @ Add to chat
+                        </button>
+                      </>
                     )}
                   </div>
                 </Rnd>
@@ -512,6 +573,38 @@ const Canvas = ({
             {/* Prototype connector arrows layer */}
             <PrototypeConnectors canvasScale={transform.scale} />
           </div>
+
+          {/* Centered placeholder when the canvas has nothing to show yet —
+              a generating card while a job runs, a quiet hint when idle. */}
+          {frames.length === 0 && canvasImages.length === 0 && (
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+              {currentStatus ? (
+                <div className="generating-gradient flex flex-col items-center gap-3 rounded-2xl px-10 py-8 shadow-lg ring-1 ring-black/5">
+                  <span className="flex items-center gap-2 rounded-full bg-white/85 px-4 py-2 text-sm font-medium text-neutral-800 shadow backdrop-blur-sm">
+                    <Spinner className="size-4" />
+                    {currentStatus === "fetching"
+                      ? "Loading your project…"
+                      : currentStatus === "analyzing"
+                        ? "Planning your screens…"
+                        : "Designing your screens…"}
+                  </span>
+                  <span className="rounded-full bg-white/60 px-3 py-1 text-xs text-neutral-700 backdrop-blur-sm">
+                    First screens usually appear within a minute
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    No screens yet
+                  </p>
+                  <p className="max-w-60 text-xs text-muted-foreground/70">
+                    Describe your design in the chat to generate your first
+                    screens.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <input

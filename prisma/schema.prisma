@@ -30,6 +30,7 @@ model Project {
   isExplore     Boolean  @default(false) // When true, project is shown on Explore (set by admin only)
   isFavorite    Boolean  @default(false) // User favorite for quick access
   shareToken    String?  @unique         // When set, project is viewable at /p/[shareToken] (no auth)
+  designContext Json?    // Frozen design system from the first generation: { dna, registry, appIdentity }. Reused by follow-up generations so all screens feel like one product.
   frames        Frame[]
   chatMessages  ChatMessage[]
   canvasImages  CanvasImage[]

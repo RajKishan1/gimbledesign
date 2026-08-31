@@ -259,6 +259,32 @@ ${CROSS_SCREEN_CONSISTENCY_RULES}
 - Rich hierarchy: layered cards (shadow-lg/2xl), floating navigation, sticky glass headers
 - Micro-interactions: subtle overlays, clear selected nav states, button press feedback
 
+# TASTE RULES (WHAT SEPARATES LAUNCH-READY FROM DEMO-WARE)
+- **60-30-10 color balance**: ~60% neutral surfaces, ~30% secondary/muted, ~10% accent. The accent appears ONLY on the primary action, active states, and 1-2 key data points per screen — never sprayed across every card
+- **One focal point per screen**: exactly one element should win the first glance (hero metric, headline, or primary CTA). Everything else steps down deliberately
+- **Numbers are typography**: metrics use tabular-nums, tight leading, and a clear unit treatment (large value + small unit: "72<span smaller>BPM</span>"). Format like real products: 12,430 not 12430; $8,240.50 not $8240.5; 24.5h not 24.50 hours
+- **Radius is a system**: pick ONE card radius and ONE control radius and never mix (e.g. cards rounded-2xl, buttons rounded-xl, inputs rounded-xl). Nested elements use a smaller radius than their container
+- **Optical alignment**: icons vertically centered with their text line, list rows left-edge aligned, section headers aligned with card content below them — not with the card edge
+- **All-caps micro-labels** (section eyebrows, card headers) get tracking-wider + text-[10-11px] + muted color + font-semibold
+- **Consistent icon optical weight**: same stroke width family throughout; never mix filled and outlined in one context
+
+# NATIVE MOBILE POLISH (MAKE IT FEEL LIKE A REAL APP, NOT A WEB PAGE)
+- **Status bar**: main screens open with an iOS status bar row — "9:41" left (text-sm font-semibold), signal/wifi/battery glyphs right (use small SVG shapes or hugeicons), same color as screen foreground, h-11 px-6 flex justify-between items-center
+- **Safe areas**: content respects the top status area and bottom home-indicator zone; bottom nav sits above a 8px gap; final scroll content gets pb-24+
+- **Home indicator**: dark screens may include the iOS home indicator: a centered rounded-full bar (w-32 h-1 bg-[var(--foreground)]/30 absolute bottom-2)
+- **Native controls, not web controls**: iOS-style switches (sliding pill) instead of checkboxes; segmented controls (rounded-lg bg-[var(--muted)] p-1 with an active white/card segment) instead of tab links; action rows with chevron-right instead of underlined links
+- **Sheets & modals**: bottom sheets get a grab handle (w-10 h-1 rounded-full bg-[var(--muted-foreground)]/30 mx-auto mt-3)
+- **Press affordance**: primary buttons look tappable — solid fill, h-12+, font-semibold, full or near-full width; never tiny text links for key actions
+- **Lists feel native**: 56-64px row height, leading icon/avatar, title + subtext stack, trailing value or chevron — not cramped table rows
+- **Real device rhythm**: headers ~56px, comfortable 16px screen gutters, thumb-reachable primary actions in the lower half when possible
+
+# REFERENCE IMAGE FIDELITY (WHEN A REFERENCE DESCRIPTION IS IN THE PROMPT)
+If the prompt contains a description of an uploaded reference design, treat its LAYOUT as a contract:
+- Preserve the reference's structure: same navigation pattern, same section ORDER, same grid arrangement (columns/spans), same component types in the same places
+- Preserve its density and scale relationships (big hero card stays big, compact rows stay compact)
+- Adapt COLORS and typography to the active theme variables — do not copy the reference palette unless the user asked for it
+- The user's written instructions override the reference where they conflict; otherwise the reference wins over your defaults
+
 # LAYOUT (CRITICAL - IPHONE VIEWPORT CONSTRAINT)
 
 **SCREEN HEIGHT RULE (ABSOLUTE REQUIREMENT):**

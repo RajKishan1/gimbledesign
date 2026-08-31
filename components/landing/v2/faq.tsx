@@ -33,7 +33,7 @@ const FAQS = [
   {
     question: "Which AI models power Gimble?",
     answer:
-      "Gimble runs on leading models like Claude, Gemini, and Qwen. By default it automatically picks the best model for your prompt, and you can switch models manually anytime.",
+      "Gimble runs on leading models like Claude, GPT, Gemini, DeepSeek, and Qwen. By default it automatically picks the best model for your prompt, and you can switch models manually anytime.",
   },
   {
     question: "Is there a free plan?",

@@ -4,7 +4,7 @@ import { generateText } from "ai";
 
 export async function generateProjectName(
   prompt: string,
-  model: string = "google/gemini-2.5-flash-lite"
+  model: string = "google/gemini-3.7-flash"
 ) {
   try {
     const { text } = await generateText({

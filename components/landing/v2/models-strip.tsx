@@ -101,6 +101,39 @@ const QwenMark = () => (
   </Tile>
 );
 
+/* OpenAI: interlocking blossom approximated as six rotated petals on black */
+const OpenAIMark = () => (
+  <Tile className="bg-[#0d0d0d]">
+    <svg viewBox="0 0 24 24" className="size-4.5" aria-hidden>
+      <g stroke="#fff" strokeWidth="1.9" strokeLinecap="round" fill="none">
+        {Array.from({ length: 6 }, (_, i) => (
+          <rect
+            key={i}
+            x="9.75"
+            y="3.2"
+            width="4.5"
+            height="10.6"
+            rx="2.25"
+            transform={`rotate(${i * 60} 12 12)`}
+          />
+        ))}
+      </g>
+    </svg>
+  </Tile>
+);
+
+/* DeepSeek: stylized whale curve in their signature blue */
+const DeepSeekMark = () => (
+  <Tile>
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+      <path
+        d="M21 8.5c-1 .8-2 1.1-2.9 1-0.6 3.4-2.6 6.2-5.6 7.8-2.6 1.4-5.6 1.6-8 .6 1.5-.3 2.8-1 3.7-2-1.9-.7-3.3-2.2-3.9-4.2 1 .5 2.1.7 3.1.5C6 10.9 5.6 9.2 6 7.4c1.4 1.9 3.4 3.2 5.7 3.6.2-2 1.5-3.6 3.4-4.2 1.4-.4 2.8-.2 3.9.6.8-.1 1.5-.4 2-.9-.1.8-.4 1.5-1 2z"
+        fill="#4D6BFE"
+      />
+    </svg>
+  </Tile>
+);
+
 type Model = {
   name: string;
   provider: string;
@@ -108,10 +141,12 @@ type Model = {
 };
 
 const MODELS: Model[] = [
-  { name: "Claude Opus 4.8", provider: "Anthropic", logo: <ClaudeMark /> },
-  { name: "Gemini 3 Pro", provider: "Google", logo: <GeminiMark /> },
-  { name: "Kimi 2.5", provider: "Moonshot AI", logo: <KimiMark /> },
-  { name: "Qwen 3.5 Plus", provider: "Alibaba", logo: <QwenMark /> },
+  { name: "Claude Opus 5", provider: "Anthropic", logo: <ClaudeMark /> },
+  { name: "GPT-5.6 Sol", provider: "OpenAI", logo: <OpenAIMark /> },
+  { name: "Gemini 3.1 Pro", provider: "Google", logo: <GeminiMark /> },
+  { name: "DeepSeek V4", provider: "DeepSeek", logo: <DeepSeekMark /> },
+  { name: "Kimi K3", provider: "Moonshot AI", logo: <KimiMark /> },
+  { name: "Qwen 3.8 Max", provider: "Alibaba", logo: <QwenMark /> },
 ];
 
 /** Credibility strip: the real models powering generation, in brand color. */

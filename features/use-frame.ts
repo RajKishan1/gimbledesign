@@ -82,6 +82,23 @@ export const useGenerateVariations = (projectId: string) => {
   });
 };
 
+export const useDuplicateFrame = (projectId: string) => {
+  return useMutation({
+    mutationFn: async (frameId: string) => {
+      const res = await axios.post(`/api/project/${projectId}/frame/duplicate`, {
+        frameId,
+      });
+      return res.data.frame as { id: string; title: string; htmlContent: string };
+    },
+    onSuccess: () => {
+      toast.success("Screen duplicated");
+    },
+    onError: () => {
+      toast.error("Failed to duplicate screen");
+    },
+  });
+};
+
 export const useDeleteFrame = (projectId: string) => {
   return useMutation({
     mutationFn: async (frameId: string) => {

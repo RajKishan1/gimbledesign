@@ -26,42 +26,71 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { generateBuildPlan } from "@/lib/generate-build-plan";
 
+/* Mini Figma logo for the Copy-to-Figma tile. */
+function FigmaMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-6" aria-hidden>
+      <path d="M12 2H8.5a3.5 3.5 0 0 0 0 7H12V2Z" fill="#F24E1E" />
+      <path d="M12 2h3.5a3.5 3.5 0 0 1 0 7H12V2Z" fill="#FF7262" />
+      <path d="M12 9H8.5a3.5 3.5 0 0 0 0 7H12V9Z" fill="#A259FF" />
+      <circle cx="15.5" cy="12.5" r="3.5" fill="#1ABCFE" />
+      <path d="M12 16H8.5a3.5 3.5 0 1 0 3.5 3.5V16Z" fill="#0ACF83" />
+    </svg>
+  );
+}
+
 // Scalable: add new formats here with supported: true when implemented
 const EXPORT_FORMATS = [
   {
     id: "code-to-clipboard",
     label: "Code to Clipboard",
-    description: "Copy full HTML for all screens to the clipboard.",
+    description: "Copy full HTML + CSS + JS for all screens.",
     icon: CodeIcon,
+    tileClass: "bg-green-100 text-green-600 dark:bg-green-500/15 dark:text-green-400",
+    badge: "Recommended",
+    badgeClass:
+      "bg-[#53f22b]/20 text-[#1e9403] dark:bg-[#53f22b]/10 dark:text-[#6bf94a]",
+    supported: true,
+  },
+  {
+    id: "copy-to-figma",
+    label: "Copy to Figma",
+    description: "Copy all screens as Figma-compatible layers.",
+    icon: Copy01Icon,
+    tileClass: "bg-neutral-100 dark:bg-white/10",
+    badge: "Recommended",
+    badgeClass:
+      "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
     supported: true,
   },
   {
     id: "prompt-export",
     label: "Prompt Export",
     description:
-      "Download a detailed .md implementation plan with code, theme tokens, and build steps for any AI coding tool.",
+      "Download a detailed .md implementation plan with code, tokens & steps.",
     icon: DocumentCodeIcon,
-    supported: true,
-  },
-  {
-    id: "copy-to-figma",
-    label: "Copy to Figma",
-    description:
-      "Copy all screens as Figma-compatible layers — paste directly into any Figma file.",
-    icon: Copy01Icon,
+    tileClass:
+      "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
+    badge: undefined,
+    badgeClass: undefined,
     supported: true,
   },
   {
     id: "build-with-ai",
     label: "Build with AI",
     description:
-      "Open anything.com — an AI builder that turns your design into a working app instantly.",
+      "Open anything.com — an AI builder that turns your design into a working app.",
     icon: SparklesIcon,
+    tileClass:
+      "bg-indigo-100 text-indigo-500 dark:bg-indigo-500/15 dark:text-indigo-400",
+    badge: undefined,
+    badgeClass: undefined,
     supported: true,
   },
 ] as const;
 
-type FormatId = (typeof EXPORT_FORMATS)[number]["id"];
+type ExportFormat = (typeof EXPORT_FORMATS)[number];
+type FormatId = ExportFormat["id"];
 
 interface ExportModalProps {
   open: boolean;
@@ -69,74 +98,93 @@ interface ExportModalProps {
   projectId: string;
 }
 
-// Radio circle component
+// Radio circle — sits outside the card, green when selected
 function RadioDot({ selected }: { selected: boolean }) {
   return (
     <span
       className={cn(
         "flex h-[18px] w-[18px] shrink-0 rounded-full border-2 items-center justify-center transition-colors",
-        selected ? "border-primary" : "border-muted-foreground/50"
+        selected ? "border-[#2fb90f]" : "border-muted-foreground/40"
       )}
     >
       {selected && (
-        <span className="h-2 w-2 rounded-full bg-primary block" />
+        <span className="h-2 w-2 rounded-full bg-[#2fb90f] block" />
       )}
     </span>
   );
 }
 
-// Individual format option row
+// Individual format option: radio outside, card with icon tile + badge
 function FormatOption({
-  id,
-  label,
-  description,
-  icon: Icon,
+  format,
   selected,
   onSelect,
 }: {
-  id: string;
-  label: string;
-  description: string;
-  icon: IconSvgElement;
+  format: ExportFormat;
   selected: boolean;
   onSelect: () => void;
 }) {
   return (
     <button
-      key={id}
       type="button"
       onClick={onSelect}
-      className={cn(
-        "w-full flex items-start gap-3 px-4 py-3.5 text-left transition-colors group",
-        selected ? "bg-accent/60" : "hover:bg-accent/30"
-      )}
+      aria-pressed={selected}
+      className="group flex w-full items-center gap-3 px-5 text-left"
     >
       <RadioDot selected={selected} />
-      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <HugeiconsIcon
-            icon={Icon}
-            size={15}
-            color="currentColor"
-            strokeWidth={1.75}
-            className={cn(
-              "shrink-0 transition-colors",
-              selected ? "text-primary" : "text-muted-foreground"
-            )}
-          />
-          <span
-            className={cn(
-              "text-sm font-medium transition-colors",
-              selected ? "text-foreground" : "text-foreground/80"
-            )}
-          >
-            {label}
+      <span
+        className={cn(
+          "flex min-w-0 flex-1 items-start gap-3 rounded-2xl border p-3.5 transition-all",
+          selected
+            ? "border-[#53f22b] bg-[#53f22b]/6 shadow-[0_0_0_3px_rgba(83,242,43,0.12)]"
+            : "border-border bg-card group-hover:border-foreground/20"
+        )}
+      >
+        <span
+          className={cn(
+            "flex size-12 shrink-0 items-center justify-center rounded-xl",
+            format.tileClass
+          )}
+        >
+          {format.id === "copy-to-figma" ? (
+            <FigmaMark />
+          ) : (
+            <HugeiconsIcon
+              icon={format.icon}
+              size={22}
+              color="currentColor"
+              strokeWidth={1.75}
+            />
+          )}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-foreground">
+            {format.label}
           </span>
-        </div>
-        <p className="text-xs text-muted-foreground leading-relaxed pl-[19px]">
-          {description}
-        </p>
-      </div>
+          <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+            {format.description}
+          </span>
+          {format.badge && (
+            <span
+              className={cn(
+                "mt-2 inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold",
+                format.badgeClass
+              )}
+            >
+              {format.badge}
+            </span>
+          )}
+        </span>
+        {selected && (
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            size={14}
+            color="currentColor"
+            strokeWidth={2}
+            className="mt-1 shrink-0 self-center text-[#2fb90f]"
+          />
+        )}
+      </span>
     </button>
   );
 }
@@ -387,11 +435,20 @@ export function ExportModal({
     onOpenChange,
   ]);
 
-  const handlePrimaryAction = useCallback(() => {
-    if (selectedFormat === "code-to-clipboard") handleCodeToClipboard();
-    else if (selectedFormat === "prompt-export") handlePromptExport();
-    else if (selectedFormat === "copy-to-figma") handleCopyToFigma();
-    else if (selectedFormat === "build-with-ai") handleBuildWithAI();
+  // Re-entry guard: a double-click on the CTA must not run the export twice
+  // (duplicate downloads / double clipboard writes / two anything.com tabs).
+  const isRunningRef = useRef(false);
+  const handlePrimaryAction = useCallback(async () => {
+    if (isRunningRef.current) return;
+    isRunningRef.current = true;
+    try {
+      if (selectedFormat === "code-to-clipboard") handleCodeToClipboard();
+      else if (selectedFormat === "prompt-export") handlePromptExport();
+      else if (selectedFormat === "copy-to-figma") await handleCopyToFigma();
+      else if (selectedFormat === "build-with-ai") await handleBuildWithAI();
+    } finally {
+      isRunningRef.current = false;
+    }
   }, [
     selectedFormat,
     handleCodeToClipboard,
@@ -407,11 +464,11 @@ export function ExportModal({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex flex-col w-full sm:max-w-[320px] gap-0 p-0 bg-card border-l border-border text-card-foreground"
+        className="flex flex-col w-full sm:max-w-90 gap-0 p-0 bg-card border-l border-border text-card-foreground"
       >
         {/* Header */}
         <SheetHeader className="px-5 pt-5 pb-4 shrink-0">
-          <SheetTitle className="text-base font-semibold text-foreground tracking-tight">
+          <SheetTitle className="text-lg font-semibold text-foreground tracking-tight">
             Export
           </SheetTitle>
         </SheetHeader>
@@ -419,19 +476,16 @@ export function ExportModal({
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto flex flex-col">
           {/* Format label */}
-          <p className="px-5 pb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Format
+          <p className="px-5 pb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Choose format
           </p>
 
           {/* Options list */}
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-3">
             {supportedFormats.map((format) => (
               <FormatOption
                 key={format.id}
-                id={format.id}
-                label={format.label}
-                description={format.description}
-                icon={format.icon}
+                format={format}
                 selected={selectedFormat === format.id}
                 onSelect={() => setSelectedFormat(format.id)}
               />
@@ -456,27 +510,15 @@ export function ExportModal({
         </div>
 
         {/* Sticky footer */}
-        <div className="shrink-0 border-t border-border p-5 space-y-3">
-          {selectedFormat === "prompt-export" && (
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Downloads a detailed implementation plan (.md) with your
-              design&apos;s code, theme tokens, and build steps—ready for any AI
-              coding tool.
-            </p>
-          )}
+        <div className="shrink-0 border-t border-border p-5 space-y-2.5">
           <Button
-            className={cn(
-              "w-full font-medium gap-2",
-              selectedFormat === "prompt-export"
-                ? "bg-primary text-primary-foreground hover:opacity-90"
-                : "bg-foreground text-background hover:opacity-90 dark:bg-primary dark:text-primary-foreground"
-            )}
+            className="h-12 w-full gap-2 rounded-2xl bg-neutral-900 text-[15px] font-medium text-white shadow-lg hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
             onClick={handlePrimaryAction}
             disabled={isCopyingToFigma && selectedFormat === "copy-to-figma"}
           >
             <HugeiconsIcon
               icon={cta.icon}
-              size={15}
+              size={16}
               color="currentColor"
               strokeWidth={1.75}
               className={cn("shrink-0", isCopyingToFigma && selectedFormat === "copy-to-figma" && "animate-spin")}
@@ -488,10 +530,13 @@ export function ExportModal({
                 size={15}
                 color="currentColor"
                 strokeWidth={1.75}
-                className="shrink-0 ml-auto"
+                className="shrink-0"
               />
             )}
           </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            Includes all screens and assets
+          </p>
         </div>
       </SheetContent>
     </Sheet>

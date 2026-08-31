@@ -282,6 +282,41 @@
   background: rgba(150, 150, 150, 0.5);
 }
 
+/* ---------- Generating state (canvas frames) ---------- */
+
+/* Slow aurora drift for the "Generating…" placeholder. The gradient is
+   3× the element width; animating background-position pans across it. */
+@keyframes generating-drift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+.generating-gradient {
+  background-image: linear-gradient(
+    115deg,
+    #c7d2fe,
+    #bae6fd,
+    #a7f3d0,
+    #fde68a,
+    #fbcfe8,
+    #ddd6fe,
+    #c7d2fe
+  );
+  background-size: 300% 300%;
+  animation: generating-drift 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .generating-gradient {
+    animation: none;
+  }
+}
+
 /* ---------- Landing v2 ---------- */
 
 /* Serif display face for landing headlines */

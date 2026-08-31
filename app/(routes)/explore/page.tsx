@@ -1,7 +1,8 @@
 "use client";
 
-import { memo, useState, useEffect, useRef } from "react";
+import { memo, useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import DashboardSidebar from "../_common/dashboard-sidebar";
 import { useExploreProjects, ExploreProject } from "@/features/use-explore";
@@ -65,7 +66,22 @@ const ExploreCard = memo(function ExploreCard({ project }: { project: ExplorePro
 });
 
 export default function ExplorePage() {
-  const { data: projects = [], isLoading } = useExploreProjects(50);
+  // useSearchParams (in ExploreContent) requires a Suspense boundary when the
+  // page is statically prerendered.
+  return (
+    <Suspense fallback={null}>
+      <ExploreContent />
+    </Suspense>
+  );
+}
+
+function ExploreContent() {
+  const { data: allProjects = [], isLoading } = useExploreProjects(50);
+  const searchParams = useSearchParams();
+  const query = (searchParams.get("q") ?? "").trim().toLowerCase();
+  const projects = query
+    ? allProjects.filter((p) => p.name.toLowerCase().includes(query))
+    : allProjects;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loaderRef = useRef<HTMLDivElement>(null);
 
@@ -107,7 +123,9 @@ export default function ExplorePage() {
                 Explore
               </h1>
               <p className="text-muted-foreground mt-1">
-                Community designs shared by creators. Open any project to view and get inspired.
+                {query
+                  ? `Results for "${searchParams.get("q")}"`
+                  : "Community designs shared by creators. Open any project to view and get inspired."}
               </p>
             </div>
             {isLoading ? (

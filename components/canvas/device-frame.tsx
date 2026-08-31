@@ -8,12 +8,23 @@ import { useCanvas } from "@/context/canvas-context";
 import { usePrototype } from "@/context/prototype-context";
 import { getHTMLWrapper } from "@/lib/frame-wrapper";
 import { cn } from "@/lib/utils";
-import DeviceFrameToolbar from "./device-frame-toolbar";
+import DeviceFrameToolbar, { FramePreviewMode } from "./device-frame-toolbar";
+
+// Stitch-style preview viewports selectable from the frame toolbar.
+const PREVIEW_VIEWPORTS: Record<
+  Exclude<FramePreviewMode, "full">,
+  { width: number; height: number }
+> = {
+  mobile: { width: 390, height: 884 },
+  tablet: { width: 768, height: 1024 },
+  desktop: { width: 1280, height: 1024 },
+};
 import PrototypeElementOverlay from "./prototype-element-overlay";
 import ElementHoverOverlay from "./element-hover-overlay";
 import { toast } from "sonner";
 import DeviceFrameSkeleton from "./device-frame-skeleton";
-import { useRegenerateFrame, useDeleteFrame } from "@/features/use-frame";
+import { useRegenerateFrame, useDeleteFrame, useDuplicateFrame } from "@/features/use-frame";
+import { useGenerateDesignById } from "@/features/use-project-id";
 
 type PropsType = {
   html: string;
@@ -62,6 +73,9 @@ const DeviceFrame = ({
     appShell,
     frames,
     readOnly,
+    addFrame,
+    setExportOpen,
+    setLoadingStatus,
   } = useCanvas();
   const currentFrame = frames.find((f) => f.id === frameId);
   const isShellComposed = currentFrame?.isShellComposed ?? false;
@@ -95,11 +109,25 @@ const DeviceFrame = ({
     return { width: 393, height: null, minHeight: 300 };
   };
   const {
-    width: DEVICE_WIDTH,
+    width: BASE_DEVICE_WIDTH,
     height: DEVICE_HEIGHT,
     minHeight: DEVICE_MIN_HEIGHT,
   } = getDeviceDimensions();
   const isFlexibleHeight = true;
+
+  // ── Preview viewport (canvas-only) ─────────────────────────────────────
+  // Switching Mobile/Tablet/Desktop/Full Height just resizes the rendered
+  // viewport on the canvas — no navigation, no regeneration, no credits.
+  const [previewMode, setPreviewMode] = useState<FramePreviewMode | null>(null);
+  const previewSize =
+    previewMode && previewMode !== "full"
+      ? PREVIEW_VIEWPORTS[previewMode]
+      : null;
+  const DEVICE_WIDTH = previewSize?.width ?? BASE_DEVICE_WIDTH;
+  // Ref mirror so the iframe wheel-forwarding listener (bound once per
+  // document) always sees the current preview mode.
+  const hasFixedPreviewRef = useRef(false);
+  hasFixedPreviewRef.current = !!previewSize;
 
   // Skeleton height: use device-appropriate placeholder height when loading, then switch to content height
   const skeletonHeight =
@@ -118,6 +146,15 @@ const DeviceFrame = ({
 
   const regenerateMutation = useRegenerateFrame(projectId);
   const deleteMutation = useDeleteFrame(projectId);
+  const duplicateMutation = useDuplicateFrame(projectId);
+  const generateNextMutation = useGenerateDesignById(projectId);
+
+  // ── Predictive attention heatmap (AI-estimated) ───────────────────────
+  const [heatmap, setHeatmap] = useState<{
+    regions: { x: number; y: number; width: number; height: number; intensity: number; label: string }[];
+    capturedHeight: number;
+  } | null>(null);
+  const [isHeatmapLoading, setIsHeatmapLoading] = useState(false);
 
   const rndRef = useRef<Rnd>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -133,6 +170,57 @@ const DeviceFrame = ({
     ...(heightMessageId != null && { heightMessageId }),
     ...(isShellComposed && appShell && { appShell }),
   });
+
+  // Wheel events inside the iframe never bubble out to the canvas, so a
+  // pinch / ctrl+wheel over a selected frame would browser-zoom the whole
+  // app. Forward them: prevent the default inside the iframe and re-dispatch
+  // an equivalent event on the iframe element, where the canvas transform's
+  // window listener picks it up (coordinates mapped through the canvas scale).
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    let attachedDoc: Document | null = null;
+    const onInnerWheel = (e: WheelEvent) => {
+      // In a fixed preview viewport (Mobile/Tablet/Desktop) plain scrolling
+      // must scroll the clipped content inside the frame — only forward
+      // zoom gestures. Full-height frames forward everything (no inner
+      // scroll exists there).
+      if (!e.ctrlKey && hasFixedPreviewRef.current) return;
+      e.preventDefault();
+      const rect = iframe.getBoundingClientRect();
+      const scaleX = rect.width / (iframe.clientWidth || 1);
+      const scaleY = rect.height / (iframe.clientHeight || 1);
+      iframe.dispatchEvent(
+        new WheelEvent("wheel", {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: e.ctrlKey,
+          metaKey: e.metaKey,
+          deltaX: e.deltaX,
+          deltaY: e.deltaY,
+          deltaMode: e.deltaMode,
+          clientX: rect.left + e.clientX * scaleX,
+          clientY: rect.top + e.clientY * scaleY,
+        }),
+      );
+    };
+
+    const attach = () => {
+      const doc = iframe.contentDocument;
+      if (!doc || doc === attachedDoc) return;
+      attachedDoc?.removeEventListener("wheel", onInnerWheel);
+      doc.addEventListener("wheel", onInnerWheel, { passive: false });
+      attachedDoc = doc;
+    };
+
+    iframe.addEventListener("load", attach);
+    attach(); // srcDoc may already be loaded
+    return () => {
+      iframe.removeEventListener("load", attach);
+      attachedDoc?.removeEventListener("wheel", onInnerWheel);
+    };
+  }, [fullHtml]);
 
   // Update screen position for connector drawing
   useEffect(() => {
@@ -185,7 +273,13 @@ const DeviceFrame = ({
   }, [framePosition]);
 
   // While loading use skeletonHeight so the frame placeholder is properly sized; after loading switch to content height.
-  const actualHeight = isLoading ? skeletonHeight : contentHeight;
+  // Fixed preview viewports clip to the device height (content scrolls
+  // inside the iframe); Full Height / default follows the content.
+  const actualHeight = isLoading
+    ? skeletonHeight
+    : previewSize
+      ? previewSize.height
+      : contentHeight;
 
   const handleDownloadPng = useCallback(async () => {
     if (isDownloading) return;
@@ -229,6 +323,8 @@ const DeviceFrame = ({
         {
           onSuccess: () => {
             updateFrame(frameId, { isLoading: true });
+            // Engage the polling fallback even if realtime events are missed.
+            setLoadingStatus("generating");
           },
           onError: () => {
             updateFrame(frameId, { isLoading: false });
@@ -236,12 +332,79 @@ const DeviceFrame = ({
         },
       );
     },
-    [frameId, regenerateMutation, updateFrame],
+    [frameId, regenerateMutation, updateFrame, setLoadingStatus],
   );
 
   const handleDeleteFrame = useCallback(() => {
     deleteMutation.mutate(frameId);
   }, [frameId, deleteMutation]);
+
+  const handleDuplicate = useCallback(() => {
+    duplicateMutation.mutate(frameId, {
+      onSuccess: (frame) => {
+        addFrame({ ...frame, isLoading: false });
+      },
+    });
+  }, [frameId, duplicateMutation, addFrame]);
+
+  // Continue the app's flow from this screen — same generation pipeline the
+  // chat uses, so new frames stream onto the canvas via realtime events.
+  const handleGenerateNext = useCallback(() => {
+    generateNextMutation.mutate({
+      prompt: `Generate the next 2-3 screens that logically follow the "${title}" screen in this app's user flow. Keep the same visual style, theme, and design language as the existing screens.`,
+    });
+  }, [generateNextMutation, title]);
+
+  // Predictive heatmap: screenshot this frame server-side, ask the vision
+  // model where attention lands, overlay the regions. Toggles off on re-click.
+  const handleToggleHeatmap = useCallback(async () => {
+    if (heatmap) {
+      setHeatmap(null);
+      return;
+    }
+    if (isHeatmapLoading) return;
+    setIsHeatmapLoading(true);
+    const loadingToast = toast.loading("Predicting attention heatmap…");
+    try {
+      const captureHeight = Math.min(Math.round(actualHeight), 4000);
+      const shotRes = await fetch("/api/screenshot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: fullHtml,
+          width: DEVICE_WIDTH,
+          height: captureHeight,
+        }),
+      });
+      if (!shotRes.ok) throw new Error("screenshot failed");
+      const blob = await shotRes.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      const imageBase64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+
+      const res = await axios.post("/api/heatmap", {
+        imageBase64,
+        mimeType: "image/png",
+      });
+      if (!res.data?.regions?.length) throw new Error("no regions");
+      setHeatmap({ regions: res.data.regions, capturedHeight: captureHeight });
+    } catch (error) {
+      console.error("Heatmap failed:", error);
+      toast.error("Failed to predict heatmap");
+    } finally {
+      toast.dismiss(loadingToast);
+      setIsHeatmapLoading(false);
+    }
+  }, [heatmap, isHeatmapLoading, actualHeight, fullHtml, DEVICE_WIDTH]);
+
+  // A regenerated/edited screen invalidates the prediction.
+  useEffect(() => {
+    setHeatmap(null);
+  }, [fullHtml]);
 
   const handlePasteToFigma = useCallback(async () => {
     if (isCopyingToFigma) return;
@@ -385,6 +548,12 @@ const DeviceFrame = ({
             isRegenerating={regenerateMutation.isPending}
             isDeleting={deleteMutation.isPending}
             isCopyingToFigma={isCopyingToFigma}
+            previewMode={previewMode}
+            onPreviewModeChange={setPreviewMode}
+            isGeneratingNext={generateNextMutation.isPending}
+            isDuplicating={duplicateMutation.isPending}
+            isHeatmapLoading={isHeatmapLoading}
+            heatmapActive={!!heatmap}
             onDownloadPng={handleDownloadPng}
             onRegenerate={handleRegenerate}
             onDeleteFrame={handleDeleteFrame}
@@ -394,6 +563,10 @@ const DeviceFrame = ({
               setVariationsFrameId(frameId);
               setVariationsPanelOpen(true);
             }}
+            onGenerateNext={handleGenerateNext}
+            onDuplicate={handleDuplicate}
+            onToggleHeatmap={handleToggleHeatmap}
+            onOpenExport={() => setExportOpen(true)}
           />
         )}
 
@@ -425,6 +598,35 @@ const DeviceFrame = ({
               "overflow-visible",
             )}
           >
+            {/* AI-predicted attention heatmap overlay */}
+            {heatmap && !isLoading && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute left-0 top-0 z-20 w-full overflow-hidden"
+                style={{ height: Math.min(heatmap.capturedHeight, actualHeight) }}
+              >
+                <div className="absolute inset-0 bg-black/25" />
+                {heatmap.regions.map((r, i) => (
+                  <div
+                    key={i}
+                    title={r.label}
+                    style={{
+                      position: "absolute",
+                      left: `${r.x}%`,
+                      top: `${(r.y / 100) * heatmap.capturedHeight}px`,
+                      width: `${r.width}%`,
+                      height: `${(r.height / 100) * heatmap.capturedHeight}px`,
+                      background: `radial-gradient(ellipse at center, hsla(${Math.round(
+                        120 * (1 - r.intensity),
+                      )}, 100%, 50%, ${(0.55 * r.intensity + 0.2).toFixed(2)}) 0%, hsla(${Math.round(
+                        120 * (1 - r.intensity),
+                      )}, 100%, 50%, 0.12) 60%, transparent 80%)`,
+                      filter: "blur(8px)",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
             {isLoading ? (
               <DeviceFrameSkeleton
                 style={{

@@ -30,7 +30,7 @@ export const regenerateFrame = inngest.createFunction(
       allFrames, // Optional: all frames in the project for context
     } = event.data;
     const CHANNEL = `user:${userId}`;
-    const selectedModel = model || "google/gemini-3-pro-preview";
+    const selectedModel = model || "google/gemini-3.1-pro-preview";
 
     await publish({
       channel: CHANNEL,
@@ -51,10 +51,32 @@ export const regenerateFrame = inngest.createFunction(
         ${selectedTheme?.style || ""}
       `;
 
-      // Build design context from all frames if available, for consistency
+      // Prefer the project's stored design system (frozen at first
+      // generation) so regenerated screens stay on the same tokens; fall
+      // back to deriving from the current frames.
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: { designContext: true },
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const storedDesign = project?.designContext as any;
+
       let designContextString = "";
       let appIdentityString = "";
-      if (allFrames && Array.isArray(allFrames) && allFrames.length > 0) {
+      if (storedDesign?.dna?.isInitialized) {
+        designContextString = `
+${generateDesignDNAString(storedDesign.dna.dna)}
+
+${generateComponentLibraryString(storedDesign.dna.components)}
+
+CRITICAL: When modifying this screen, you MUST maintain the Design DNA above.
+Any changes should seamlessly blend with the app's established visual style.
+`;
+        if (storedDesign.appIdentity) {
+          appIdentityString = generateAppIdentityString(storedDesign.appIdentity);
+        }
+      }
+      if (!designContextString && allFrames && Array.isArray(allFrames) && allFrames.length > 0) {
         const designContext = buildDesignContext(allFrames, themeId);
         if (designContext.isInitialized) {
           designContextString = `
