@@ -60,12 +60,12 @@ export default function LoginPage() {
 
   return (
     <div
-      className={`flex min-h-screen w-full bg-background ${openSauceOne.className} ${instrumentSerif.variable}`}
+      className={`flex min-h-screen w-full bg-background  ${openSauceOne.className} ${instrumentSerif.variable}`}
     >
       {/* ---- Left: auth panel ---- */}
-      <div className="relative flex w-full flex-col px-6 py-6 sm:px-10 lg:w-[44%] lg:shrink-0">
+      <div className="relative flex w-full flex-col px-6 py-6 sm:px-10 lg:w-[55%] lg:shrink-0 ">
         {/* Top bar */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between ">
           <Link
             href="/"
             className="flex items-baseline text-xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80"
@@ -82,21 +82,32 @@ export default function LoginPage() {
         </div>
 
         {/* Centered auth block */}
-        <div className="flex flex-1 items-center justify-center py-12">
-          <div className="w-full max-w-sm">
-            <h1 className="font-display text-4xl leading-[1.1] text-foreground sm:text-[44px]">
-              Welcome to gimble<span className="text-sky-600 dark:text-sky-400">.</span>
+        <div className="flex flex-1 items-center justify-center py-12 ">
+          <div className="relative w-full max-w-sm ">
+            {/* Top */}
+            <div className="absolute -top-25 left-1/2 -translate-x-1/2 w-156 h-px bg-gray-400" />
+
+            {/* Bottom */}
+            <div className="absolute  -bottom-25 left-1/2 -translate-x-1/2 w-156 h-px  bg-gray-400" />
+
+            {/* Left */}
+            <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-px h-152 bg-gray-400" />
+
+            {/* Right */}
+            <div className="absolute -right-20 top-1/2 -translate-y-1/2 w-px h-152 bg-gray-400" />
+            <h1 className="font-display text-4xl text-center leading-[1.1] text-foreground sm:text-[46px]">
+              Get Started with gimble
+              <span className="text-sky-600 dark:text-sky-400">.</span>
             </h1>
-            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-              Describe what you want, and we handle the rest — from idea to
-              polished mobile &amp; web design in minutes.
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground text-center">
+              Describe what you want, and we handle the rest.
             </p>
 
             <button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isSigningIn}
-              className="mt-9 flex h-12 w-full items-center justify-center gap-3 rounded-full border border-border bg-card text-[15px] font-semibold text-foreground shadow-sm transition-all hover:border-foreground/25 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+              className="my-12 flex h-12 w-full items-center justify-center gap-3 rounded-full border border-border bg-card text-[14px] font-semibold text-foreground shadow-sm transition-all hover:border-foreground/25 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isSigningIn ? (
                 <>
@@ -110,20 +121,24 @@ export default function LoginPage() {
                 </>
               )}
             </button>
-
-            <p className="mt-5 text-center text-xs leading-relaxed text-muted-foreground">
-              Free plan includes 100 credits — no credit card required.
+            <p className="font-semibold mt-4 p-2 text-center text-xs leading-relaxed text-muted-foreground">
+              * Free plan includes 100 credits — no credit card required.
             </p>
+            {/* <div className="my-8 h-px w-full bg-border" /> */}
 
-            <div className="my-8 h-px w-full bg-border" />
-
-            <p className="text-center text-xs leading-relaxed text-muted-foreground">
+            <p className="mt-6 text-center text-[13px] leading-relaxed text-muted-foreground">
               By continuing, you agree to our{" "}
-              <a href="#" className="underline underline-offset-2 hover:text-foreground">
+              <a
+                href="#"
+                className="underline underline-offset-2 hover:text-foreground"
+              >
                 Terms
               </a>{" "}
               and{" "}
-              <a href="#" className="underline underline-offset-2 hover:text-foreground">
+              <a
+                href="#"
+                className="underline underline-offset-2 hover:text-foreground"
+              >
                 Privacy Policy
               </a>
               .
@@ -132,14 +147,16 @@ export default function LoginPage() {
         </div>
 
         {/* Bottom meta */}
-        <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Gimble
-        </p>
+        <span className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Gimble
+          </p>
+        </span>
       </div>
 
       {/* ---- Right: imagery panel ---- */}
       <div className="relative hidden flex-1 p-4 lg:block">
-        <div className="relative isolate h-full w-full overflow-hidden rounded-[2rem]">
+        <div className="relative isolate h-full w-full overflow-hidden rounded-2xl">
           {/* Gradient fallback under the photo */}
           <div
             aria-hidden
@@ -154,7 +171,10 @@ export default function LoginPage() {
             className="-z-10 object-cover"
           />
           {/* Slight dim in dark mode so the panel doesn't glare */}
-          <div aria-hidden className="absolute inset-0 hidden bg-black/20 dark:block" />
+          <div
+            aria-hidden
+            className="absolute inset-0 hidden bg-black/20 dark:block"
+          />
           {/* Legibility scrim behind the quote card */}
           <div
             aria-hidden

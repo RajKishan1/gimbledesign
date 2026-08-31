@@ -25,6 +25,9 @@ import LandingTestimonials from "@/components/landing/v2/testimonials";
 import LandingFaq from "@/components/landing/v2/faq";
 import LandingCta from "@/components/landing/v2/cta";
 import LandingFooter from "@/components/landing/v2/footer";
+import DesignShowcase from "@/components/landing/v2/DesignShowcase";
+import PremiumProcessSection from "@/components/landing/v2/Premiumprocesssection";
+import LandingModels from "@/components/landing/v2/LandingModels";
 
 // Loading state type for the design process
 type LoadingState = "idle" | "enhancing" | "designing";
@@ -273,7 +276,8 @@ const LandingSection = () => {
         </div>
       </LandingHero>
 
-      <LandingModelsStrip />
+      {/* <LandingModelsStrip /> */}
+      <LandingModels />
 
       {/* Recent projects (signed-in users only) */}
       {userId && (
@@ -323,8 +327,10 @@ const LandingSection = () => {
         </section>
       )}
 
-      <LandingShowcase />
-      <LandingCapabilities />
+      {/* <LandingShowcase /> */}
+      <DesignShowcase />
+      {/* <LandingCapabilities /> */}
+      <PremiumProcessSection />
       <LandingPricing />
       <LandingTestimonials />
       <LandingFaq />

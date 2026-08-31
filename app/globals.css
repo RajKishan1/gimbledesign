@@ -407,3 +407,16 @@
     transform: translateX(300%);
   }
 }
+.carousel-track {
+  animation: carousel 60s linear infinite;
+}
+
+@keyframes carousel {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 10px));
+  }
+}
