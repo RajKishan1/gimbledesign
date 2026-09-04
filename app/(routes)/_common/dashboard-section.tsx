@@ -435,7 +435,7 @@ const DashboardSection = () => {
 
           <ExploreDesign />
           {/* My Projects */}
-          <div className="w-full py-10 px-4 sm:px-6 lg:px-8 xl:px-10">
+          {/* <div className="w-full py-10 px-4 sm:px-6 lg:px-8 xl:px-10">
             <div className="w-full">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <h2 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -525,7 +525,7 @@ const DashboardSection = () => {
                 </p>
               )}
             </div>
-          </div>
+          </div> */}
         </main>
       </div>
     </div>
