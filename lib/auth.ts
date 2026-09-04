@@ -1,56 +1,176 @@
+// import { betterAuth } from "better-auth";
+// import { mongodbAdapter } from "better-auth/adapters/mongodb";
+// import { MongoClient } from "mongodb";
+// import { nextCookies } from "better-auth/next-js";
+
+// const globalForMongo = globalThis as unknown as {
+//   mongoClient: MongoClient;
+//   mongoDb: ReturnType<MongoClient["db"]>;
+// };
+
+// function getMongoDb() {
+//   const url = process.env.DATABASE_URL;
+//   if (!url) throw new Error("DATABASE_URL is not set");
+//   if (!globalForMongo.mongoClient) {
+//     globalForMongo.mongoClient = new MongoClient(url);
+//   }
+//   if (!globalForMongo.mongoDb) {
+//     globalForMongo.mongoDb = globalForMongo.mongoClient.db();
+//   }
+//   return {
+//     db: globalForMongo.mongoDb,
+//     client: globalForMongo.mongoClient,
+//   };
+// }
+
+// const { db, client } = getMongoDb();
+
+// const baseURL =
+//   process.env.BETTER_AUTH_URL ??
+//   process.env.NEXT_PUBLIC_APP_URL ??
+//   "http://localhost:3000";
+
+// export const auth = betterAuth({
+//   baseURL,
+//   trustedOrigins: [
+//     baseURL,
+//     ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS
+//       ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",")
+//           .map((o) => o.trim())
+//           .filter(Boolean)
+//       : []),
+//   ],
+//   secret: process.env.BETTER_AUTH_SECRET,
+//   database: mongodbAdapter(db, { client }),
+//   socialProviders: {
+//     google: {
+//       clientId: process.env.GOOGLE_CLIENT_ID!,
+//       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+//     },
+//   },
+//   plugins: [nextCookies()],
+// });
+
+// export async function getSession(headers: Headers) {
+//   return auth.api.getSession({ headers });
+// }
+
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 import { nextCookies } from "better-auth/next-js";
 
 const globalForMongo = globalThis as unknown as {
-  mongoClient: MongoClient;
-  mongoDb: ReturnType<MongoClient["db"]>;
+  mongoClient?: MongoClient;
+  mongoClientPromise?: Promise<MongoClient>;
 };
 
-function getMongoDb() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set");
-  if (!globalForMongo.mongoClient) {
-    globalForMongo.mongoClient = new MongoClient(url);
-  }
-  if (!globalForMongo.mongoDb) {
-    globalForMongo.mongoDb = globalForMongo.mongoClient.db();
-  }
-  return {
-    db: globalForMongo.mongoDb,
-    client: globalForMongo.mongoClient,
-  };
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set");
 }
 
-const { db, client } = getMongoDb();
+/**
+ * Create/reuse one MongoDB client.
+ *
+ * IMPORTANT:
+ * Never call client.close() anywhere in the application.
+ */
+const client =
+  globalForMongo.mongoClient ??
+  new MongoClient(DATABASE_URL, {
+    tls: true,
 
+    // Helps avoid hanging for a very long time when
+    // MongoDB Atlas cannot be reached.
+    serverSelectionTimeoutMS: 10000,
+
+    // Keep the connection pool reasonably sized.
+    maxPoolSize: 10,
+
+    // Use IPv4. This can avoid certain Windows/network
+    // IPv6 connection problems.
+    family: 4,
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForMongo.mongoClient = client;
+}
+
+/**
+ * Connect exactly once.
+ */
+const clientPromise =
+  globalForMongo.mongoClientPromise ??
+  client.connect();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForMongo.mongoClientPromise = clientPromise;
+}
+
+/**
+ * MongoDB database instance.
+ *
+ * client.db() does not create another MongoClient.
+ */
+const db = client.db();
+
+/**
+ * Better Auth URL
+ */
 const baseURL =
   process.env.BETTER_AUTH_URL ??
   process.env.NEXT_PUBLIC_APP_URL ??
   "http://localhost:3000";
 
+/**
+ * Trusted origins
+ */
+const trustedOrigins = [
+  baseURL,
+
+  ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS
+    ? process.env.BETTER_AUTH_TRUSTED_ORIGINS
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+    : []),
+];
+
+/**
+ * Better Auth
+ */
 export const auth = betterAuth({
   baseURL,
-  trustedOrigins: [
-    baseURL,
-    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS
-      ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",")
-          .map((o) => o.trim())
-          .filter(Boolean)
-      : []),
-  ],
+
+  trustedOrigins,
+
   secret: process.env.BETTER_AUTH_SECRET,
-  database: mongodbAdapter(db, { client }),
+
+  database: mongodbAdapter(db, {
+    client,
+  }),
+
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },
+
   plugins: [nextCookies()],
 });
 
+/**
+ * Get current session
+ */
 export async function getSession(headers: Headers) {
-  return auth.api.getSession({ headers });
+  // Make sure MongoDB has successfully connected before
+  // Better Auth performs its database operation.
+  await clientPromise;
+
+  return auth.api.getSession({
+    headers,
+  });
 }
