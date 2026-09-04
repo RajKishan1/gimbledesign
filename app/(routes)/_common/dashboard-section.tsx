@@ -8,22 +8,16 @@ import Header from "./header";
 import DashboardSidebar from "./dashboard-sidebar";
 import {
   useCreateProject,
-  useGetProjects,
   useRenameProject,
   useDeleteProject,
   useDuplicateProject,
   useSetProjectFavorite,
 } from "@/features/use-project";
-import {
-  useExploreProjects,
-  useMoveProjectToExplore,
-} from "@/features/use-explore";
 import { useProfile } from "@/context/profile-provider";
 import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Copy01Icon,
@@ -102,29 +96,24 @@ const DashboardSection = () => {
   const [inspirationKind, setInspirationKind] = useState<"web" | "mobile">(
     "web",
   );
-  const [projectsFilter, setProjectsFilter] = useState<"all" | "favorites">(
-    "all",
-  );
-  const userId = user?.id;
 
-  // When arriving from Mini Tools (?mini=wireframe or ?mini=inspirations), set device type
+  // When arriving from Mini Tools (?mini=wireframe or ?mini=inspirations), set device type.
+  // The navbar's Mobile App / Web Platform tabs use ?type= and jump to the prompt.
   React.useEffect(() => {
     const mini = searchParams.get("mini");
     if (mini === "wireframe") setDeviceType("wireframe");
     else if (mini === "inspirations") setDeviceType("inspirations");
+    const type = searchParams.get("type");
+    if (type === "web" || type === "mobile") {
+      setDeviceType(type);
+      document
+        .getElementById("new-design")
+        ?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [searchParams]);
 
-  const {
-    data: projects,
-    isLoading,
-    isError,
-  } = useGetProjects(userId, 10, projectsFilter === "favorites");
   const { mutate, isPending } = useCreateProject();
   const { data: profile } = useProfile();
-  const { data: exploreProjects = [], isLoading: exploreLoading } =
-    useExploreProjects(8);
-  const moveToExplore = useMoveProjectToExplore();
-  const isAdmin = profile?.role === "admin";
 
   React.useEffect(() => {
     if (!isPending && loadingState === "designing") {
@@ -236,6 +225,10 @@ const DashboardSection = () => {
               backdrop-blur "frosted glass" effect actually sees content
               scrolling underneath it. */}
           <NavBar />
+
+          {/* Explore designs — first thing on the page, like the reference. */}
+          <ExploreDesign />
+
           {/* Hero — id anchors the NewModel banner's "Try" CTA. */}
           <div
             id="new-design"

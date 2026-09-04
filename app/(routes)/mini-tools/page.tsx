@@ -1,216 +1,391 @@
 "use client";
 
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  BrowserIcon,
+  CubeIcon,
+  Edit02Icon,
+  EraserIcon,
+  Image01Icon,
+  Layers01Icon,
   Layout01Icon,
   MagicWand01Icon,
+  PencilEdit02Icon,
+  Search01Icon,
+  ShoppingBag01Icon,
   SmartPhone01Icon,
-  ArrowRight01Icon,
+  SourceCodeIcon,
+  StarIcon,
+  TextFontIcon,
 } from "@hugeicons/core-free-icons";
 import DashboardSidebar from "../_common/dashboard-sidebar";
+import NavBar from "@/components/dashboard/NavBar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-function WireframePreview() {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      <div className="flex flex-col gap-2 w-[60%]">
-        <div className="h-3 rounded-md border border-foreground/15 bg-background/40" />
-        <div className="h-10 rounded-md border border-foreground/15 bg-background/40" />
-        <div className="h-6 rounded-md border border-foreground/15 bg-background/40" />
-      </div>
-    </div>
-  );
-}
+type Category = "Design" | "Generate" | "Edit" | "Export";
 
-function ReimaginePreview() {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      <div className="relative w-24 h-24">
-        <div className="absolute left-0 top-2 w-16 h-16 rounded-lg border border-foreground/15 bg-background/40" />
-        <div className="absolute right-0 bottom-0 w-16 h-16 rounded-lg border border-foreground/20 bg-foreground/5" />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-card border border-border shadow-sm text-foreground">
-          <HugeiconsIcon
-            icon={MagicWand01Icon}
-            size={16}
-            color="currentColor"
-            strokeWidth={1.75}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
+type Tool = {
+  id: string;
+  title: string;
+  description: string;
+  /** Set only for tools that actually exist — the rest show "Coming soon". */
+  href?: string;
+  badge?: string;
+  icon: typeof Layout01Icon;
+  /** Pastel tile background + icon color. */
+  tile: string;
+  iconColor: string;
+  category: Category;
+};
 
-function AppStoreScreensPreview() {
-  return (
-    <div className="absolute inset-0 flex items-end justify-center pb-2">
-      <div className="flex items-end gap-2">
-        <div className="w-12 h-20 rounded-md border border-foreground/15 bg-background/40 -rotate-6 flex flex-col items-center pt-1">
-          <div className="w-4 h-1 rounded-full bg-foreground/20" />
-        </div>
-        <div className="w-14 h-24 rounded-md border border-foreground/15 bg-background/50 flex flex-col items-center pt-1.5 z-10">
-          <div className="w-5 h-1 rounded-full bg-foreground/20" />
-        </div>
-        <div className="w-12 h-20 rounded-md border border-foreground/15 bg-background/40 rotate-6 flex flex-col items-center pt-1">
-          <div className="w-4 h-1 rounded-full bg-foreground/20" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const tools = [
+const TOOLS: Tool[] = [
   {
     id: "wireframe",
     title: "Wireframe",
-    valueProp: "Sketch low-fidelity layouts in seconds",
-    cta: "Open Wireframe",
+    description: "Sketch low-fidelity layouts in seconds",
     href: "/dashboard?mini=wireframe",
     icon: Layout01Icon,
-    accent: "from-blue-500/20 to-indigo-500/10",
-    preview: <WireframePreview />,
-    badge: undefined as string | undefined,
+    tile: "bg-indigo-50 dark:bg-indigo-500/10",
+    iconColor: "text-indigo-500",
+    category: "Design",
   },
   {
     id: "reimagine",
     title: "Reimagine",
-    valueProp: "Turn any screenshot into a better design",
-    cta: "Open Reimagine",
+    description: "Turn any screenshot into a better design",
     href: "/dashboard?mini=inspirations",
     icon: MagicWand01Icon,
-    accent: "from-fuchsia-500/20 to-pink-500/10",
-    preview: <ReimaginePreview />,
-    badge: undefined as string | undefined,
+    tile: "bg-fuchsia-50 dark:bg-fuchsia-500/10",
+    iconColor: "text-fuchsia-500",
+    category: "Design",
   },
   {
     id: "app-store",
     title: "App Store Screens",
-    valueProp: "Generate marketing-ready store screenshots",
-    cta: "Coming soon",
+    description: "Generate marketing-ready store screenshots",
     href: "/mini-tools/app-store-screens",
     icon: SmartPhone01Icon,
-    accent: "from-amber-500/20 to-orange-500/10",
-    preview: <AppStoreScreensPreview />,
-    badge: "Coming soon" as string | undefined,
+    tile: "bg-orange-50 dark:bg-orange-500/10",
+    iconColor: "text-orange-500",
+    category: "Export",
+  },
+  {
+    id: "magic-edit",
+    title: "Magic Edit",
+    description: "Edit any part of your design with simple prompts",
+    badge: "Beta",
+    icon: Edit02Icon,
+    tile: "bg-green-50 dark:bg-green-500/10",
+    iconColor: "text-green-600",
+    category: "Edit",
+  },
+  {
+    id: "design-system",
+    title: "Design System",
+    description: "Create consistent styles and components",
+    icon: TextFontIcon,
+    tile: "bg-blue-50 dark:bg-blue-500/10",
+    iconColor: "text-blue-500",
+    category: "Design",
+  },
+  {
+    id: "image-generator",
+    title: "Image Generator",
+    description: "Generate original images for your projects",
+    icon: Image01Icon,
+    tile: "bg-violet-50 dark:bg-violet-500/10",
+    iconColor: "text-violet-500",
+    category: "Generate",
+  },
+  {
+    id: "ai-mockups",
+    title: "AI Mockups",
+    description: "Create realistic device mockups instantly",
+    icon: SmartPhone01Icon,
+    tile: "bg-sky-50 dark:bg-sky-500/10",
+    iconColor: "text-sky-600",
+    category: "Generate",
+  },
+  {
+    id: "icon-generator",
+    title: "Icon Generator",
+    description: "Generate beautiful icons in any style",
+    icon: StarIcon,
+    tile: "bg-amber-50 dark:bg-amber-500/10",
+    iconColor: "text-amber-500",
+    category: "Generate",
+  },
+  {
+    id: "remove-background",
+    title: "Remove Background",
+    description: "Remove image backgrounds in one click",
+    icon: EraserIcon,
+    tile: "bg-rose-50 dark:bg-rose-500/10",
+    iconColor: "text-rose-500",
+    category: "Edit",
+  },
+  {
+    id: "brand-kit",
+    title: "Brand Kit Extractor",
+    description: "Extract colors, fonts and assets from any brand",
+    icon: ShoppingBag01Icon,
+    tile: "bg-stone-100 dark:bg-stone-500/10",
+    iconColor: "text-stone-600",
+    category: "Export",
+  },
+  {
+    id: "illustration-generator",
+    title: "Illustration Generator",
+    description: "Create stunning illustrations in seconds",
+    icon: PencilEdit02Icon,
+    tile: "bg-purple-50 dark:bg-purple-500/10",
+    iconColor: "text-purple-500",
+    category: "Generate",
+  },
+  {
+    id: "landing-page",
+    title: "Landing Page Generator",
+    description: "Generate high-converting landing pages",
+    icon: BrowserIcon,
+    tile: "bg-indigo-50 dark:bg-indigo-500/10",
+    iconColor: "text-indigo-500",
+    category: "Generate",
+  },
+  {
+    id: "content-generator",
+    title: "Content Generator",
+    description: "Generate content blocks for your designs",
+    icon: CubeIcon,
+    tile: "bg-yellow-50 dark:bg-yellow-500/10",
+    iconColor: "text-yellow-600",
+    category: "Generate",
+  },
+  {
+    id: "design-to-code",
+    title: "Design to Code",
+    description: "Convert designs into clean frontend code",
+    icon: SourceCodeIcon,
+    tile: "bg-blue-50 dark:bg-blue-500/10",
+    iconColor: "text-blue-500",
+    category: "Export",
+  },
+  {
+    id: "export-assets",
+    title: "Export Assets",
+    description: "Export assets in all formats and sizes",
+    icon: Layers01Icon,
+    tile: "bg-violet-50 dark:bg-violet-500/10",
+    iconColor: "text-violet-500",
+    category: "Export",
   },
 ];
 
-const workflows = [
-  {
-    label: "Turn sketch into app UI",
-    href: "/dashboard?mini=wireframe",
-    icon: Layout01Icon,
-  },
-  {
-    label: "Reimagine a screenshot",
-    href: "/dashboard?mini=inspirations",
-    icon: MagicWand01Icon,
-  },
-  {
-    label: "Generate App Store screenshots",
-    href: "/mini-tools/app-store-screens",
-    icon: SmartPhone01Icon,
-  },
+const CATEGORIES: ("All Tools" | Category)[] = [
+  "All Tools",
+  "Design",
+  "Generate",
+  "Edit",
+  "Export",
 ];
+
+function ToolCard({ tool }: { tool: Tool }) {
+  const card = (
+    <div
+      className={cn(
+        "group flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card",
+        "shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-all duration-200",
+        tool.href
+          ? "hover:-translate-y-0.5 hover:border-border hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.3)]"
+          : "cursor-default",
+      )}
+    >
+      {/* Pastel tile */}
+      <div
+        className={cn(
+          "relative flex h-36 items-center justify-center",
+          tool.tile,
+        )}
+      >
+        <span
+          className={cn(
+            "flex size-14 items-center justify-center rounded-2xl bg-white/80 shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:ring-white/10",
+            tool.iconColor,
+          )}
+        >
+          <HugeiconsIcon
+            icon={tool.icon}
+            size={26}
+            color="currentColor"
+            strokeWidth={1.75}
+          />
+        </span>
+        {(tool.badge || !tool.href) && (
+          <span className="absolute right-3 top-3 inline-flex items-center rounded-full border border-border/50 bg-background/80 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground backdrop-blur-sm">
+            {tool.badge ?? "Coming soon"}
+          </span>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="flex flex-1 flex-col p-4">
+        <h2 className="text-sm font-semibold text-foreground">
+          {tool.title}
+          {tool.badge && (
+            <span className="ml-1.5 text-xs font-medium text-muted-foreground">
+              ({tool.badge})
+            </span>
+          )}
+        </h2>
+        <p className="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">
+          {tool.description}
+        </p>
+        <span
+          className={cn(
+            "mt-3 flex size-7 items-center justify-center self-end rounded-full border border-border text-muted-foreground transition-all",
+            tool.href &&
+              "group-hover:border-foreground group-hover:bg-foreground group-hover:text-background",
+          )}
+        >
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            size={13}
+            color="currentColor"
+            strokeWidth={2}
+          />
+        </span>
+      </div>
+    </div>
+  );
+
+  if (tool.href) {
+    return (
+      <Link href={tool.href} aria-label={tool.title}>
+        {card}
+      </Link>
+    );
+  }
+  return card;
+}
 
 export default function MiniToolsPage() {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>(
+    "All Tools",
+  );
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return TOOLS.filter((t) => {
+      if (category !== "All Tools" && t.category !== category) return false;
+      if (!q) return true;
+      return (
+        t.title.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q)
+      );
+    });
+  }, [query, category]);
+
   return (
     <div className="w-full h-screen overflow-hidden flex">
       <DashboardSidebar />
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-card">
         <main className="flex-1 min-h-0 overflow-y-auto">
-          <div className="w-full max-w-5xl mx-auto py-12 px-6">
-            <div className="max-w-3xl mb-10">
-              <h1 className="font-bold text-2xl sm:text-3xl tracking-tight text-foreground">
-                Mini Tools
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                Focused utilities for sketching, reimagining and shipping
-                designs. Pick a tool below or jump into a popular workflow.
-              </p>
-            </div>
+          {/* NavBar reads useSearchParams — needs Suspense on this
+              statically-prerendered page. */}
+          <Suspense fallback={<div className="h-17 border-b border-border/60" />}>
+            <NavBar />
+          </Suspense>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-12">
-              {tools.map((tool) => (
-                <Link
-                  key={tool.id}
-                  href={tool.href}
-                  className={cn(
-                    "group flex flex-col h-[320px] rounded-2xl border border-border/60 bg-card overflow-hidden",
-                    "transition-all duration-200",
-                    "shadow-[0_1px_2px_rgba(0,0,0,0.06)]",
-                    "hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.35)] hover:border-border hover:-translate-y-0.5"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "relative h-40 overflow-hidden bg-gradient-to-br",
-                      tool.accent
-                    )}
-                  >
-                    {tool.preview}
-                    {tool.badge && (
-                      <span className="absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider bg-background/80 backdrop-blur-sm border border-border/50 text-muted-foreground">
-                        {tool.badge}
-                      </span>
-                    )}
-                  </div>
+          <div className="w-full px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
+            {/* Header row: title + search + category filter */}
+            <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-sm">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                  Tools
+                </h1>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  Powerful utilities to help you design, reimagine and ship
+                  amazing products faster.
+                </p>
+              </div>
 
-                  <div className="flex flex-col flex-1 p-5">
-                    <div className="flex items-center gap-2.5 mb-1.5">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-foreground/5 text-foreground">
-                        <HugeiconsIcon
-                          icon={tool.icon}
-                          size={18}
-                          color="currentColor"
-                          strokeWidth={1.75}
-                        />
-                      </div>
-                      <h2 className="font-semibold text-base text-foreground">
-                        {tool.title}
-                      </h2>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
-                      {tool.valueProp}
-                    </p>
-                    <span className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-foreground group-hover:gap-2 transition-all">
-                      {tool.cta}
+              <div className="flex items-center gap-3">
+                <label className="flex h-10 w-full max-w-64 items-center gap-2 rounded-full border border-border bg-card px-3.5 transition-colors focus-within:border-foreground/25 sm:w-64">
+                  <HugeiconsIcon
+                    icon={Search01Icon}
+                    size={15}
+                    color="currentColor"
+                    strokeWidth={1.75}
+                    className="shrink-0 text-muted-foreground"
+                  />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search tools..."
+                    aria-label="Search tools"
+                    className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                  />
+                </label>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                    >
+                      {category}
                       <HugeiconsIcon
-                        icon={ArrowRight01Icon}
+                        icon={ArrowDown01Icon}
                         size={14}
                         color="currentColor"
-                        strokeWidth={2}
+                        strokeWidth={1.75}
+                        className="text-muted-foreground"
                       />
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                    {CATEGORIES.map((c) => (
+                      <DropdownMenuItem
+                        key={c}
+                        onClick={() => setCategory(c)}
+                        className={cn(
+                          "cursor-pointer rounded-lg text-sm",
+                          category === c && "font-semibold text-foreground",
+                        )}
+                      >
+                        {c}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                Popular workflows
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {workflows.map((w) => (
-                  <Link
-                    key={w.label}
-                    href={w.href}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-border/60 bg-card hover:bg-accent hover:border-border text-sm text-foreground transition-colors"
-                  >
-                    <HugeiconsIcon
-                      icon={w.icon}
-                      size={14}
-                      color="currentColor"
-                      strokeWidth={1.75}
-                      className="text-muted-foreground"
-                    />
-                    {w.label}
-                  </Link>
+            {/* Grid */}
+            {filtered.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-muted/30 py-16 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No tools match &quot;{query}&quot;.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {filtered.map((tool) => (
+                  <ToolCard key={tool.id} tool={tool} />
                 ))}
               </div>
-            </section>
+            )}
           </div>
         </main>
       </div>

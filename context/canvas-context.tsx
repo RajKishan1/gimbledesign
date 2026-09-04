@@ -2,6 +2,7 @@
 import { useInngestSubscription } from "@inngest/realtime/hooks";
 import { fetchRealtimeSubscriptionToken } from "@/app/action/realtime";
 import { THEME_LIST, ThemeType } from "@/lib/themes";
+import { toast } from "sonner";
 import { AppShellType, FrameType } from "@/types/project";
 import { POPULAR_FONTS, FontOption, DEFAULT_FONT } from "@/constant/fonts";
 import {
@@ -10,6 +11,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -62,6 +64,15 @@ interface CanvasContextType {
 
   /** When true (e.g. public share view), hide edit toolbar and actions. */
   readOnly?: boolean;
+
+  /** Image handed from the canvas to the chat input ("@" attachment).
+      Chat consumes it and clears it back to null. */
+  chatImage: { dataUrl: string; name: string } | null;
+  setChatImage: (img: { dataUrl: string; name: string } | null) => void;
+
+  /** Project export panel — openable from the top toolbar and frame menus. */
+  exportOpen: boolean;
+  setExportOpen: (open: boolean) => void;
 }
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -110,6 +121,8 @@ export const CanvasProvider = ({
   );
   const [variationsPanelOpen, setVariationsPanelOpen] = useState(false);
   const [variationsFrameId, setVariationsFrameId] = useState<string | null>(null);
+  const [chatImage, setChatImage] = useState<{ dataUrl: string; name: string } | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const [prevProjectId, setPrevProjectId] = useState(projectId);
   const appShell = initialAppShell;
@@ -210,6 +223,89 @@ export const CanvasProvider = ({
     });
   }, [projectId, freshData]);
 
+  // Live mirror of frames for use inside the polling interval below.
+  const framesRef = useRef(frames);
+  useEffect(() => {
+    framesRef.current = frames;
+  }, [frames]);
+
+  // ── Job state sync fallback ───────────────────────────────────────────
+  // Realtime websocket events can be missed (dropped connection, tab sleep),
+  // leaving skeleton frames and the "generating" status stuck forever. While
+  // a job is active, poll the DB every 8s and reconcile; after 5 minutes
+  // with no completion, fail gracefully instead of spinning forever.
+  useEffect(() => {
+    const ACTIVE = ["running", "analyzing", "generating"];
+    if (!projectId || !loadingStatus || !ACTIVE.includes(loadingStatus)) return;
+
+    const startedAt = Date.now();
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/project/${projectId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const dbFrames: FrameType[] = data?.frames ?? [];
+
+        const prev = framesRef.current;
+        let changed = false;
+        const matchedDbIds = new Set<string>();
+        const merged = prev.map((f) => {
+          // Match by id, or match a loading skeleton by title (skeletons
+          // use analysis ids until the frame.created event renames them).
+          const db =
+            dbFrames.find((d) => d.id === f.id) ??
+            (f.isLoading && !f.htmlContent
+              ? dbFrames.find(
+                  (d) =>
+                    d.title === f.title &&
+                    !matchedDbIds.has(d.id) &&
+                    !prev.some((p) => p.id === d.id),
+                )
+              : undefined);
+          if (db) matchedDbIds.add(db.id);
+          if (db && db.htmlContent && (f.isLoading || f.id !== db.id)) {
+            changed = true;
+            return { ...db, isLoading: false };
+          }
+          return f;
+        });
+        // Frames completed in the DB that never arrived via realtime
+        for (const db of dbFrames) {
+          if (!merged.some((f) => f.id === db.id)) {
+            merged.push({ ...db, isLoading: false });
+            changed = true;
+          }
+        }
+        if (changed) setFrames(merged);
+        // Everything the job promised has materialized — settle to idle so
+        // the UI doesn't show "generating" forever after missed events.
+        if (changed && merged.every((f) => !f.isLoading)) {
+          setLoadingStatus("idle");
+          return;
+        }
+
+        if (Date.now() - startedAt > 5 * 60_000) {
+          setLoadingStatus("idle");
+          // Drop skeletons that never materialized in the DB
+          setFrames((prev) =>
+            prev.filter(
+              (f) =>
+                !(f.isLoading && !f.htmlContent) ||
+                dbFrames.some((d) => d.id === f.id),
+            ),
+          );
+          toast.error(
+            "Generation is taking longer than expected — showing the screens that completed.",
+          );
+        }
+      } catch {
+        /* network hiccup — try again next tick */
+      }
+    }, 8_000);
+
+    return () => clearInterval(interval);
+  }, [projectId, loadingStatus]);
+
   const addFrame = useCallback((frame: FrameType) => {
     setFrames((prev) => [...prev, frame]);
   }, []);
@@ -249,6 +345,10 @@ export const CanvasProvider = ({
         setVariationsFrameId,
         appShell,
         readOnly,
+        chatImage,
+        setChatImage,
+        exportOpen,
+        setExportOpen,
       }}
     >
       {children}

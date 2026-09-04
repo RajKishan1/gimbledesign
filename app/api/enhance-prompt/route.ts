@@ -986,15 +986,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Combine image context with user text for enhancement
+    // Combine image context with user text for enhancement. The layout spec
+    // extracted from the image is a CONTRACT — the enhancer must carry its
+    // structural details through verbatim, not summarize them away.
     const combinedInput = refFromImage
-      ? `Reference from uploaded image:\n\n${refFromImage}${
+      ? `REFERENCE DESIGN (uploaded by user — preserve its layout structure):\n${refFromImage}${
           userText ? `\n\nUser request:\n${userText}` : ""
-        }`
+        }\n\nIMPORTANT: Your enhanced prompt MUST retain the reference's structural details verbatim — section order, grid column counts, navigation type and item count, component inventory, and any exact labels/numbers listed. Enhance around them; never drop or generalize them.`
       : userText;
     originalPrompt = combinedInput;
 
-    const selectedModel = model || "google/gemini-3-pro-preview";
+    const selectedModel = model || "google/gemini-3.1-pro-preview";
 
     // Get the appropriate enhancement prompt based on design type
     const enhancementPrompt = getEnhancementPrompt(designType);

@@ -192,6 +192,92 @@ const DESIGN_SYSTEMS = [
       "Inputs: h-10, rounded-md, focus-visible:ring-2",
       "Dialog: rounded-lg, p-6, centered overlay"
     ]
+  },
+
+  // ── Style presets (product aesthetics, not component frameworks) ──────
+  {
+    name: "iOS Clean",
+    keywords: ["ios clean", "ios style", "ios native", "apple style", "cupertino", "iphone style"],
+    rules: [
+      "iOS native feel: SF-style system font stack, -apple-system look, tight tracking on large titles",
+      "Large title header: text-3xl font-bold left-aligned, collapses to centered text-base font-semibold on secondary screens",
+      "Grouped inset lists: rounded-2xl cards containing rows separated by hairline dividers (border-b border-[var(--border)]/60), chevron-right on tappable rows",
+      "Buttons: full-width rounded-xl h-12 filled primary; text-only tinted buttons for secondary actions (no borders)",
+      "Tab bar: translucent backdrop-blur-xl bg-[var(--card)]/80, 5 items, small 10px labels under icons",
+      "Toggles as iOS switches (rounded-full pill w-12 h-7 with sliding thumb), never checkboxes",
+      "Minimal shadows — separation via background contrast (grouped bg vs card bg), not elevation",
+      "Whitespace generous: 16px screen margins, 12px between grouped sections"
+    ]
+  },
+  {
+    name: "Android Material",
+    keywords: ["android material", "material you", "android style", "android 12", "material-inspired", "android modern"],
+    rules: [
+      "Material You feel: tonal color surfaces (primary at 10-20% opacity for containers), dynamic-color look",
+      "Top app bar: left-aligned title text-xl font-medium, 64px height, optional centered variant",
+      "FAB: 56px rounded-2xl (NOT circle) bottom-right with tonal or filled primary, above bottom nav",
+      "Bottom navigation: full-width bar (not floating pill), active item gets a pill-shaped tonal indicator behind the icon plus label",
+      "Buttons: rounded-full h-10 px-6 filled primary; tonal (primary/10 bg) for secondary",
+      "Cards: rounded-3xl, tonal surface color instead of borders, minimal shadow",
+      "Ripple-suggestive press states, 8dp grid spacing, roomy 16-24px paddings",
+      "Chips: rounded-lg outlined with leading icons for filters"
+    ]
+  },
+  {
+    name: "Startup Premium",
+    keywords: ["startup premium", "premium saas", "linear style", "stripe style", "premium startup", "modern saas"],
+    rules: [
+      "Refined dark-neutral or crisp-light surfaces with ONE restrained accent color used only for primary actions and key data",
+      "Typography-led hierarchy: oversized semibold numerals for metrics (text-4xl font-semibold tabular-nums), 13-14px muted labels in medium weight",
+      "Hairline borders (border-[var(--border)]) over shadows; at most shadow-sm",
+      "Radius: consistent rounded-xl everywhere — never mix radii",
+      "Subtle gradients only as faint radial glows behind hero metrics (5-10% opacity)",
+      "Dense but airy: 24px section gaps, 16px card padding, perfect optical alignment",
+      "Micro-labels in uppercase tracking-wider text-[11px] for section headers",
+      "Buttons: compact h-9 rounded-lg font-medium, quiet secondary (ghost) actions"
+    ]
+  },
+  {
+    name: "Bold Dark Mode",
+    keywords: ["bold dark", "dark premium", "bold dark mode", "neon dark", "dark bold"],
+    rules: [
+      "Near-black layered surfaces: background darkest, cards one step lighter, never pure #000 next to pure #fff",
+      "One or two vivid accents (electric primary + one supporting pastel) used at full saturation ONLY on data, active states, and the main CTA",
+      "Oversized bold numerals: text-5xl font-black for hero metrics with tight leading",
+      "High-contrast hierarchy: white primary text, 50-60% muted secondary, accent for emphasis only",
+      "Glow accents: drop-shadow around accent-colored charts and active icons (subtle, 4-8px blur)",
+      "Cards: rounded-2xl/3xl with faint 1px inner borders (white/5) to define edges",
+      "All-caps micro-labels with wide tracking for card headers (text-[10px] tracking-[0.15em])",
+      "Charts and progress bars are the visual heroes — give them space and color"
+    ]
+  },
+  {
+    name: "Minimal Productivity",
+    keywords: ["minimal productivity", "minimal clean", "notion style", "productivity minimal", "calm minimal", "zen minimal"],
+    rules: [
+      "Monochrome base: near-white background, ink-black text, ONE muted accent used sparingly (links, active states)",
+      "Typography does the work: clear scale (15px body, 17px semibold subheads, 22-24px bold titles), no decorative styling",
+      "Flat surfaces: no shadows, 1px borders or background-tint separation only",
+      "Compact density: 12px paddings, 8px item gaps, list-first layouts over cards",
+      "Radius restrained: rounded-lg maximum",
+      "Checkboxes, simple progress bars and plain counts over flashy charts",
+      "Icons small (16-18px), monochrome, aligned to text baseline",
+      "Zero gradients, zero glows — calm and content-focused"
+    ]
+  },
+  {
+    name: "Consumer Social",
+    keywords: ["consumer social", "social app style", "instagram style", "tiktok style", "playful social", "gen z social"],
+    rules: [
+      "Content-first: edge-to-edge media cards, tight 8-12px gutters, masonry or full-bleed feeds",
+      "Vibrant but controlled: gradient accents on avatars/stories rings and the primary CTA only",
+      "Avatars everywhere: 32-40px rounded-full with 2px ring for active/story states",
+      "Bold rounded type for names and counts (font-bold), light muted timestamps",
+      "Pill-shaped interactive elements: follow buttons (h-8 rounded-full px-4 text-sm font-semibold), filter chips",
+      "Floating action affordances: prominent center create-button in bottom nav",
+      "Engagement rows: heart/comment/share icon clusters with compact counts (12.4K)",
+      "Playful depth: soft large-radius cards (rounded-3xl), gentle shadows on floating elements"
+    ]
   }
 ];
 

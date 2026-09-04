@@ -23,9 +23,10 @@ import { Spinner } from "../ui/spinner";
 import { cn } from "@/lib/utils";
 import { usePrototype } from "@/context/prototype-context";
 import { useCanvas } from "@/context/canvas-context";
-import { parseThemeColors, ThemeType } from "@/lib/themes";
+import ThemePanel from "./theme-panel";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { toast } from "sonner";
 import { useRegenerateFrame } from "@/features/use-frame";
 import { SELECTABLE_MODELS } from "@/constant/models";
 import {
@@ -52,7 +53,7 @@ interface DesignSidebarProps {
   setupStatus?: SetupStatus;
 }
 
-type DesignTab = "chat" | "theme" | "fonts";
+type DesignTab = "chat" | "theme";
 
 // ─── Sub-components (memoized) ────────────────────────────────────────────────
 
@@ -354,7 +355,10 @@ const ChatInput = memo(function ChatInput({
 }: ChatInputProps) {
   const [promptText, setPromptText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("auto");
-  const [attachedImage, setAttachedImage] = useState<{ dataUrl: string; name: string } | null>(null);
+  // The attached image lives in canvas context so the canvas can hand an
+  // uploaded image straight to the chat ("@ Add to chat" on a canvas image).
+  const { chatImage: attachedImage, setChatImage: setAttachedImage, deviceType, updateFrame, setLoadingStatus } = useCanvas();
+  const [isCapturingSite, setIsCapturingSite] = useState(false);
   const [attachedUrl, setAttachedUrl] = useState<string | null>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInputValue, setUrlInputValue] = useState("");
@@ -400,18 +404,46 @@ const ChatInput = memo(function ChatInput({
     reader.onload = () => setAttachedImage({ dataUrl: reader.result as string, name: file.name });
     reader.readAsDataURL(file);
     e.target.value = "";
-  }, []);
+  }, [setAttachedImage]);
 
   const isLoading =
-    isPending || regenerateFrame.isPending || saveMessageMutation.isPending || !!setupStatus;
+    isPending || regenerateFrame.isPending || saveMessageMutation.isPending || !!setupStatus || isCapturingSite;
 
   const handleGenerate = async () => {
-    if (!promptText.trim()) return;
+    if (!promptText.trim() || isCapturingSite) return;
     const urlToSend = attachedUrl; // capture before clearing
     const text = urlToSend
       ? `Reference website: ${urlToSend}\n\n${promptText.trim()}`
       : promptText.trim();
-    const imageToSend = attachedImage; // capture before clearing
+    let imageToSend = attachedImage; // capture before clearing
+
+    // A URL alone is useless to the model — it can't browse. Screenshot the
+    // site server-side and send that image as the actual design reference.
+    if (urlToSend && !imageToSend) {
+      setIsCapturingSite(true);
+      const captureToast = toast.loading("Capturing website design…");
+      try {
+        const res = await axios.post("/api/website-screenshot", {
+          url: urlToSend,
+          device: deviceType === "web" ? "web" : "mobile",
+        });
+        if (res.data?.dataUrl) {
+          let name = urlToSend;
+          try {
+            name = new URL(urlToSend).hostname;
+          } catch {}
+          imageToSend = { dataUrl: res.data.dataUrl, name };
+        }
+      } catch {
+        toast.error(
+          "Couldn't capture that website — continuing with the URL as text only",
+        );
+      } finally {
+        toast.dismiss(captureToast);
+        setIsCapturingSite(false);
+      }
+    }
+
     setPromptText("");
     setAttachedImage(null);
     setAttachedUrl(null);
@@ -424,7 +456,16 @@ const ChatInput = memo(function ChatInput({
         { frameId: selectedFrame.id, prompt: text, model: selectedModel },
         {
           onSuccess: () => {
+            // Show the generating state on the frame itself (cleared by the
+            // frame.created realtime event or the polling fallback), and set
+            // the status optimistically so the polling fallback engages even
+            // if the realtime connection is down.
+            updateFrame(selectedFrame.id, { isLoading: true });
+            setLoadingStatus("generating");
             saveMessageMutation.mutate({ message: `Editing ${screenName}...`, frameId: selectedFrame.id, role: "assistant" });
+          },
+          onError: () => {
+            updateFrame(selectedFrame.id, { isLoading: false });
           },
         }
       );
@@ -469,7 +510,10 @@ const ChatInput = memo(function ChatInput({
                   <span className="text-[10px] font-bold leading-none">×</span>
                 </button>
               </div>
-              <span className="text-xs text-muted-foreground truncate flex-1">{attachedImage.name}</span>
+              <span className="text-xs text-muted-foreground truncate flex-1">
+                <span className="font-medium text-foreground">@</span>
+                {attachedImage.name}
+              </span>
             </div>
           )}
 
@@ -665,10 +709,21 @@ const DesignSidebar = ({
   setupStatus = null,
 }: DesignSidebarProps) => {
   const { mode, links, removeLink, clearLinks, selectedLinkId, setSelectedLinkId } = usePrototype();
-  const { frames, themes, theme: currentTheme, setTheme, fonts, font: currentFont, setFont, loadingStatus, selectedFrame } = useCanvas();
+  const { frames, themes, theme: currentTheme, setTheme, fonts, font: currentFont, setFont, loadingStatus, selectedFrame, chatImage } = useCanvas();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<DesignTab>("chat");
+
+  // When the canvas hands an image to the chat ("@ Add to chat"), make sure
+  // the chat input is actually visible. Render-time sync, no effect needed.
+  const [prevChatImage, setPrevChatImage] = useState(chatImage);
+  if (chatImage !== prevChatImage) {
+    setPrevChatImage(chatImage);
+    if (chatImage) {
+      setActiveTab("chat");
+      setIsCollapsed(false);
+    }
+  }
 
   const queryClient = useQueryClient();
   const regenerateFrame = useRegenerateFrame(projectId);
@@ -692,18 +747,6 @@ const DesignSidebar = ({
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chat", projectId] }),
   });
-
-  // Memoize theme onSelect callbacks to avoid defeating React.memo
-  const themeSelectHandlers = useMemo(() => {
-    if (!themes) return [];
-    return themes.map((theme) => () => setTheme(theme.id));
-  }, [themes, setTheme]);
-
-  // Memoize font onSelect callbacks
-  const fontSelectHandlers = useMemo(() => {
-    if (!fonts) return [];
-    return fonts.map((font) => () => setFont(font.id));
-  }, [fonts, setFont]);
 
   return (
     <div
@@ -730,7 +773,7 @@ const DesignSidebar = ({
 
           {/* Tab bar — tabs on left, collapse toggle on right */}
           <div className="flex shrink-0 border-b border-border items-center">
-            {(["chat", "theme", "fonts"] as DesignTab[]).map((tab) => (
+            {(["chat", "theme"] as DesignTab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -741,12 +784,7 @@ const DesignSidebar = ({
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {tab === "fonts" ? (
-                  <span className="flex items-center gap-1.5">
-                    <HugeiconsIcon icon={TypeCursorIcon} size={14} color="currentColor" strokeWidth={1.75} />
-                    Fonts
-                  </span>
-                ) : tab === "theme" ? (
+                {tab === "theme" ? (
                   <span className="flex items-center gap-1.5">
                     <HugeiconsIcon icon={ColorsIcon} size={14} color="currentColor" strokeWidth={1.75} />
                     Theme
@@ -797,42 +835,17 @@ const DesignSidebar = ({
             </div>
           )}
 
-          {/* ── Theme tab ───────────────────────────────────────────── */}
+          {/* ── Theme tab — presets, typography, colors & style controls ── */}
           {activeTab === "theme" && (
-            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin p-3 pt-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 shrink-0">
-                Choose a theme
-              </p>
-              <div className="space-y-1.5">
-                {themes?.map((theme, i) => (
-                  <ThemeItem
-                    key={theme.id}
-                    theme={theme}
-                    isSelected={currentTheme?.id === theme.id}
-                    onSelect={themeSelectHandlers[i]}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Fonts tab ───────────────────────────────────────────── */}
-          {activeTab === "fonts" && (
-            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin p-3 pt-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 shrink-0">
-                Choose a font
-              </p>
-              <div className="space-y-1.5">
-                {fonts?.map((font, i) => (
-                  <FontItem
-                    key={font.id}
-                    font={font}
-                    isSelected={currentFont?.id === font.id}
-                    onSelect={fontSelectHandlers[i]}
-                  />
-                ))}
-              </div>
-            </div>
+            <ThemePanel
+              projectId={projectId}
+              themes={themes ?? []}
+              currentTheme={currentTheme ?? null}
+              onSelectTheme={setTheme}
+              fonts={fonts ?? []}
+              currentFont={currentFont ?? null}
+              onSelectFont={setFont}
+            />
           )}
         </div>
       )}
@@ -916,53 +929,5 @@ const DesignSidebar = ({
   );
 };
 
-// ─── Theme item (memoized with useMemo for color parsing) ─────────────────────
-
-const ThemeItem = memo(function ThemeItem({ theme, isSelected, onSelect }: { theme: ThemeType; isSelected: boolean; onSelect: () => void }) {
-  const color = useMemo(() => parseThemeColors(theme.style), [theme.style]);
-  return (
-    <button
-      onClick={onSelect}
-      className={cn(
-        "flex items-center justify-between w-full cursor-pointer px-2.5 py-2 rounded-xl border gap-3 bg-muted/50 transition-colors",
-        isSelected ? "border-primary/60 bg-primary/5" : "border-border hover:bg-accent/50"
-      )}
-    >
-      <div className="flex gap-1.5">
-        {(["primary", "secondary", "accent", "muted"] as const).map((key) => (
-          <div key={key} className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: color[key] }} />
-        ))}
-      </div>
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <span className="text-xs text-muted-foreground truncate">{theme.name}</span>
-        {isSelected && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} color={color.primary} strokeWidth={2} className="shrink-0 ml-auto" />}
-      </div>
-    </button>
-  );
-});
-
-// ─── Font item (memoized) ─────────────────────────────────────────────────────
-
-const FontItem = memo(function FontItem({ font, isSelected, onSelect }: { font: { id: string; name: string; family: string; category: string }; isSelected: boolean; onSelect: () => void }) {
-  return (
-    <button
-      onClick={onSelect}
-      className={cn(
-        "flex items-center justify-between w-full cursor-pointer px-2.5 py-2 rounded-xl border gap-3 bg-muted/50 transition-colors",
-        isSelected ? "border-foreground/50 bg-foreground/5 dark:bg-foreground/10" : "border-border hover:bg-accent/50"
-      )}
-    >
-      <div className="flex flex-col items-start  flex-1 min-w-0">
-        <span className="text-xs font-medium text-foreground truncate w-full" style={{ fontFamily: font.family }}>
-          {font.name}
-        </span>
-        <span className="text-[10px] text-muted-foreground capitalize">{font.category}</span>
-      </div>
-      {isSelected && (
-        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} color="currentColor" strokeWidth={2} className="text-foreground shrink-0" />
-      )}
-    </button>
-  );
-});
 
 export default DesignSidebar;

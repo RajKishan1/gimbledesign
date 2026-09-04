@@ -49,8 +49,8 @@ const DesignTreeAnalysisSchema = z.object({
 });
 
 // Fast model for analysis, quality model for generation
-const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const FAST_MODEL = "google/gemini-3.7-flash";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 /**
  * Add required properties and IDs to a node recursively

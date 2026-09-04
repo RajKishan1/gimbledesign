@@ -67,7 +67,7 @@ export default function ExploreDesign() {
                   className={cn(
                     "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
                     filter === f.value
-                      ? "bg-sky-500 text-white shadow-sm"
+                      ? "bg-neutral-900 text-white shadow-sm dark:bg-white dark:text-neutral-900"
                       : "border border-border/60 bg-card text-foreground hover:bg-muted",
                   )}
                 >
@@ -77,7 +77,7 @@ export default function ExploreDesign() {
             </div>
             <Link
               href="/explore"
-              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-sky-600 dark:hover:text-sky-400"
+              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               View all
               <ArrowRight className="size-4" />

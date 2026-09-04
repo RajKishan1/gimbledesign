@@ -8,46 +8,74 @@ export interface ModelOption {
 
 export const AI_MODELS: ModelOption[] = [
   {
-    id: "anthropic/claude-opus-4.8",
-    name: "Claude Opus 4.8",
+    id: "anthropic/claude-opus-5",
+    name: "Claude Opus 5",
     provider: "Anthropic",
     description: "Anthropic's most powerful model - highest quality",
     useCase: "generation",
   },
   {
-    id: "google/gemini-3-flash-preview",
-    name: "Gemini 3 Flash",
-    provider: "Google",
-    description: "Fast and efficient - great for analysis",
-    useCase: "analysis",
+    id: "anthropic/claude-sonnet-5",
+    name: "Claude Sonnet 5",
+    provider: "Anthropic",
+    description: "Fast and capable - great balance of speed and quality",
+    useCase: "both",
   },
   {
-    id: "google/gemini-3-pro-preview",
+    id: "openai/gpt-5.6-sol",
+    name: "GPT-5.6 Sol",
+    provider: "OpenAI",
+    description: "OpenAI's flagship - strong reasoning and generation",
+    useCase: "generation",
+  },
+  {
+    id: "google/gemini-3.1-pro-preview",
     name: "Gemini 3.1 Pro",
     provider: "Google",
     description: "Advanced Gemini Pro - balanced speed/quality",
     useCase: "both",
   },
   {
-    id: "moonshotai/kimi-k2.5",
-    name: "Kimi 2.5",
+    id: "google/gemini-3.7-flash",
+    name: "Gemini 3.7 Flash",
+    provider: "Google",
+    description: "Fast and efficient - great for analysis",
+    useCase: "analysis",
+  },
+  {
+    id: "deepseek/deepseek-v4-pro",
+    name: "DeepSeek V4 Pro",
+    provider: "DeepSeek",
+    description: "Strong open-weights model with 1M context",
+    useCase: "both",
+  },
+  {
+    id: "moonshotai/kimi-k3",
+    name: "Kimi K3",
     provider: "Moonshot AI",
     description: "Strong reasoning, vision, and tool-calling",
     useCase: "both",
   },
   {
-    id: "qwen/qwen3.5-plus-02-15",
-    name: "Qwen 3.5 Plus",
+    id: "qwen/qwen3.8-max",
+    name: "Qwen 3.8 Max",
     provider: "Qwen",
-    description: "Vision-language model, great for multimodal tasks",
+    description: "Alibaba's flagship - great for multimodal tasks",
+    useCase: "both",
+  },
+  {
+    id: "z-ai/glm-5.3",
+    name: "GLM-5.3",
+    provider: "Zhipu AI",
+    description: "Top coding and agentic model with long context",
     useCase: "both",
   },
 ];
 
-// Auto = use Gemini 3 Pro by default (no GPT or others)
+// Auto = use Gemini 3.1 Pro by default
 export const AUTO_MODEL_ID = "auto";
 
-/** Models shown in the prompt input dropdown: Auto, Gemini Pro, Gemini Flash, Opus (no GPT) */
+/** Models shown in the prompt input dropdown */
 export const SELECTABLE_MODELS: ModelOption[] = [
   {
     id: AUTO_MODEL_ID,
@@ -56,48 +84,14 @@ export const SELECTABLE_MODELS: ModelOption[] = [
     description: "Automatically picks the best model for your task",
     useCase: "both",
   },
-  {
-    id: "google/gemini-3-pro-preview",
-    name: "Gemini 3 Pro",
-    provider: "Google",
-    description: "Great for creative layouts, exploring visual styles",
-    useCase: "both",
-  },
-  {
-    id: "google/gemini-3-flash-preview",
-    name: "Gemini 3 Flash",
-    provider: "Google",
-    description: "The fastest, great for dense layouts, apps, quick edits",
-    useCase: "analysis",
-  },
-  {
-    id: "anthropic/claude-opus-4.8",
-    name: "Claude Opus 4.8",
-    provider: "Anthropic",
-    description: "Anthropic's most powerful model - highest quality",
-    useCase: "generation",
-  },
-  {
-    id: "moonshotai/kimi-k2.5",
-    name: "Kimi 2.5",
-    provider: "Moonshot AI",
-    description: "Strong reasoning, vision, and tool-calling",
-    useCase: "both",
-  },
-  {
-    id: "qwen/qwen3.5-plus-02-15",
-    name: "Qwen 3.5 Plus",
-    provider: "Qwen",
-    description: "Vision-language model, great for multimodal tasks",
-    useCase: "both",
-  },
+  ...AI_MODELS,
 ];
 
 // Fast model for analysis phase (planning screens)
-export const FAST_MODEL = "google/gemini-3-flash-preview";
+export const FAST_MODEL = "google/gemini-3.7-flash";
 
 // Quality model for generation phase (creating HTML). Auto resolves to this.
-export const DEFAULT_MODEL = "google/gemini-3-pro-preview";
+export const DEFAULT_MODEL = "google/gemini-3.1-pro-preview";
 
 export const getModelName = (modelId: string): string => {
   if (modelId === AUTO_MODEL_ID) return "Auto";
@@ -107,6 +101,6 @@ export const getModelName = (modelId: string): string => {
 
 export const getAnalysisModel = (): string => FAST_MODEL;
 
-/** Resolves user-facing model id to actual API model (Auto → Gemini 3 Pro). */
+/** Resolves user-facing model id to actual API model (Auto → Gemini 3.1 Pro). */
 export const getGenerationModel = (userModel?: string): string =>
   !userModel || userModel === AUTO_MODEL_ID ? DEFAULT_MODEL : userModel;

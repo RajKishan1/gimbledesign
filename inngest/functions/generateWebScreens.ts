@@ -81,8 +81,8 @@ const FlexibleAppSchema = z.object({
 });
 
 // Fast model for analysis, quality model for generation
-const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const FAST_MODEL = "google/gemini-3.7-flash";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 export const generateWebScreens = inngest.createFunction(
   { id: "generate-web-screens" },
@@ -249,17 +249,35 @@ export const generateWebScreens = inngest.createFunction(
     );
     const fullThemeCSS = `${BASE_VARIABLES}\n${selectedTheme?.style || ""}`;
 
-    // Design Context - built from first screens, maintained throughout
+    // Stored design system from the FIRST generation (immutable tokens):
+    // follow-up generations reuse it so every screen feels like one product,
+    // even if the original frames were later edited, regenerated, or deleted.
+    const storedDesign = isExistingGeneration
+      ? await step.run("load-design-context", async () => {
+          const p = await prisma.project.findUnique({
+            where: { id: projectId },
+            select: { designContext: true },
+          });
+          return (p?.designContext ?? null) as {
+            dna?: DesignContext;
+            registry?: ComponentRegistry;
+            appIdentity?: AppIdentity;
+          } | null;
+        })
+      : null;
+
+    // Design Context - stored tokens first, else derived from existing frames
     let designContext: DesignContext = isExistingGeneration
-      ? buildDesignContext(frames, analysisToUse.themeToUse)
+      ? (storedDesign?.dna ?? buildDesignContext(frames, analysisToUse.themeToUse))
       : buildDesignContext([], analysisToUse.themeToUse);
 
     // Component Registry - stores exact HTML components for perfect consistency
     // Built after first screen, used for ALL subsequent screens
     let componentRegistry: ComponentRegistry | null =
-      isExistingGeneration && frames.length > 0
+      storedDesign?.registry ??
+      (isExistingGeneration && frames.length > 0
         ? buildComponentRegistry(frames[0], prompt)
-        : null;
+        : null);
 
     // Provisional identity from analysis appName — available from screen 0.
     // Upgraded to HTML-extracted identity after screen 1 is generated.
@@ -279,10 +297,12 @@ export const generateWebScreens = inngest.createFunction(
       },
     };
     if (isExistingGeneration && frames.length > 0) {
-      frozenAppIdentity = extractAppIdentity(
-        (frames[0] as FrameType).htmlContent,
-        (frames[0] as FrameType).title,
-      );
+      frozenAppIdentity =
+        storedDesign?.appIdentity ??
+        extractAppIdentity(
+          (frames[0] as FrameType).htmlContent,
+          (frames[0] as FrameType).title,
+        );
     }
 
     // Theme lock — tells the AI exactly which theme is active and must never change
@@ -499,6 +519,24 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}
         return { success: true, frame: frame };
       });
     }
+
+    // Persist the design system so follow-up generations reuse the exact
+    // same tokens, components, and identity (one product, not mockups).
+    await step.run("save-design-context", async () => {
+      await prisma.project.update({
+        where: { id: projectId, userId },
+        data: {
+          designContext: JSON.parse(
+            JSON.stringify({
+              dna: designContext,
+              registry: componentRegistry,
+              appIdentity: frozenAppIdentity,
+            }),
+          ),
+        },
+      });
+      return { saved: true };
+    });
 
     await publish({
       channel: CHANNEL,

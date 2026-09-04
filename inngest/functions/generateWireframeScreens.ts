@@ -213,8 +213,8 @@ STRICT RULES:
 
 ${THEME_VARIABLES_GUIDE}`;
 
-const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const FAST_MODEL = "google/gemini-3.7-flash";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 export const generateWireframeScreens = inngest.createFunction(
   { id: "generate-wireframe-screens" },

@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const selectedModel = model || "google/gemini-2.0-flash-001";
+    const selectedModel = model || "google/gemini-3.7-flash";
 
     const { object } = await generateObject({
       model: openrouter.chat(selectedModel),

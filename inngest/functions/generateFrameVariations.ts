@@ -34,7 +34,7 @@ export const generateFrameVariations = inngest.createFunction(
     } = event.data;
 
     const CHANNEL = `user:${userId}`;
-    const selectedModel = model || "google/gemini-3-pro-preview";
+    const selectedModel = model || "google/gemini-3.1-pro-preview";
 
     // Generate stable skeleton IDs so the client can match them when real frames arrive
     const skeletonIds = Array.from(

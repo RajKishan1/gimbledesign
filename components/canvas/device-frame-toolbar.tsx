@@ -16,8 +16,15 @@ import {
   Share01Icon,
   Copy01Icon,
   RefreshIcon,
-  DashboardCircleIcon,
-  AnalyticsUpIcon,
+  GridViewIcon,
+  CircleArrowRight02Icon,
+  FireIcon,
+  LinkSquare02Icon,
+  SmartPhone01Icon,
+  Tablet01Icon,
+  ComputerIcon,
+  ArrowUpDownIcon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { useState, useRef } from "react";
 import { Separator } from "../ui/separator";
@@ -28,9 +35,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
 } from "../ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverAnchor } from "../ui/popover";
 import { InputGroup, InputGroupAddon } from "../ui/input-group";
@@ -41,6 +45,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+
+/** Canvas-only preview viewport for a frame. "full" = content height at the
+    project's own device width (the default). */
+export type FramePreviewMode = "mobile" | "tablet" | "desktop" | "full";
+
+const PREVIEW_OPTIONS: {
+  id: FramePreviewMode;
+  label: string;
+  dims: string;
+  icon: typeof SmartPhone01Icon;
+}[] = [
+  { id: "mobile", label: "Mobile", dims: "390×884", icon: SmartPhone01Icon },
+  { id: "tablet", label: "Tablet", dims: "768×1024", icon: Tablet01Icon },
+  { id: "desktop", label: "Desktop", dims: "1280×1024", icon: ComputerIcon },
+  { id: "full", label: "Full Height", dims: "", icon: ArrowUpDownIcon },
+];
 
 type PropsType = {
   title: string;
@@ -53,12 +73,22 @@ type PropsType = {
   isRegenerating?: boolean;
   isDeleting?: boolean;
   isCopyingToFigma?: boolean;
+  previewMode?: FramePreviewMode | null;
+  onPreviewModeChange?: (mode: FramePreviewMode) => void;
+  isGeneratingNext?: boolean;
+  isDuplicating?: boolean;
+  isHeatmapLoading?: boolean;
+  heatmapActive?: boolean;
   onOpenHtmlDialog: () => void;
   onDownloadPng?: () => void;
   onRegenerate?: (prompt: string) => void;
   onDeleteFrame?: () => void;
   onPasteToFigma?: () => void;
   onOpenVariations?: () => void;
+  onGenerateNext?: () => void;
+  onDuplicate?: () => void;
+  onToggleHeatmap?: () => void;
+  onOpenExport?: () => void;
 };
 
 function FigmaIcon({ className }: { className?: string }) {
@@ -104,12 +134,22 @@ const DeviceFrameToolbar = ({
   isRegenerating = false,
   isDeleting = false,
   isCopyingToFigma = false,
+  previewMode = null,
+  onPreviewModeChange,
+  isGeneratingNext = false,
+  isDuplicating = false,
+  isHeatmapLoading = false,
+  heatmapActive = false,
   onOpenHtmlDialog,
   onDownloadPng,
   onRegenerate,
   onDeleteFrame,
   onPasteToFigma,
   onOpenVariations,
+  onGenerateNext,
+  onDuplicate,
+  onToggleHeatmap,
+  onOpenExport,
 }: PropsType) => {
   const [promptValue, setPromptValue] = useState("");
   const [aiPopoverOpen, setAiPopoverOpen] = useState(false);
@@ -178,34 +218,56 @@ const DeviceFrameToolbar = ({
                   <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 rounded-lg p-1" sideOffset={4}>
+              <DropdownMenuContent align="start" className="w-60 rounded-lg p-1" sideOffset={4}>
+                <DropdownMenuItem
+                  disabled={disabled || isRegenerating}
+                  onClick={() => onRegenerate?.("Regenerate this screen with a fresh design approach while keeping the same purpose and content")}
+                  className="cursor-pointer gap-2"
+                >
+                  {isRegenerating ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    <HugeiconsIcon icon={RefreshIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  )}
+                  Regenerate this screen
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={onOpenVariations}
                   className="cursor-pointer gap-2"
                 >
-                  <HugeiconsIcon icon={Copy01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                  Variations
+                  <HugeiconsIcon icon={GridViewIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  Create variation
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  disabled
+                  disabled={disabled || isGeneratingNext}
+                  onClick={onGenerateNext}
                   className="cursor-pointer gap-2"
                 >
-                  <HugeiconsIcon icon={DashboardCircleIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                  Prototype (select &gt;1 screens)
+                  {isGeneratingNext ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    <HugeiconsIcon icon={CircleArrowRight02Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  )}
+                  Generate next screens
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => onRegenerate?.("Regenerate this screen with a fresh design approach while keeping the same purpose and content")}
+                  disabled={isHeatmapLoading}
+                  onClick={onToggleHeatmap}
                   className="cursor-pointer gap-2"
                 >
-                  <HugeiconsIcon icon={RefreshIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                  Regenerate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled
-                  className="cursor-pointer gap-2"
-                >
-                  <HugeiconsIcon icon={AnalyticsUpIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                  Predictive Heatmap
+                  {isHeatmapLoading ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    <HugeiconsIcon icon={FireIcon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  )}
+                  <span className="flex-1">
+                    {heatmapActive ? "Hide heatmap" : "Predictive heatmap"}
+                  </span>
+                  {!heatmapActive && !isHeatmapLoading && (
+                    <span className="inline-flex items-center rounded-full bg-[#53f22b]/15 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#1e9403] dark:bg-[#53f22b]/10 dark:text-[#6bf94a]">
+                      New
+                    </span>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -267,25 +329,55 @@ const DeviceFrameToolbar = ({
               </PopoverContent>
             </Popover>
 
-            {/* Preview */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
-                    onClick={() => window.open(previewUrl, "_blank")}
-                  >
-                    <HugeiconsIcon icon={EyeIcon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                    <span className="text-xs font-medium">Preview</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Open prototype preview in new tab
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {/* Preview — Stitch-style viewport switcher. Size options only
+                resize the frame's viewport on the canvas (no navigation,
+                no regeneration, no credits). */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 gap-1.5 rounded-md text-foreground hover:bg-accent"
+                >
+                  <HugeiconsIcon icon={EyeIcon} size={14} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  <span className="text-xs font-medium">Preview</span>
+                  <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 rounded-lg p-1" sideOffset={4}>
+                <DropdownMenuItem
+                  onClick={() => window.open(previewUrl, "_blank")}
+                  className="cursor-pointer gap-2"
+                >
+                  <HugeiconsIcon icon={LinkSquare02Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  New Tab
+                </DropdownMenuItem>
+                <Separator className="my-1" />
+                {PREVIEW_OPTIONS.map((opt) => {
+                  const active = (previewMode ?? "full") === opt.id;
+                  return (
+                    <DropdownMenuItem
+                      key={opt.id}
+                      onClick={() => onPreviewModeChange?.(opt.id)}
+                      className="cursor-pointer gap-2"
+                    >
+                      <HugeiconsIcon icon={opt.icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                      <span className={cn("flex-1", active && "font-semibold")}>
+                        {opt.label}
+                      </span>
+                      {opt.dims && (
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {opt.dims}
+                        </span>
+                      )}
+                      {active && (
+                        <HugeiconsIcon icon={Tick02Icon} size={14} color="currentColor" strokeWidth={2} className="shrink-0 text-primary" />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* More dropdown */}
             <DropdownMenu>
@@ -328,26 +420,14 @@ const DeviceFrameToolbar = ({
                   )}
                   Copy to Figma
                 </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                    <HugeiconsIcon icon={Share01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                    Export
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="rounded-lg">
-                    <DropdownMenuItem
-                      disabled={disabled || isDownloading}
-                      onClick={onDownloadPng}
-                      className="cursor-pointer gap-2"
-                    >
-                      {isDownloading ? (
-                        <Spinner className="size-4" />
-                      ) : (
-                        <HugeiconsIcon icon={Download01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
-                      )}
-                      Download as PNG
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                <DropdownMenuItem
+                  onClick={onOpenExport}
+                  className="cursor-pointer gap-2"
+                >
+                  <HugeiconsIcon icon={Share01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  Export
+                </DropdownMenuItem>
+                <Separator className="my-1" />
                 <DropdownMenuItem
                   disabled={disabled || isDownloading}
                   onClick={onDownloadPng}
@@ -360,7 +440,18 @@ const DeviceFrameToolbar = ({
                   )}
                   Download
                 </DropdownMenuItem>
-                <Separator className="my-1" />
+                <DropdownMenuItem
+                  disabled={disabled || isDuplicating}
+                  onClick={onDuplicate}
+                  className="cursor-pointer gap-2"
+                >
+                  {isDuplicating ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    <HugeiconsIcon icon={Copy01Icon} size={16} color="currentColor" strokeWidth={1.75} className="shrink-0" />
+                  )}
+                  Duplicate
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={disabled || isDeleting}
                   onClick={onDeleteFrame}

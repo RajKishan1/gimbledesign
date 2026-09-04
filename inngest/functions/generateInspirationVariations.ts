@@ -82,8 +82,8 @@ const InspirationAnalysisSchema = z.object({
     .describe("Exactly 4 layout/composition variations for the same concept"),
 });
 
-const FAST_MODEL = "google/gemini-3-flash-preview";
-const QUALITY_MODEL = "google/gemini-3-pro-preview";
+const FAST_MODEL = "google/gemini-3.7-flash";
+const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
 
 export const generateInspirationVariations = inngest.createFunction(
   { id: "generate-inspiration-variations" },

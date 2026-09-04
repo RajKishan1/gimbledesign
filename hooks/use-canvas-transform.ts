@@ -46,31 +46,64 @@ export function useCanvasTransform(opts: UseCanvasTransformOptions = {}) {
     scale: initialScale,
   });
 
-  // rAF handle — ensures we only have one pending frame at a time
-  const rafRef = useRef<number | null>(null);
+  // The transformed layer element. During gestures we write its style
+  // DIRECTLY every frame (cheap GPU composite) and only commit React state
+  // on a throttle — re-rendering the whole frame tree (iframes included)
+  // at 60fps is what made zoom/pan/scroll feel laggy.
+  const transformElRef = useRef<HTMLElement | null>(null);
 
-  // Whether a rAF flush is already scheduled
-  const dirtyRef = useRef(false);
-
-  const scheduleFlush = useCallback(() => {
-    if (dirtyRef.current) return;
-    dirtyRef.current = true;
-    rafRef.current = requestAnimationFrame(() => {
-      dirtyRef.current = false;
-      setTransform({ ...liveRef.current });
-    });
+  /** Attach the element that receives the live transform (the canvas layer). */
+  const attachTransformElement = useCallback((el: HTMLElement | null) => {
+    transformElRef.current = el;
+    if (el) {
+      const t = liveRef.current;
+      el.style.transform = `translate(${t.x}px, ${t.y}px) scale(${t.scale})`;
+    }
   }, []);
 
-  // Clean up any pending rAF on unmount
+  // rAF handle for the direct DOM write — one pending frame at a time
+  const rafRef = useRef<number | null>(null);
+  // Throttled React state commit
+  const commitTimerRef = useRef<number | null>(null);
+  const lastCommitRef = useRef(0);
+  const STATE_COMMIT_MS = 90;
+
+  const scheduleFlush = useCallback(() => {
+    // 1) Visual update: write the style directly, batched per frame.
+    if (rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        const el = transformElRef.current;
+        if (el) {
+          const t = liveRef.current;
+          el.style.transform = `translate(${t.x}px, ${t.y}px) scale(${t.scale})`;
+        }
+      });
+    }
+    // 2) React state: throttled with a trailing commit so overlays
+    //    (toolbars, Rnd scale, connectors) settle right after the gesture.
+    if (commitTimerRef.current !== null) return;
+    const elapsed = performance.now() - lastCommitRef.current;
+    const delay = Math.max(0, STATE_COMMIT_MS - elapsed);
+    commitTimerRef.current = window.setTimeout(() => {
+      commitTimerRef.current = null;
+      lastCommitRef.current = performance.now();
+      setTransform({ ...liveRef.current });
+    }, delay);
+  }, []);
+
+  // Clean up any pending rAF/timer on unmount
   useEffect(() => {
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      if (commitTimerRef.current !== null)
+        clearTimeout(commitTimerRef.current);
     };
   }, []);
 
   /**
-   * Apply a transform update immediately to the live ref, then schedule
-   * a single rAF flush so React state is updated once per frame.
+   * Apply a transform update immediately to the live ref, paint it directly
+   * to the DOM on the next frame, and commit React state on a throttle.
    */
   const applyTransform = useCallback(
     (updater: (prev: CanvasTransform) => CanvasTransform) => {
@@ -131,19 +164,37 @@ export function useCanvasTransform(opts: UseCanvasTransformOptions = {}) {
     [applyTransform, minScale, maxScale]
   );
 
+  // The canvas container — wheel events inside it drive the canvas transform.
+  const containerElRef = useRef<HTMLElement | null>(null);
+
   /**
-   * Attach the wheel listener to a container element.
-   * Must use { passive: false } so we can call preventDefault()
-   * and stop the browser from doing its own scroll/zoom.
+   * Register the canvas container element. The actual listener lives on
+   * `window` (capture, non-passive) so that:
+   *   - cursor inside the canvas  → pan/zoom the CANVAS
+   *   - ctrl+wheel anywhere else  → swallowed, so the browser never
+   *     page-zooms the whole app while the editor is open
    */
-  const attachWheelListener = useCallback(
-    (el: HTMLElement | null) => {
-      if (!el) return;
-      el.addEventListener("wheel", handleWheel, { passive: false });
-      return () => el.removeEventListener("wheel", handleWheel);
-    },
-    [handleWheel]
-  );
+  const attachWheelListener = useCallback((el: HTMLElement | null) => {
+    containerElRef.current = el;
+    return () => {
+      if (containerElRef.current === el) containerElRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      const container = containerElRef.current;
+      if (container && e.target instanceof Node && container.contains(e.target)) {
+        handleWheel(e);
+      } else if (e.ctrlKey) {
+        // Pinch / ctrl+wheel outside the canvas: block browser page zoom.
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("wheel", onWheel, { passive: false, capture: true });
+    return () =>
+      window.removeEventListener("wheel", onWheel, { capture: true });
+  }, [handleWheel]);
 
   // ── POINTER / DRAG PAN ────────────────────────────────────────────────
   // Used in HAND mode: click-drag pans the canvas.
@@ -184,7 +235,17 @@ export function useCanvasTransform(opts: UseCanvasTransformOptions = {}) {
     (factor: number) => {
       applyTransform((prev) => {
         const newScale = Math.min(maxScale, Math.max(minScale, prev.scale * factor));
-        return { ...prev, scale: newScale };
+        const ratio = newScale / prev.scale;
+        // Anchor the zoom at the visible center of the canvas container —
+        // scaling from the origin makes the content jump toward the corner.
+        const rect = containerElRef.current?.getBoundingClientRect();
+        const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+        const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+        return {
+          scale: newScale,
+          x: cx - ratio * (cx - prev.x),
+          y: cy - ratio * (cy - prev.y),
+        };
       });
     },
     [applyTransform, minScale, maxScale]
@@ -207,9 +268,30 @@ export function useCanvasTransform(opts: UseCanvasTransformOptions = {}) {
     applyTransform(() => ({ x: initialX, y: initialY, scale: initialScale }));
   }, [applyTransform, initialX, initialY, initialScale]);
 
+  // Ctrl/Cmd +/-/0 would browser-zoom the whole app — intercept them and
+  // drive the canvas zoom instead, matching design-tool conventions.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      if (e.key === "=" || e.key === "+") {
+        e.preventDefault();
+        zoomIn();
+      } else if (e.key === "-" || e.key === "_") {
+        e.preventDefault();
+        zoomOut();
+      } else if (e.key === "0") {
+        e.preventDefault();
+        resetTransform();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [zoomIn, zoomOut, resetTransform]);
+
   return {
     transform,
     attachWheelListener,
+    attachTransformElement,
     startDrag,
     updateDrag,
     endDrag,
