@@ -227,7 +227,7 @@ const DashboardSection = () => {
           <NavBar />
 
           {/* Explore designs — first thing on the page, like the reference. */}
-          <ExploreDesign />
+          {/* <ExploreDesign /> */}
 
           {/* Hero — id anchors the NewModel banner's "Try" CTA. */}
           <div
