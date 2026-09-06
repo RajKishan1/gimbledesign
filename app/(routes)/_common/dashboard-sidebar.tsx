@@ -126,7 +126,7 @@ function DashboardSidebarImpl() {
         if (target.closest("a, button, [role='menuitem']")) return;
       }}
       className={cn(
-        "flex h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-[#f6f6f4] transition-all duration-300 ease-in-out dark:bg-sidebar",
+        "flex h-screen shrink-0 flex-col overflow-hidden border-r border-border bg-[#F7F8F8] transition-all duration-300 ease-in-out dark:bg-[#1B1B1B]",
         isCollapsed ? "w-18 cursor-pointer" : "w-64",
       )}
     >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -168,13 +168,17 @@ function NotificationsButton() {
   );
 }
 
+/** false during SSR/hydration, true once on the client — no effect/setState needed. */
+const subscribeNoop = () => () => {};
+const useMounted = () =>
+  useSyncExternalStore(subscribeNoop, () => true, () => false);
+
 function AccountMenu() {
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const { data: profile } = useProfile();
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
   const isDark = mounted && resolvedTheme === "dark";
 
   const profilePicture = profile?.profilePicture || user?.image || "";
@@ -289,8 +293,10 @@ const NavBar = () => {
         "backdrop-blur-xl backdrop-saturate-200",
       )}
     >
-      {/* Left: nav items */}
-      <ul className="flex items-center gap-6 overflow-x-auto">
+      {/* Left: nav items. Horizontal scroll on narrow screens, but with the
+          scrollbar hidden and vertical overflow clipped — otherwise the 1px
+          link underline overflows and Windows paints a vertical scrollbar. */}
+      <ul className="flex min-w-0 items-center gap-6 overflow-x-auto overflow-y-hidden py-px [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {NAV_ITEMS.map((item) => (
           <li key={item.label} className="shrink-0">
             <NavLink
