@@ -18,6 +18,7 @@ import {
   Settings01Icon,
 } from "@hugeicons/core-free-icons";
 import { useGetCredits } from "@/features/use-credits";
+import { useSubscription } from "@/features/use-subscription";
 import { authClient } from "@/lib/auth-client";
 
 /* Primary navigation — quiet ghost rows; active gets the solid dark pill. */
@@ -104,9 +105,14 @@ function DashboardSidebarImpl() {
     user?.id,
   );
 
+  const { data: subscription } = useSubscription(!!user);
+
   const creditsLabel = isLoadingCredits
     ? "…"
     : `${credits != null ? Math.max(0, Math.floor(Number(credits))) : 0}`;
+  const planLabel = `${subscription?.planName ?? "Free"} Plan`;
+  const hasSubscription = !!subscription?.hasSubscription;
+  const planHref = hasSubscription ? "/profile#billing" : "/Pricing";
 
   return (
     <aside
@@ -198,14 +204,14 @@ function DashboardSidebarImpl() {
       {!isCollapsed ? (
         <div className="space-y-2 px-3 py-4">
           <Link
-            href="/Pricing"
+            href={planHref}
             className="flex items-center justify-center rounded-xl bg-[#53f22b] py-2.5 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-[#47dd21]"
           >
-            Upgrade
+            {hasSubscription ? "Manage plan" : "Upgrade"}
           </Link>
 
           <Link
-            href="/Pricing"
+            href={planHref}
             className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm transition-colors hover:bg-accent"
           >
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#53f22b]/15 text-[#2eae0e]">
@@ -218,7 +224,7 @@ function DashboardSidebarImpl() {
             </span>
             <span className="min-w-0 flex-1 leading-tight">
               <span className="block truncate text-[13px] font-semibold text-foreground">
-                Free Plan
+                {planLabel}
               </span>
               <span className="block text-[11px] text-muted-foreground">
                 Credits
@@ -252,9 +258,9 @@ function DashboardSidebarImpl() {
       ) : (
         <div className="mt-auto space-y-1.5 px-2 py-3">
           <Link
-            href="/Pricing"
-            aria-label="Upgrade"
-            title="Upgrade"
+            href={planHref}
+            aria-label={hasSubscription ? "Manage plan" : "Upgrade"}
+            title={hasSubscription ? "Manage plan" : "Upgrade"}
             className="flex items-center justify-center rounded-xl bg-[#53f22b] p-2.5 text-black transition-colors hover:bg-[#47dd21]"
           >
             <HugeiconsIcon

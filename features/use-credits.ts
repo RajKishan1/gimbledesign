@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 export const useGetCredits = (userId?: string) => {
@@ -9,18 +9,5 @@ export const useGetCredits = (userId?: string) => {
       return res.data.data.credits as number;
     },
     enabled: !!userId,
-  });
-};
-
-export const useDeductCredits = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (amount: number) => {
-      const res = await axios.patch("/api/credits", { amount: -amount });
-      return res.data.data.credits as number;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["credits"] });
-    },
   });
 };

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { DefaultProjectThumbnail } from "@/components/ui/project-thumbnail";
+import { BillingSection } from "@/components/billing/billing-section";
 import { toast } from "sonner";
 
 const ProfilePage = () => {
@@ -117,9 +118,9 @@ const ProfilePage = () => {
       }
 
       toast.success("Image uploaded successfully");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Upload error:", error);
-      toast.error(error.message || "Failed to upload image");
+      toast.error(error instanceof Error && error.message ? error.message : "Failed to upload image");
     } finally {
       if (type === "profilePicture") {
         setUploadingProfilePic(false);
@@ -425,6 +426,8 @@ const ProfilePage = () => {
             </div>
           </div>
         </div>
+
+        <BillingSection />
 
         <div className="mt-8 p-6 rounded-lg border bg-card">
           <div className="flex items-center gap-2 mb-4">

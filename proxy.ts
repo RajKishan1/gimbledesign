@@ -10,7 +10,9 @@ export async function proxy(request: NextRequest) {
   const isPublic =
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
     pathname.startsWith("/api/inngest") ||
-    pathname.startsWith("/api/auth");
+    pathname.startsWith("/api/auth") ||
+    // Provider webhooks authenticate with signatures, not session cookies.
+    pathname.startsWith("/api/webhooks/");
   const isProtected =
     PROTECTED_PATHS.some(
       (p) => pathname === p || pathname.startsWith(p + "/"),

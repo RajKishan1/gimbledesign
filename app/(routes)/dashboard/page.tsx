@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import DashboardSection from "../_common/dashboard-section";
+import { CheckoutStatus } from "@/components/billing/checkout-status";
 import { getSession } from "@/lib/auth";
 
 /**
@@ -11,8 +13,8 @@ import { getSession } from "@/lib/auth";
  * profile via ProfileProvider (single subscription), explore via its own
  * React Query call.
  *
- * The projects prefetch that used to live here was removed along with the
- * dashboard's "My Projects" section — projects now live only on /projects.
+ * Polar sends users back here with `?checkout=success`; CheckoutStatus turns
+ * that into a toast and refreshes billing data.
  */
 export default async function DashboardPage() {
   const session = await getSession(await headers());
@@ -22,6 +24,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-full">
+      <Suspense fallback={null}>
+        <CheckoutStatus />
+      </Suspense>
       <DashboardSection />
     </div>
   );

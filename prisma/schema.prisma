@@ -97,17 +97,31 @@ model User {
   profilePicture String?
   headerImage   String?
 
-  // Paddle subscription fields
-  paddleCustomerId     String?  // ctm_xxx
-  paddleSubscriptionId String?  // sub_xxx
-  plan                 String?  // "lite" | "starter" | "pro" | "team"
-  subscriptionStatus   String?  // "active" | "trialing" | "canceled" | "past_due" | "paused"
-  cancelAtPeriodEnd    Boolean  @default(false)
-  currentPeriodEnd     DateTime?
-  scheduledChangeAt    DateTime?
+  // Polar billing — written only by the Polar webhook / API sync (lib/polar/sync.ts)
+  polarCustomerId     String?
+  polarSubscriptionId String?   // set while the user holds an entitled subscription
+  polarProductId      String?   // Polar product currently subscribed to
+  plan                String?   // "basic" | "pro" | "max" — null means free tier
+  subscriptionStatus  String?   // Polar status: active | trialing | past_due | canceled | ...
+  cancelAtPeriodEnd   Boolean   @default(false)
+  currentPeriodEnd    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([polarCustomerId])
+}
+
+/// Processed webhook deliveries. Providers deliver at-least-once, so handlers
+/// insert here first and skip any delivery they have already seen.
+model WebhookEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  provider  String   // "polar"
+  eventId   String   // provider delivery id (Standard Webhooks `webhook-id`)
+  type      String
+  createdAt DateTime @default(now())
+
+  @@unique([provider, eventId])
 }
 
 /// Admin-curated design tiles shown on the dashboard "Explore designs" section.
