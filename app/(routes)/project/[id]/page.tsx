@@ -62,7 +62,7 @@ const Page = () => {
 
   return (
     <CanvasProvider
-      initialFrames={project?.frames}
+      initialFrames={project?.frames ?? []}
       initialThemeId={project?.theme}
       initialDeviceType={initialDeviceType}
       initialDimensions={initialDimensions}

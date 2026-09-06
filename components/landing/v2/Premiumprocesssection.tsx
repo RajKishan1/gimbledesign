@@ -1,5 +1,6 @@
 import React from "react";
 import { Smartphone, Monitor, PenTool } from "lucide-react";
+import FeatureSection from "./FeatureSection";
 
 /**
  * PremiumProcessSection
@@ -52,7 +53,7 @@ const steps: Step[] = [
     Icon: PenTool,
     title: "Wireframes",
     description: "Structure before polish",
-     ringColor: "ring-[#3B82F6]/15",
+    ringColor: "ring-[#3B82F6]/15",
     badgeColor: "bg-[#3B82F6]",
     iconColor: "text-[#3B82F6]",
   },
@@ -139,104 +140,7 @@ const PremiumProcessSection: React.FC = () => {
         </div>
 
         {/* Glassmorphism process card */}
-        <div className="relative mx-auto mt-14 max-w-5xl rounded-3xl border border-white/20 bg-white/80 dark:bg-white/2 p-8 shadow-xl backdrop-blur-xl sm:p-10 md:p-12">
-          {/* Everything below shares one relative wrapper so the connector
-              line's coordinate system (0-300 viewBox) maps exactly onto the
-              3 equal-width columns of the grid: column centers sit at
-              x = 50 / 150 / 250, i.e. 1/6, 1/2, 5/6 of the width. */}
-          <div className="relative">
-            {/* Gradient connector line (desktop only) — glow + crisp pass */}
-            <svg
-              className="pointer-events-none absolute inset-x-0 top-5 hidden h-10 w-full md:block"
-              viewBox="0 0 300 40"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <defs>
-                <linearGradient
-                  id="stepConnector"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop offset="0%" stopColor="#3B82F6" />
-                  <stop offset="50%" stopColor="#8B5CF6" />
-                  <stop offset="100%" stopColor="#3B82F6" />
-                </linearGradient>
-                <filter
-                  id="lineGlow"
-                  x="-50%"
-                  y="-100%"
-                  width="200%"
-                  height="300%"
-                >
-                  <feGaussianBlur stdDeviation="3.2" />
-                </filter>
-              </defs>
-              {/* soft glow pass */}
-              <path
-                d="M 50 20 C 83 40 117 40 150 20 C 183 0 217 0 250 20"
-                fill="none"
-                stroke="url(#stepConnector)"
-                strokeWidth="9"
-                strokeLinecap="round"
-                opacity="0.35"
-                filter="url(#lineGlow)"
-              />
-              {/* crisp line pass */}
-              <path
-                d="M 50 20 C 83 40 117 40 150 20 C 183 0 217 0 250 20"
-                fill="none"
-                stroke="url(#stepConnector)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                opacity="0.85"
-              />
-            </svg>
-
-            {/* Vertical dividers between columns (desktop only) */}
-            {/* <div className="pointer-events-none absolute left-1/3 top-1/2 hidden h-24 w-px -translate-y-1/2 bg-[#0F172A]/10 md:block" />
-            <div className="pointer-events-none absolute left-2/3 top-1/2 hidden h-24 w-px -translate-y-1/2 bg-[#0F172A]/10 md:block" /> */}
-
-            {/* Steps grid — a single 3-column grid with NO extra sibling
-                elements in between, so every column's icon/title/description
-                sit on the exact same row and align at the same height
-                regardless of description line-wrapping. */}
-            <div className="grid grid-cols-1 gap-y-10 md:grid-cols-3 md:gap-y-0">
-              {steps.map((step) => (
-                <div
-                  key={step.number}
-                  className="group flex flex-col items-center px-4 text-center transition-transform duration-300 ease-out hover:-translate-y-1"
-                >
-                  {/* Number badge + icon */}
-                  <div className="relative mb-5">
-                    <div
-                      className={`flex h-20 w-20 items-center justify-center rounded-full bg-white ring-8 ${step.ringColor} transition-transform duration-300 ease-out group-hover:scale-105`}
-                    >
-                      <step.Icon
-                        className={`h-8 w-8 ${step.iconColor}`}
-                        // strokeWidth={1.75}
-                      />
-                    </div>
-                    <span
-                      className={`absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full ${step.badgeColor} text-xs font-semibold text-white shadow-md`}
-                    >
-                      {step.number}
-                    </span>
-                  </div>
-
-                  <h3 className="mt-2 text-lg font-bold text-[#202020] dark:text-gray-300">
-                    {step.title}
-                  </h3>
-                  <p className="mt-1 max-w-[16rem] text-sm leading-relaxed text-[#64748B] dark:text-gray-500">
-                    {step.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <FeatureSection />
 
         {/* Bottom CTA pill */}
         <div className="mt-10 flex justify-center">
@@ -306,3 +210,102 @@ const ArrowIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 export default PremiumProcessSection;
+
+//  <div className="relative mx-auto mt-14 max-w-5xl rounded-3xl border border-white/20 bg-white/80 dark:bg-white/2 p-8 shadow-xl backdrop-blur-xl sm:p-10 md:p-12">
+//           {/* Everything below shares one relative wrapper so the connector
+//               line's coordinate system (0-300 viewBox) maps exactly onto the
+//               3 equal-width columns of the grid: column centers sit at
+//               x = 50 / 150 / 250, i.e. 1/6, 1/2, 5/6 of the width. */}
+//           <div className="relative">
+//             {/* Gradient connector line (desktop only) — glow + crisp pass */}
+//             <svg
+//               className="pointer-events-none absolute inset-x-0 top-5 hidden h-10 w-full md:block"
+//               viewBox="0 0 300 40"
+//               preserveAspectRatio="none"
+//               aria-hidden="true"
+//             >
+//               <defs>
+//                 <linearGradient
+//                   id="stepConnector"
+//                   x1="0%"
+//                   y1="0%"
+//                   x2="100%"
+//                   y2="0%"
+//                 >
+//                   <stop offset="0%" stopColor="#3B82F6" />
+//                   <stop offset="50%" stopColor="#8B5CF6" />
+//                   <stop offset="100%" stopColor="#3B82F6" />
+//                 </linearGradient>
+//                 <filter
+//                   id="lineGlow"
+//                   x="-50%"
+//                   y="-100%"
+//                   width="200%"
+//                   height="300%"
+//                 >
+//                   <feGaussianBlur stdDeviation="3.2" />
+//                 </filter>
+//               </defs>
+//               {/* soft glow pass */}
+//               <path
+//                 d="M 50 20 C 83 40 117 40 150 20 C 183 0 217 0 250 20"
+//                 fill="none"
+//                 stroke="url(#stepConnector)"
+//                 strokeWidth="9"
+//                 strokeLinecap="round"
+//                 opacity="0.35"
+//                 filter="url(#lineGlow)"
+//               />
+//               {/* crisp line pass */}
+//               <path
+//                 d="M 50 20 C 83 40 117 40 150 20 C 183 0 217 0 250 20"
+//                 fill="none"
+//                 stroke="url(#stepConnector)"
+//                 strokeWidth="3"
+//                 strokeLinecap="round"
+//                 opacity="0.85"
+//               />
+//             </svg>
+
+//             {/* Vertical dividers between columns (desktop only) */}
+//             {/* <div className="pointer-events-none absolute left-1/3 top-1/2 hidden h-24 w-px -translate-y-1/2 bg-[#0F172A]/10 md:block" />
+//             <div className="pointer-events-none absolute left-2/3 top-1/2 hidden h-24 w-px -translate-y-1/2 bg-[#0F172A]/10 md:block" /> */}
+
+//             {/* Steps grid — a single 3-column grid with NO extra sibling
+//                 elements in between, so every column's icon/title/description
+//                 sit on the exact same row and align at the same height
+//                 regardless of description line-wrapping. */}
+//             <div className="grid grid-cols-1 gap-y-10 md:grid-cols-3 md:gap-y-0">
+//               {steps.map((step) => (
+//                 <div
+//                   key={step.number}
+//                   className="group flex flex-col items-center px-4 text-center transition-transform duration-300 ease-out hover:-translate-y-1"
+//                 >
+//                   {/* Number badge + icon */}
+//                   <div className="relative mb-5">
+//                     <div
+//                       className={`flex h-20 w-20 items-center justify-center rounded-full bg-white ring-8 ${step.ringColor} transition-transform duration-300 ease-out group-hover:scale-105`}
+//                     >
+//                       <step.Icon
+//                         className={`h-8 w-8 ${step.iconColor}`}
+//                         // strokeWidth={1.75}
+//                       />
+//                     </div>
+//                     <span
+//                       className={`absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full ${step.badgeColor} text-xs font-semibold text-white shadow-md`}
+//                     >
+//                       {step.number}
+//                     </span>
+//                   </div>
+
+//                   <h3 className="mt-2 text-lg font-bold text-[#202020] dark:text-gray-300">
+//                     {step.title}
+//                   </h3>
+//                   <p className="mt-1 max-w-[16rem] text-sm leading-relaxed text-[#64748B] dark:text-gray-500">
+//                     {step.description}
+//                   </p>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         </div>

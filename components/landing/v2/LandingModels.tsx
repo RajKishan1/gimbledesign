@@ -234,7 +234,7 @@ export default function LandingModels({
           </div>
         </div>
 
-        <p className="mt-[30px] text-sm text-slate-500">
+        <p className="mt-7.5 text-sm text-slate-500">
           <strong className="font-bold text-slate-900">Auto mode</strong> picks
           the best model for every prompt — or{" "}
           <a

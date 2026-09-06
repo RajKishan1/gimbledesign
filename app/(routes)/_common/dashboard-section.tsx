@@ -227,7 +227,7 @@ const DashboardSection = () => {
           <NavBar />
 
           {/* Explore designs — first thing on the page, like the reference. */}
-          <ExploreDesign />
+          {/* <ExploreDesign /> */}
 
           {/* Hero — id anchors the NewModel banner's "Try" CTA. */}
           <div
@@ -426,6 +426,99 @@ const DashboardSection = () => {
             <NewModel />
           </div>
 
+          <ExploreDesign />
+          {/* My Projects */}
+          {/* <div className="w-full py-10 px-4 sm:px-6 lg:px-8 xl:px-10">
+            <div className="w-full">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                  My Projects
+                </h2>
+                <div className="flex items-center gap-3">
+                  <div className="flex rounded-full border border-border bg-muted p-1">
+                    <button
+                      type="button"
+                      onClick={() => setProjectsFilter("all")}
+                      aria-pressed={projectsFilter === "all"}
+                      className={cn(
+                        "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                        projectsFilter === "all"
+                          ? "bg-sky-500 text-white shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      All Projects
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProjectsFilter("favorites")}
+                      aria-pressed={projectsFilter === "favorites"}
+                      className={cn(
+                        "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                        projectsFilter === "favorites"
+                          ? "bg-sky-500 text-white shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      Favorites
+                    </button>
+                  </div>
+                  <Link
+                    href="/projects"
+                    className="flex shrink-0 items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-sky-600 dark:hover:text-sky-400"
+                  >
+                    View all
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </div>
+              </div>
+              {isLoading ? (
+                <ProjectShimmerGrid
+                  count={4}
+                  className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-3"
+                />
+              ) : (
+                <>
+                  <div className="mt-3">
+                    {(() => {
+                      const list = projects ?? [];
+                      if (projectsFilter === "favorites" && list.length === 0) {
+                        return (
+                          <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
+                            <p className="text-sm text-muted-foreground">
+                              No favorites yet. Star projects to see them here.
+                            </p>
+                          </div>
+                        );
+                      }
+                      if (list.length === 0) {
+                        return (
+                          <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
+                            <p className="text-sm text-muted-foreground">
+                              No projects yet. Create one above.
+                            </p>
+                          </div>
+                        );
+                      }
+                      return (
+                        <ProjectsGrid
+                          projects={list}
+                          isAdmin={isAdmin}
+                          onMoveToExplore={moveToExplore.mutate}
+                          isMovingToExplore={moveToExplore.isPending}
+                        />
+                      );
+                    })()}
+                  </div>
+                </>
+              )}
+              {isError && (
+                <p className="text-destructive text-sm">
+                  Failed to load projects
+                </p>
+              )}
+            </div>
+          </div> */}
         </main>
       </div>
     </div>

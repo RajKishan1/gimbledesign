@@ -18,7 +18,11 @@ export async function proxy(request: NextRequest) {
       (p) => pathname === p || pathname.startsWith(p + "/"),
     ) || pathname.startsWith("/project/");
 
-  if (sessionCookie && (pathname === "/" || pathname === "/login")) {
+  // A cookie can still exist after its database session has expired or been
+  // removed. Redirecting /login based only on cookie presence creates a loop:
+  // /login -> /dashboard -> /login. Let the login page remain reachable so
+  // Better Auth can replace a stale cookie when the user signs in again.
+  if (sessionCookie && pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
