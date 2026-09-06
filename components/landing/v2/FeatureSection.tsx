@@ -13,7 +13,7 @@ const features = [
   {
     src: "/landing/mobileapp.png",
     heading: "Mobile Apps",
-    text: "Complete app screens and flows",
+    text: "Complete app screens and flows ",
   },
   {
     src: "/landing/webplatform.png",
@@ -37,7 +37,7 @@ const FeatureSection = () => {
         duration: 0.5,
         ease: "easeOut",
       }}
-      className="mt-6 flex gap-4 flex-col md:flex-row"
+      className="my-12 flex gap-4 flex-col md:flex-row"
     >
       {features.map((feature, index) => (
         <FeatureCard
@@ -70,16 +70,13 @@ const FeatureCard = ({
         delay: index * 0.08,
         ease: "easeOut",
       }}
-      whileHover={{
-       
-        scale: 1.015,
-      }}
+     
       whileTap={{
         scale: 0.98,
       }}
-      className="group flex flex-1 cursor-pointer flex-col items-start rounded-2xl border border-gray-200 bg-white/50 p-3  text-center dark:border-gray-700 dark:bg-gray-800"
+      className="group flex flex-1 cursor-pointer flex-col items-center rounded-2xl   p-3  text-center "
     >
-      <div className="aspect-[5/3] w-full overflow-hidden rounded-lg ">
+      <div className="aspect-[4/3] w-full overflow-hidden rounded-lg ">
         <motion.img
           src={src}
           alt={heading}
@@ -93,13 +90,13 @@ const FeatureCard = ({
       </div>
 
       <motion.h3
-        className="mt-3 text-[16px] font-semibold"
+        className="mt-3 text-[16px] font-semibold pl-1"
         transition={{ duration: 0.2 }}
       >
         {heading}
       </motion.h3>
 
-      <p className="text-[14px] text-gray-500 dark:text-gray-400">
+      <p className="text-[14px] text-gray-500 dark:text-gray-400 pl-1">
         {text}
       </p>
     </motion.div>
