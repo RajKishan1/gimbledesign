@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SUBSCRIPTION_QUERY_KEY } from "@/features/use-subscription";
@@ -13,14 +13,16 @@ import { SUBSCRIPTION_QUERY_KEY } from "@/features/use-subscription";
  */
 export function CheckoutStatus() {
   const params = useSearchParams();
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (params.get("checkout") !== "success") return;
 
     toast.success("Payment received. Your plan and credits will appear in a moment.");
-    router.replace("/dashboard");
+    // Updating the Next router here reruns this effect and immediately clears
+    // the retry timers below. Strip the query string without a navigation so
+    // webhook-lag retries remain active.
+    window.history.replaceState(window.history.state, "", "/dashboard");
 
     const refresh = () => {
       queryClient.invalidateQueries({ queryKey: SUBSCRIPTION_QUERY_KEY });
@@ -28,7 +30,7 @@ export function CheckoutStatus() {
     };
     const timers = [2_000, 6_000, 12_000].map((ms) => setTimeout(refresh, ms));
     return () => timers.forEach(clearTimeout);
-  }, [params, router, queryClient]);
+  }, [params, queryClient]);
 
   return null;
 }
