@@ -13,15 +13,23 @@ import PrototypeConnectors from "./prototype-connectors";
 import { toast } from "sonner";
 import { Rnd } from "react-rnd";
 import { useCanvasTransform } from "@/hooks/use-canvas-transform";
+import { useAppStoreSet } from "@/features/use-app-store";
+import {
+  AppStoreSlotsLayer,
+  AppStoreStatusPill,
+} from "@/components/app-store/app-store-canvas";
 
 const Canvas = ({
   projectId,
   isPending,
   projectName,
+  isAppStore = false,
 }: {
   projectId: string;
   isPending: boolean;
   projectName: string | null;
+  /** App Store Screens project: show render slots and hide chat affordances. */
+  isAppStore?: boolean;
 }) => {
   const {
     theme,
@@ -100,6 +108,17 @@ const Canvas = ({
     },
     enabled: !!projectId,
   });
+
+  // ── App Store Screens: poll the set and pull finished renders onto the canvas ──
+  const { data: storeSet } = useAppStoreSet(projectId, isAppStore);
+  const doneSignature = (storeSet?.screens ?? [])
+    .filter((s) => s.status === "done")
+    .map((s) => `${s.id}:${s.updatedAt}`)
+    .join("|");
+  useEffect(() => {
+    if (!isAppStore || !projectId) return;
+    queryClient.invalidateQueries({ queryKey: ["canvasImages", projectId] });
+  }, [doneSignature, isAppStore, projectId, queryClient]);
 
   const addImageMutation = useMutation({
     mutationFn: async (img: { src: string; x: number; y: number; width: number; height: number }) => {
@@ -372,6 +391,7 @@ const Canvas = ({
     <>
       <div className="relative w-full h-full overflow-hidden">
         {currentStatus && <CanvasLoader status={currentStatus} />}
+        {isAppStore && <AppStoreStatusPill set={storeSet} />}
 
         {/* Canvas container — captures all pointer and wheel events */}
         <div
@@ -553,16 +573,18 @@ const Canvas = ({
                         >
                           &times;
                         </button>
-                        <button
-                          className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-neutral-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-md z-10 whitespace-nowrap hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            attachImageToChat(img.src);
-                          }}
-                          title="Attach this image to the chat as a design reference"
-                        >
-                          @ Add to chat
-                        </button>
+                        {!isAppStore && (
+                          <button
+                            className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-neutral-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-md z-10 whitespace-nowrap hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              attachImageToChat(img.src);
+                            }}
+                            title="Attach this image to the chat as a design reference"
+                          >
+                            @ Add to chat
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
@@ -570,13 +592,16 @@ const Canvas = ({
               );
             })}
 
+            {/* App Store Screens: slots for screens still rendering */}
+            {isAppStore && <AppStoreSlotsLayer set={storeSet} projectId={projectId} />}
+
             {/* Prototype connector arrows layer */}
             <PrototypeConnectors canvasScale={transform.scale} />
           </div>
 
           {/* Centered placeholder when the canvas has nothing to show yet —
               a generating card while a job runs, a quiet hint when idle. */}
-          {frames.length === 0 && canvasImages.length === 0 && (
+          {frames.length === 0 && canvasImages.length === 0 && !(isAppStore && storeSet) && (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
               {currentStatus ? (
                 <div className="generating-gradient flex flex-col items-center gap-3 rounded-2xl px-10 py-8 shadow-lg ring-1 ring-black/5">

@@ -24,7 +24,10 @@ export async function GET(
         ],
       },
       include: {
-        frames: true,
+        // Screens are generated in parallel, so creation time is not display
+        // order. `position` is set by the generators; legacy frames (null)
+        // sort first, which preserves their original order.
+        frames: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] },
       },
     });
 
@@ -271,6 +274,11 @@ export async function DELETE(
 
     await prisma.chatMessage.deleteMany({ where: { projectId: id } });
     await prisma.frame.deleteMany({ where: { projectId: id } });
+    await prisma.canvasImage.deleteMany({ where: { projectId: id } });
+    // App Store Screens records (no-ops for other project types)
+    await prisma.appStoreScreen.deleteMany({ where: { projectId: id } });
+    await prisma.appStoreAsset.deleteMany({ where: { projectId: id } });
+    await prisma.appStoreSet.deleteMany({ where: { projectId: id } });
     await prisma.project.delete({ where: { id, userId } });
 
     return NextResponse.json({ success: true });

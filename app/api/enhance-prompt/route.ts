@@ -1,5 +1,21 @@
 import { NextResponse } from "next/server";
-import { openrouter } from "@/lib/openrouter";
+import { llm } from "@/lib/llm";
+import { FAST_MODEL } from "@/constant/models";
+import { scrubColorSpecs } from "@/lib/theme-conformance";
+
+/**
+ * Colours are owned by the project's theme system (CSS variables chosen at
+ * planning time). If the enhanced brief names hex codes or palettes, the
+ * generator hardcodes them, later screens don't see them, and the app drifts
+ * into two different looks. So the enhancer describes mood, never values.
+ */
+const NO_COLOR_SPEC_RULE = `
+ABSOLUTE RULE — COLOURS & FONTS:
+- Never specify colours: no hex codes, no rgb(), no colour names for surfaces or accents ("navy", "gold", "#F59E0B"), no palettes, no gradients with named colours.
+- Never specify font families.
+- Describe tone and mood only ("premium, cinematic, high-contrast dark UI with one warm accent") — the theme system converts that into actual colours.
+- Semantic status colours (success/error/warning) may be mentioned by role only.
+If the user's text names colours, keep their intent as mood words but drop the literal values.`;
 import { generateText } from "ai";
 
 // ==================== MOBILE APP ENHANCEMENT PROMPT ====================
@@ -996,7 +1012,11 @@ export async function POST(request: Request) {
       : userText;
     originalPrompt = combinedInput;
 
-    const selectedModel = model || "google/gemini-3.1-pro-preview";
+    // Enhancement sits on the critical path before the first screen can even
+    // start, so it always runs on the fast model with a tight output cap —
+    // the user's chosen model is reserved for the screens themselves.
+    void model;
+    const selectedModel = FAST_MODEL;
 
     // Get the appropriate enhancement prompt based on design type
     const enhancementPrompt = getEnhancementPrompt(designType);
@@ -1011,15 +1031,16 @@ export async function POST(request: Request) {
 
     // Enhance the prompt using AI (includes image context when provided)
     const { text: enhancedPrompt } = await generateText({
-      model: openrouter.chat(selectedModel),
-      system: enhancementPrompt,
+      model: llm.chat(selectedModel),
+      system: `${enhancementPrompt}\n\n${NO_COLOR_SPEC_RULE}`,
       prompt: `${userPromptPrefix}:\n\n${combinedInput}`,
       temperature: 0.7, // Some creativity but still focused
+      maxOutputTokens: 1500,
     });
 
     return NextResponse.json({
       success: true,
-      enhancedPrompt: enhancedPrompt?.trim() || combinedInput, // Fallback to original if enhancement fails
+      enhancedPrompt: scrubColorSpecs(enhancedPrompt?.trim() || combinedInput), // Fallback to original if enhancement fails
       originalPrompt: combinedInput,
       designType: designType,
     });

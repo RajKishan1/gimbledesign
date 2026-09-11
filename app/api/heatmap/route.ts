@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { generateObject } from "ai";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
-import { openrouter } from "@/lib/openrouter";
+import { llm, generateStructured } from "@/lib/llm";
 
 // AI-predicted attention heatmap: a vision model estimates where users will
 // look and tap first on a screen. Client-side rendering turns the regions
 // into gradient blobs over the frame.
 
-const VISION_MODEL = "openai/gpt-5.4-mini";
+const VISION_MODEL = "google:gemini@3.5-flash";
 
 const HeatmapSchema = z.object({
   regions: z
@@ -46,8 +45,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { object } = await generateObject({
-      model: openrouter.chat(VISION_MODEL),
+    const { object } = await generateStructured({
+      model: llm.chat(VISION_MODEL),
       schema: HeatmapSchema,
       messages: [
         {

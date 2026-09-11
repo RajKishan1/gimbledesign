@@ -17,6 +17,7 @@ const DEVICE_THEME: Record<string, { from: string; to: string; mid: string }> = 
   web:          { from: "#6366f1", to: "#8b5cf6", mid: "#7c3aed" },
   wireframe:    { from: "#1d4ed8", to: "#4f46e5", mid: "#3b82f6" },
   inspirations: { from: "#db2777", to: "#9333ea", mid: "#ec4899" },
+  "app-store":  { from: "#d97706", to: "#ea580c", mid: "#f59e0b" },
 };
 
 function resolveTheme(deviceType: DeviceTypeLike) {
@@ -235,12 +236,42 @@ function InspirationIllustration() {
   );
 }
 
+/** App Store — three store screenshots fanned out, caption bar + phone each */
+function AppStoreIllustration() {
+  const cards = [
+    { cls: "-rotate-[10deg] -translate-x-12 translate-y-2 opacity-80" },
+    { cls: "rotate-0 z-10" },
+    { cls: "rotate-[10deg] translate-x-12 translate-y-2 opacity-80" },
+  ];
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="absolute w-28 h-28 rounded-full bg-white/20 blur-2xl" />
+      {cards.map((c, i) => (
+        <div
+          key={i}
+          className={`absolute w-[54px] h-[104px] rounded-xl border border-white/45 bg-white/15 shadow-xl overflow-hidden flex flex-col items-center pt-2 ${c.cls}`}
+        >
+          <div className="h-1.5 w-8 rounded-full bg-white/70" />
+          <div className="mt-1 h-1 w-6 rounded-full bg-white/40" />
+          <div className="mt-2 w-[38px] flex-1 mb-[-6px] rounded-t-[10px] border border-b-0 border-white/50 bg-white/20">
+            <div className="mx-auto mt-1.5 h-[3px] w-4 rounded-full bg-black/40" />
+            <div className="mx-1.5 mt-1.5 h-4 rounded bg-white/25" />
+            <div className="mx-1.5 mt-1 h-1 rounded-full bg-white/35" />
+            <div className="mx-1.5 mt-1 h-1 w-2/3 rounded-full bg-white/25" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function pickIllustration(deviceType: DeviceTypeLike) {
   switch (deviceType) {
     case "mobile":       return <MobileIllustration />;
     case "web":          return <WebIllustration />;
     case "wireframe":    return <WireframeIllustration />;
     case "inspirations": return <InspirationIllustration />;
+    case "app-store":    return <AppStoreIllustration />;
     default:             return <MobileIllustration />;
   }
 }

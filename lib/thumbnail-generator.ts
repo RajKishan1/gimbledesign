@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { openrouter } from "@/lib/openrouter";
+import { llm } from "@/lib/llm";
 import prisma from "@/lib/prisma";
 import { FAST_MODEL } from "@/constant/models";
 import {
@@ -131,7 +131,7 @@ async function fetchColorsFromLLM(args: {
   const timer = setTimeout(() => controller.abort(), COLOR_TIMEOUT_MS);
   try {
     const { text } = await generateText({
-      model: openrouter.chat(FAST_MODEL),
+      model: llm.chat(FAST_MODEL),
       system: COLOR_SYSTEM_PROMPT,
       prompt: buildColorPrompt(args),
       temperature: 0.85,

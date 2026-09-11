@@ -7,6 +7,14 @@ import { generateWireframeScreens } from "@/inngest/functions/generateWireframeS
 import { regenerateFrame } from "@/inngest/functions/regenerateFrame";
 import { generateFrameVariations } from "@/inngest/functions/generateFrameVariations";
 import { generateInspirationVariations } from "@/inngest/functions/generateInspirationVariations";
+import {
+  generateAppStoreScreens,
+  regenerateAppStoreScreen,
+} from "@/inngest/functions/generateAppStoreScreens";
+
+// Each Inngest step runs as its own request to this route. Image renders and
+// long LLM calls can take well over a minute, so raise the serverless ceiling.
+export const maxDuration = 300;
 
 // The serve() function automatically:
 // - Detects INNGEST_SIGNING_KEY from environment for production webhook verification
@@ -22,6 +30,8 @@ export const { GET, POST, PUT } = serve({
     regenerateFrame,
     generateFrameVariations,
     generateInspirationVariations,
+    generateAppStoreScreens,
+    regenerateAppStoreScreen,
   ],
   // Optional: Explicitly set signing key (if not using INNGEST_SIGNING_KEY env var)
   // signingKey: process.env.INNGEST_SIGNING_KEY,

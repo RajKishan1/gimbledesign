@@ -1,23 +1,25 @@
-import { generateObject, generateText, stepCountIs } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { inngest } from "../client";
 import { z } from "zod";
-import { openrouter } from "@/lib/openrouter";
+import { llm, generateStructured } from "@/lib/llm";
 import { FrameType } from "@/types/project";
 import { ANALYSIS_PROMPT, GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
-import { unsplashTool } from "../tool";
+import { imageTools } from "../tool";
+import { availableImagesBlock, prefetchImages, type PrefetchedImage } from "@/lib/unsplash";
+import { DEFAULT_MODEL, FAST_MODEL } from "@/constant/models";
+import { analyzePalette, buildPaletteLockString } from "@/lib/palette-lock";
+import { conformToThemeVariables, scrubColorSpecs } from "@/lib/theme-conformance";
 import {
   buildDesignContext,
   generateFullContext,
-  updateDesignContext,
   DesignContext,
 } from "@/lib/design-context-manager";
 import {
   AppIdentity,
   ComponentRegistry,
   buildComponentRegistry,
-  updateRegistryIfNeeded,
   generateFullScreenContext,
   generateAppIdentityString,
   extractAppIdentity,
@@ -47,6 +49,13 @@ const ScreenSchema = z.object({
     .string()
     .describe(
       "A dense, high-fidelity visual directive (like an image generation prompt). Describe the layout, specific data examples (e.g. 'Oct-Mar'), component hierarchy, and physical attributes (e.g. 'Chunky cards', 'Floating header','Floating action button', 'Bottom navigation',Header with user avatar).",
+    ),
+  imageQueries: z
+    .array(z.string().max(60))
+    .max(3)
+    .default([])
+    .describe(
+      "0–3 short photo search phrases this screen needs (e.g. 'grilled salmon bowl'). Empty for screens without photos. Avatars never count.",
     ),
 });
 
@@ -78,9 +87,25 @@ const FlexibleAppSchema = z.object({
     ),
 });
 
-// Fast model for analysis, quality model for generation
-const FAST_MODEL = "google/gemini-3.7-flash";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+type ScreenPlan = z.infer<typeof ScreenSchema>;
+/** Step outputs are JSON-serialised by Inngest, so keep them Date-free. */
+type FrameRow = {
+  id: string;
+  title: string;
+  htmlContent: string;
+  projectId: string;
+  position: number | null;
+};
+
+/**
+ * How many screens render at the same time once the design system is
+ * established. Each in-flight call holds a credit reservation upstream, so
+ * this is deliberately modest.
+ */
+const PARALLEL_SCREENS = 3;
+
+/** Output cap for one screen. The prompt targets ~120–220 lines (≈4–7k tokens). */
+const SCREEN_MAX_OUTPUT_TOKENS = 14_000;
 
 export const generateScreens = inngest.createFunction(
   { id: "generate-ui-screens" },
@@ -98,9 +123,25 @@ export const generateScreens = inngest.createFunction(
     const isExistingGeneration = Array.isArray(frames) && frames.length > 0;
     const requestedScreenCount = parseScreenCountFromPrompt(prompt);
 
-    // Use fast model for analysis, user-selected or quality model for generation
+    // Fast model for analysis, user-selected (or default) model for generation
     const analysisModel = FAST_MODEL;
-    const generationModel = model || QUALITY_MODEL;
+    const generationModel = model || DEFAULT_MODEL;
+
+    // ── Palette lock ─────────────────────────────────────────────────────────
+    // Follow-up screens must match what is already on the canvas, even when
+    // the first generation hardcoded its colours instead of using the theme
+    // variables. Inspect the existing HTML and describe its palette literally.
+    const existingPalette = isExistingGeneration
+      ? analyzePalette((frames as FrameType[]).map((f) => f.htmlContent))
+      : null;
+    const existingThemeName =
+      THEME_LIST.find((t) => t.id === existingTheme)?.name ?? String(existingTheme ?? "");
+    const paletteLock = existingPalette
+      ? buildPaletteLockString(existingPalette, existingThemeName)
+      : "";
+    // New projects, and follow-ups to projects that DO use the theme system,
+    // must stay 100% variable-driven so theme switching and later screens work.
+    const enforceThemeVariables = !existingPalette || existingPalette.mode === "theme";
 
     await publish({
       channel: CHANNEL,
@@ -111,7 +152,7 @@ export const generateScreens = inngest.createFunction(
       },
     });
 
-    // PHASE 1: Analysis (using fast model)
+    // ── PHASE 1: Analysis (fast model) ────────────────────────────────────────
     const analysis = await step.run("analyze-and-plan-screens", async () => {
       await publish({
         channel: CHANNEL,
@@ -138,6 +179,7 @@ export const generateScreens = inngest.createFunction(
           - Set totalScreenCount to the number of NEW screens only (not the total app count).
           - If the user asks for "login and signup", output exactly 2 screens.
           - Match the navigation patterns, visual style, and design system of the existing screens.
+          ${paletteLock ? `\n          ${paletteLock.replace(/\n/g, "\n          ")}\n          In every visualDescription refer to these existing colours by role (background, card surface, accent) — never invent a new palette.\n` : ""}
           ${
             requestedScreenCount != null
               ? `
@@ -190,11 +232,12 @@ export const generateScreens = inngest.createFunction(
           }
         `.trim();
 
-      const { object } = await generateObject({
-        model: openrouter.chat(analysisModel),
+      const { object } = await generateStructured({
+        model: llm.chat(analysisModel),
         schema: FlexibleAppSchema,
         system: ANALYSIS_PROMPT,
         prompt: analysisPrompt,
+        maxOutputTokens: 6000,
       });
 
       const themeToUse = isExistingGeneration ? existingTheme : object.theme;
@@ -234,15 +277,27 @@ export const generateScreens = inngest.createFunction(
             totalScreenCount: requestedScreenCount,
           }
         : analysis;
+    // Planner text must never carry literal colours into the screens.
+    const screens: ScreenPlan[] = analysisToUse.screens.map((s: ScreenPlan) => ({
+      ...s,
+      visualDescription: scrubColorSpecs(s.visualDescription),
+    }));
+    const total = screens.length;
 
-    // PHASE 2: Sequential Generation with ENHANCED CONTEXT FIDELITY
-    // Uses Component Registry (immutable) + Design DNA + Recent Screen approach
-    const generatedFrames: typeof frames = isExistingGeneration
-      ? [...frames]
-      : [];
-    const selectedTheme = THEME_LIST.find(
-      (t) => t.id === analysisToUse.themeToUse,
-    );
+    // ── Images: resolve up front so no screen needs a tool round-trip ─────────
+    const images = await step.run("prefetch-images", async () => {
+      const queries = screens.flatMap((s) =>
+        (s.imageQueries ?? []).map((q) => ({ query: q, orientation: "landscape" as const })),
+      );
+      return prefetchImages(queries);
+    });
+    const imagesFor = (screen: ScreenPlan): PrefetchedImage[] => {
+      const wanted = new Set((screen.imageQueries ?? []).map((q) => q.trim().toLowerCase()));
+      return images.filter((img) => wanted.has(img.query));
+    };
+
+    // ── Shared design context ────────────────────────────────────────────────
+    const selectedTheme = THEME_LIST.find((t) => t.id === analysisToUse.themeToUse);
     const fullThemeCSS = `${BASE_VARIABLES}\n${selectedTheme?.style || ""}`;
 
     // Stored design system from the FIRST generation (immutable tokens):
@@ -262,13 +317,12 @@ export const generateScreens = inngest.createFunction(
         })
       : null;
 
-    // Design Context - stored tokens first, else derived from existing frames
     let designContext: DesignContext = isExistingGeneration
       ? (storedDesign?.dna ?? buildDesignContext(frames, analysisToUse.themeToUse))
       : buildDesignContext([], analysisToUse.themeToUse);
 
-    // Component Registry - stores exact HTML components for perfect consistency
-    // Built after first screen, used for ALL subsequent screens
+    // Component Registry — exact HTML components for perfect consistency.
+    // Built from the first screen, then used for ALL others.
     let componentRegistry: ComponentRegistry | null =
       storedDesign?.registry ??
       (isExistingGeneration && frames.length > 0
@@ -292,8 +346,6 @@ export const generateScreens = inngest.createFunction(
         sampleItemAmount: "-$14.99",
       },
     };
-    // If we already have frames (continuing generation), prefer the stored
-    // identity from the first generation, else extract from the first frame
     if (isExistingGeneration && frames.length > 0) {
       frozenAppIdentity =
         storedDesign?.appIdentity ??
@@ -303,9 +355,14 @@ export const generateScreens = inngest.createFunction(
         );
     }
 
-    // Theme lock — tells the AI exactly which theme is active and must never change
-    const themeLockString = `THEME LOCK: "${selectedTheme?.name || analysisToUse.themeToUse}" — theme ID: ${analysisToUse.themeToUse}
-All screens MUST use this theme's CSS variables unchanged. Do NOT introduce new colors, swap to a different palette, or change any CSS variable values.`;
+    // Colour contract — for variable-driven apps: the theme lock; for apps
+    // whose existing screens hardcoded a palette: that palette, literally.
+    const colorContract = enforceThemeVariables
+      ? `THEME LOCK: "${selectedTheme?.name || analysisToUse.themeToUse}" — theme ID: ${analysisToUse.themeToUse}
+All colours come from this theme's CSS variables — no hex codes, no Tailwind palette classes, no font-['…'] classes. Do NOT introduce new colours or swap palettes.${paletteLock ? `\n\n${paletteLock}` : ""}`
+      : `${paletteLock}
+
+NOTE: the existing screens of this app do NOT use theme CSS variables. Do not introduce var(--…) colours here either — copy the literal palette above so every screen matches.`;
 
     // Detect if user requested a specific design system
     const designSystemSpec = detectDesignSystem(prompt);
@@ -313,212 +370,194 @@ All screens MUST use this theme's CSS variables unchanged. Do NOT introduce new 
       ? `\n\n⚠️ DESIGN SYSTEM REQUIRED: ${designSystemSpec.name}\n${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}\n\nYou MUST follow these rules on EVERY screen.`
       : "";
 
-    for (let i = 0; i < analysisToUse.screens.length; i++) {
-      const screenPlan = analysisToUse.screens[i];
+    // New frames are appended after any existing ones in display order.
+    const basePosition = isExistingGeneration ? frames.length : 0;
 
-      await step.run(`generate-screen-${i}`, async () => {
-        // After generating first screen, build Component Registry + upgrade identity from real HTML
-        if (generatedFrames.length === 1 && !componentRegistry) {
-          componentRegistry = buildComponentRegistry(
-            generatedFrames[0] as FrameType,
-            prompt,
-          );
-          // Upgrade from provisional (analysis appName) to HTML-extracted identity
-          frozenAppIdentity = componentRegistry.appIdentity;
-        }
+    type RenderContext = {
+      registry: ComponentRegistry | null;
+      identity: AppIdentity;
+      designContext: DesignContext;
+      /** Finished frames the model may look at for continuity (oldest → newest). */
+      referenceFrames: FrameType[];
+    };
 
-        // After generating second screen, update registry if needed
-        if (generatedFrames.length === 2 && componentRegistry) {
-          componentRegistry = updateRegistryIfNeeded(
-            componentRegistry,
-            generatedFrames[1] as FrameType,
-          );
-        }
+    // ── One screen ───────────────────────────────────────────────────────────
+    const renderScreen = async (i: number, ctx: RenderContext): Promise<FrameRow> => {
+      const screenPlan = screens[i];
+      const appIdentityString = generateAppIdentityString(ctx.identity);
 
-        // After generating first 2-3 screens, rebuild design context
-        if (generatedFrames.length >= 2 && generatedFrames.length <= 3) {
-          designContext = buildDesignContext(
-            generatedFrames,
-            analysisToUse.themeToUse,
-          );
-        }
-
-        // Always build from frozenAppIdentity — available from screen 0 onwards
-        const appIdentityString = generateAppIdentityString(frozenAppIdentity);
-
-        // Generate context string based on whether we have a Component Registry
-        let contextString: string;
-
-        if (componentRegistry && i > 0) {
-          // Use Component Registry for enhanced consistency
-          const recentFrame =
-            generatedFrames.length > 0
-              ? (generatedFrames[generatedFrames.length - 1] as FrameType)
-              : null;
-
-          contextString = generateFullScreenContext(
-            componentRegistry,
-            recentFrame,
-            i,
-            screenPlan.name,
-            analysisToUse.screens.length,
-          );
-
-          // Also include Design DNA for additional patterns
-          contextString +=
-            "\n\n" +
-            generateFullContext(
-              designContext,
-              screenPlan,
-              [], // Don't include recent frames again
-              i,
-              analysisToUse.screens.length,
-            );
-        } else if (designContext.isInitialized) {
-          // Fallback to Design DNA approach
-          const recentFrames = generatedFrames.slice(-2);
-          contextString = generateFullContext(
-            designContext,
-            screenPlan,
-            recentFrames,
-            i,
-            analysisToUse.screens.length,
-          );
-        } else {
-          contextString = `No previous screens - this is the first screen. Establish the Design DNA (typography, spacing, colors, navigation patterns) that ALL subsequent screens will follow.${designSystemContext}`;
-        }
-
-        // Determine active navigation item
-        const activeNavItem = componentRegistry?.navigation
-          ? getActiveNavItem(screenPlan.name, componentRegistry.navigation)
-          : null;
-        const navActiveHint = activeNavItem
-          ? `\n\nACTIVE NAVIGATION: For this screen ("${screenPlan.name}"), the active nav icon should be: ${activeNavItem}`
-          : "";
-
-        const result = await generateText({
-          model: openrouter.chat(generationModel),
-          system: GENERATION_SYSTEM_PROMPT,
-          tools: {
-            searchUnsplash: unsplashTool,
-          },
-          stopWhen: stepCountIs(5),
-          prompt: `
-          ${appIdentityString}
-
-          ${themeLockString}
-
-          - Screen ${i + 1}/${analysisToUse.screens.length}
-          - Screen ID: ${screenPlan.id}
-          - Screen Name: ${screenPlan.name}
-          - Screen Purpose: ${screenPlan.purpose}
-
-          VISUAL DESCRIPTION: ${screenPlan.visualDescription}
-          ${designSystemContext}
-
-          ${contextString}
-          ${navActiveHint}
-
-          THEME CSS VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare):
-          ${fullThemeCSS}
-
-          ════════════════════════════════════════════════════════════════════════════
-          GENERATION INSTRUCTIONS
-          ════════════════════════════════════════════════════════════════════════════
-
-          ${
-            i === 0
-              ? `
-          **FIRST SCREEN - ESTABLISH DESIGN DNA:**
-          You are creating the FOUNDATION for all subsequent screens. Every decision you make here will be replicated EXACTLY:
-          - Typography hierarchy (heading sizes, body text, captions)
-          - Spacing system (padding, margins, gaps)
-          - Component patterns (cards, buttons, inputs)
-          - Navigation pattern (bottom nav for main screens - use 5 icons consistently)
-          - Icon choices (these EXACT icons will be used on ALL screens)
-          - Visual style (shadows, borders, glass effects)
-
-          Make deliberate, professional choices that will scale across 20+ screens.
-          The navigation icons you choose here are LOCKED for the entire app.
-
-          **BOTTOM NAV CONTRACT (LOCKED AFTER THIS SCREEN):**
-          The bottom navigation bar you create here becomes the IMMUTABLE template.
-          - Choose exactly 5 icons with appropriate Hugeicons names
-          - Use: fixed bottom-6 left-6 right-6, h-16, z-30, rounded-full
-          - Background: bg-[var(--card)]/80 backdrop-blur-xl shadow-2xl border border-[var(--border)]/50
-          - Active: text-[var(--primary)] + drop-shadow-[0_0_4px_var(--primary)]
-          - Inactive: text-[var(--muted-foreground)]
-          - Every subsequent screen will copy this EXACTLY — only the active icon changes.
-          `
-              : `
-          **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${analysisToUse.screens.length}):**
-          This screen MUST be indistinguishable in style from previous screens.
-
-          MANDATORY REQUIREMENTS:
-          1. BOTTOM NAV: Copy the EXACT same bottom navigation bar from Screen 1 — same icons, same order, same styling, same dimensions. ONLY change which icon is active for this screen.
-          2. ICONS: Use ONLY the icons from Icon Lock - NO substitutions allowed
-          3. TYPOGRAPHY: Same heading sizes, font weights, text colors
-          4. SPACING: Same padding, margins, gaps as previous screens
-          5. COMPONENTS: Same card, button, input styling
-          6. THEME: Same colors, same CSS variables usage — no alternate palettes or opacity changes
-          7. Only the CONTENT changes - the VISUAL FRAMEWORK stays IDENTICAL
-
-          ⚠️ If you change the bottom navigation bar (icons, order, style, layout) or the theme, the app will look broken. This is the #1 consistency rule.
-          `
-          }
-
-          **OUTPUT RULES:**
-          1. Generate ONLY raw HTML starting with <div>
-          2. Use Tailwind CSS for layout/spacing, CSS variables for colors
-          3. Root: class="relative w-full h-screen bg-[var(--background)] overflow-hidden" — use h-screen NOT min-h-screen. The screen must fit within a single iPhone viewport (393×852px). Put scrollable content inside an inner container with flex-1 overflow-y-auto.
-          4. Hidden scrollbars: [&::-webkit-scrollbar]:hidden scrollbar-none
-          5. No markdown, comments, <html>, <body>, or <head>
-          6. CONTENT DENSITY: Show only 3-5 cards/items in the visible area. Do NOT create endlessly tall pages with 10+ sections. Prioritize above-the-fold content.
-          
-          Generate the complete, production-ready HTML for this screen now.
-      `.trim(),
-        });
-
-        let finalHtml = result.text ?? "";
-        const match = finalHtml.match(/<div[\s\S]*<\/div>/);
-        finalHtml = match ? match[0] : finalHtml;
-        finalHtml = finalHtml.replace(/```/g, "");
-
-        // Create the frame
-        const frame = await prisma.frame.create({
-          data: {
-            projectId,
-            title: screenPlan.name,
-            htmlContent: finalHtml,
-          },
-        });
-
-        // Add to generatedFrames for next iteration's context
-        generatedFrames.push(frame);
-
-        // Update design context (mainly updates screen graph after first 3)
-        designContext = updateDesignContext(
-          designContext,
-          frame,
-          generatedFrames,
+      let contextString: string;
+      if (ctx.registry) {
+        // The registry already carries the first screen's HTML; only attach a
+        // separate "recent" frame when it adds something the registry lacks.
+        const last = ctx.referenceFrames[ctx.referenceFrames.length - 1] ?? null;
+        const recentFrame =
+          last && last.title !== ctx.registry.sourceScreenTitle ? last : null;
+        contextString =
+          generateFullScreenContext(ctx.registry, recentFrame, Math.max(i, 1), screenPlan.name, total) +
+          "\n\n" +
+          generateFullContext(ctx.designContext, screenPlan, [], i, total);
+      } else if (ctx.designContext.isInitialized) {
+        contextString = generateFullContext(
+          ctx.designContext,
+          screenPlan,
+          ctx.referenceFrames.slice(-2),
+          i,
+          total,
         );
+      } else {
+        contextString = `No previous screens - this is the first screen. Establish the Design DNA (typography, spacing, colors, navigation patterns) that ALL subsequent screens will follow.${designSystemContext}`;
+      }
 
-        await publish({
-          channel: CHANNEL,
-          topic: "frame.created",
-          data: {
-            frame: {
-              ...frame,
-              isLoading: false,
-            },
-            screenId: screenPlan.id,
-            frameId: frame.id,
-            projectId: projectId,
-          },
-        });
+      const activeNavItem = ctx.registry?.navigation
+        ? getActiveNavItem(screenPlan.name, ctx.registry.navigation)
+        : null;
+      const navActiveHint = activeNavItem
+        ? `\n\nACTIVE NAVIGATION: For this screen ("${screenPlan.name}"), the active nav icon should be: ${activeNavItem}`
+        : "";
 
-        return { success: true, frame: frame };
+      const imagesBlock = availableImagesBlock(imagesFor(screenPlan));
+      const isFoundation = !ctx.registry;
+
+      const result = await generateText({
+        model: llm.chat(generationModel),
+        system: GENERATION_SYSTEM_PROMPT,
+        tools: imageTools(),
+        stopWhen: stepCountIs(3),
+        maxOutputTokens: SCREEN_MAX_OUTPUT_TOKENS,
+        prompt: `
+${appIdentityString}
+
+${colorContract}
+
+- Screen ${i + 1}/${total}
+- Screen ID: ${screenPlan.id}
+- Screen Name: ${screenPlan.name}
+- Screen Purpose: ${screenPlan.purpose}
+
+VISUAL DESCRIPTION: ${screenPlan.visualDescription}
+${designSystemContext}
+
+${imagesBlock}
+
+${contextString}
+${navActiveHint}
+
+${
+  enforceThemeVariables
+    ? `THEME CSS VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare):\n${fullThemeCSS}`
+    : "(Theme CSS variables intentionally omitted — this app's screens use the literal palette from the PALETTE LOCK.)"
+}
+
+════════════════════════════════════════════════════════════════════════════
+GENERATION INSTRUCTIONS
+════════════════════════════════════════════════════════════════════════════
+${
+  isFoundation
+    ? `
+**FIRST SCREEN — ESTABLISH THE DESIGN DNA.**
+Every choice here is replicated on every other screen: typography scale, spacing, card/button/input patterns, icon choices, and the tab bar.
+- Tab bar: exactly 5 items with Hugeicons names, using the NAVIGATION CONTRACT markup verbatim. These icons and their order are LOCKED for the whole app.
+- Make deliberate, professional choices that scale across 20+ screens.
+`
+    : `
+**MAINTAIN THE DESIGN DNA — screen ${i + 1} of ${total}.**
+This screen must be indistinguishable in style from the others: copy the tab bar from the registry exactly (only the active item changes), use only Icon Lock icons, same typography, spacing, components, and theme variables. Only the CONTENT changes.
+`
+}
+Generate the complete HTML for this screen now — HTML only, starting with <div.
+        `.trim(),
       });
+
+      let finalHtml = result.text ?? "";
+      const match = finalHtml.match(/<div[\s\S]*<\/div>/);
+      finalHtml = match ? match[0] : finalHtml;
+      finalHtml = finalHtml.replace(/```/g, "");
+
+      // A screen that hardcodes its palette breaks theme switching AND every
+      // later screen's consistency (they only see the theme variables). Repair
+      // it before it is saved and before the registry is built from it.
+      if (enforceThemeVariables) {
+        const conformed = await conformToThemeVariables(finalHtml, {
+          themeCSS: fullThemeCSS,
+          label: screenPlan.name,
+        });
+        finalHtml = conformed.html;
+      }
+
+      const frame = await prisma.frame.create({
+        data: {
+          projectId,
+          title: screenPlan.name,
+          htmlContent: finalHtml,
+          position: basePosition + i,
+        },
+      });
+
+      await publish({
+        channel: CHANNEL,
+        topic: "frame.created",
+        data: {
+          frame: { ...frame, isLoading: false },
+          screenId: screenPlan.id,
+          frameId: frame.id,
+          projectId: projectId,
+        },
+      });
+
+      return {
+        id: frame.id,
+        title: frame.title,
+        htmlContent: frame.htmlContent,
+        projectId: frame.projectId,
+        position: frame.position,
+      };
+    };
+
+    // ── PHASE 2: Generation ──────────────────────────────────────────────────
+    // The first screen of a brand-new app defines the design system, so it
+    // renders alone. Everything after it (and every screen of a follow-up
+    // generation, where the system already exists) renders in parallel
+    // batches against the same frozen registry — N screens cost roughly the
+    // time of two instead of N.
+    let referenceFrames: FrameType[] = isExistingGeneration ? [...frames] : [];
+    const produced: Record<number, FrameRow> = {};
+    let queue = screens.map((_, i) => i);
+
+    if (!componentRegistry && total > 0) {
+      const first = await step.run("generate-screen-0", () =>
+        renderScreen(0, {
+          registry: null,
+          identity: frozenAppIdentity,
+          designContext,
+          referenceFrames,
+        }),
+      );
+      produced[0] = first;
+      componentRegistry = buildComponentRegistry(first as FrameType, prompt);
+      frozenAppIdentity = componentRegistry.appIdentity;
+      referenceFrames = [...referenceFrames, first as FrameType];
+      designContext = buildDesignContext(referenceFrames, analysisToUse.themeToUse);
+      queue = queue.slice(1);
+    }
+
+    for (let b = 0; b < queue.length; b += PARALLEL_SCREENS) {
+      const batch = queue.slice(b, b + PARALLEL_SCREENS);
+      const ctx: RenderContext = {
+        registry: componentRegistry,
+        identity: frozenAppIdentity,
+        designContext,
+        referenceFrames,
+      };
+      const results = await Promise.all(
+        batch.map((i) => step.run(`generate-screen-${i}`, () => renderScreen(i, ctx))),
+      );
+      results.forEach((frame, k) => {
+        produced[batch[k]] = frame;
+      });
+      // Later batches get to see what earlier ones produced.
+      referenceFrames = [...referenceFrames, ...(results as FrameType[])];
+      designContext = buildDesignContext(referenceFrames, analysisToUse.themeToUse);
     }
 
     // Persist the design system so follow-up generations reuse the exact
@@ -536,7 +575,7 @@ All screens MUST use this theme's CSS variables unchanged. Do NOT introduce new 
           ),
         },
       });
-      return { saved: true };
+      return { saved: true, screens: Object.keys(produced).length };
     });
 
     await publish({

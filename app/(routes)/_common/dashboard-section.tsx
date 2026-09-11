@@ -627,7 +627,9 @@ const ExploreGrid = memo(function ExploreGrid({
                 ? "Web"
                 : p.deviceType === "mobile"
                   ? "Mobile"
-                  : p.deviceType}
+                  : p.deviceType === "app-store"
+                    ? "App Store"
+                    : p.deviceType}
             </p>
           </div>
         </Link>
@@ -854,7 +856,9 @@ export const ProjectCard = memo(
           ? { label: "Mobile", icon: SmartPhone01Icon }
           : project.deviceType === "wireframe"
             ? { label: "Wireframe", icon: Layout01Icon }
-            : { label: "Inspirations", icon: Image01Icon };
+            : project.deviceType === "app-store"
+              ? { label: "App Store", icon: SmartPhone01Icon }
+              : { label: "Inspirations", icon: Image01Icon };
 
     return (
       <div

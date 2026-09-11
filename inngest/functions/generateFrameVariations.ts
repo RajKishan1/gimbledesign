@@ -1,10 +1,11 @@
 import { generateText, stepCountIs } from "ai";
+import { DEFAULT_MODEL } from "@/constant/models";
 import { inngest } from "../client";
-import { openrouter } from "@/lib/openrouter";
+import { llm } from "@/lib/llm";
 import { GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
-import { unsplashTool } from "../tool";
+import { imageTools } from "../tool";
 import {
   buildDesignContext,
   generateDesignDNAString,
@@ -14,6 +15,7 @@ import {
   extractAppIdentity,
   generateAppIdentityString,
 } from "@/lib/component-registry";
+import { analyzePalette, buildPaletteLockString } from "@/lib/palette-lock";
 
 export const generateFrameVariations = inngest.createFunction(
   { id: "generate-frame-variations" },
@@ -34,7 +36,7 @@ export const generateFrameVariations = inngest.createFunction(
     } = event.data;
 
     const CHANNEL = `user:${userId}`;
-    const selectedModel = model || "google/gemini-3.1-pro-preview";
+    const selectedModel = model || DEFAULT_MODEL;
 
     // Generate stable skeleton IDs so the client can match them when real frames arrive
     const skeletonIds = Array.from(
@@ -123,13 +125,26 @@ ${generateComponentLibraryString(designContext.components)}
           }
         }
 
+        // Palette lock: variations may change layout/copy/imagery, but the
+        // app's colours stay the app's colours unless the user asked to vary
+        // the colour scheme.
+        const varyingColors = Boolean(aspectsToVary?.colorScheme);
+        const palette = analyzePalette([
+          frame.htmlContent,
+          ...((Array.isArray(allFrames) ? allFrames : []) as Array<{ htmlContent?: string }>)
+            .map((f) => f.htmlContent ?? "")
+            .filter(Boolean),
+        ]);
+        const paletteLock = varyingColors
+          ? ""
+          : buildPaletteLockString(palette, selectedTheme?.name ?? String(themeId ?? ""));
+        const usesThemeVars = palette.mode === "theme" || palette.mode === "unknown";
+
         const result = await generateText({
-          model: openrouter.chat(selectedModel),
+          model: llm.chat(selectedModel),
           system: GENERATION_SYSTEM_PROMPT,
-          tools: {
-            searchUnsplash: unsplashTool,
-          },
-          stopWhen: stepCountIs(5),
+          tools: imageTools(),
+          stopWhen: stepCountIs(3),
           prompt: `
           ${appIdentityString ? `${appIdentityString}\n\n` : ""}
           You are generating VARIATION ${i + 1} of ${numberOfOptions} based on an existing screen design.
@@ -137,9 +152,15 @@ ${generateComponentLibraryString(designContext.components)}
           ORIGINAL SCREEN TITLE: ${frame.title}
           ORIGINAL SCREEN HTML: ${frame.htmlContent}
 
+          ${paletteLock}
+
           ${designContextString}
 
-          THEME VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare these): ${fullThemeCSS}
+          ${
+            usesThemeVars || varyingColors
+              ? `THEME VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare these): ${fullThemeCSS}`
+              : "(Theme CSS variables intentionally omitted — this app's screens use the literal palette in the PALETTE LOCK. Do not introduce var(--…) colours.)"
+          }
 
           VARIATION INSTRUCTIONS:
           - Creative range: ${creativeRange.toUpperCase()} — ${rangeInstructions[creativeRange] || rangeInstructions.explore}

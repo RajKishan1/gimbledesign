@@ -1,10 +1,11 @@
 import { generateText, stepCountIs } from "ai";
+import { DEFAULT_MODEL } from "@/constant/models";
 import { inngest } from "../client";
-import { openrouter } from "@/lib/openrouter";
+import { llm } from "@/lib/llm";
 import { GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
-import { unsplashTool } from "../tool";
+import { imageTools } from "../tool";
 import {
   buildDesignContext,
   generateDesignDNAString,
@@ -14,6 +15,7 @@ import {
   extractAppIdentity,
   generateAppIdentityString,
 } from "@/lib/component-registry";
+import { analyzePalette, buildPaletteLockString } from "@/lib/palette-lock";
 
 export const regenerateFrame = inngest.createFunction(
   { id: "regenerate-frame" },
@@ -30,7 +32,7 @@ export const regenerateFrame = inngest.createFunction(
       allFrames, // Optional: all frames in the project for context
     } = event.data;
     const CHANNEL = `user:${userId}`;
-    const selectedModel = model || "google/gemini-3.1-pro-preview";
+    const selectedModel = model || DEFAULT_MODEL;
 
     await publish({
       channel: CHANNEL,
@@ -97,13 +99,23 @@ Any changes should seamlessly blend with the app's established visual style.
         }
       }
 
+      // Palette lock: the edited screen must keep the colours the app already
+      // uses — literal values if the app hardcoded them, theme variables if not.
+      const paletteSource: string[] = [
+        frame.htmlContent,
+        ...((Array.isArray(allFrames) ? allFrames : []) as Array<{ htmlContent?: string }>)
+          .map((f) => f.htmlContent ?? "")
+          .filter(Boolean),
+      ];
+      const palette = analyzePalette(paletteSource);
+      const paletteLock = buildPaletteLockString(palette, selectedTheme?.name ?? String(themeId ?? ""));
+      const usesThemeVars = palette.mode === "theme" || palette.mode === "unknown";
+
       const result = await generateText({
-        model: openrouter.chat(selectedModel),
+        model: llm.chat(selectedModel),
         system: GENERATION_SYSTEM_PROMPT,
-        tools: {
-          searchUnsplash: unsplashTool,
-        },
-        stopWhen: stepCountIs(5),
+        tools: imageTools(),
+        stopWhen: stepCountIs(3),
         prompt: `
         ${appIdentityString ? `${appIdentityString}\n\n` : ""}
         USER REQUEST: ${prompt}
@@ -111,9 +123,15 @@ Any changes should seamlessly blend with the app's established visual style.
         ORIGINAL SCREEN TITLE: ${frame.title}
         ORIGINAL SCREEN HTML: ${frame.htmlContent}
 
+        ${paletteLock}
+
         ${designContextString}
 
-        THEME VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare these): ${fullThemeCSS}
+        ${
+          usesThemeVars
+            ? `THEME VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare these): ${fullThemeCSS}`
+            : "(Theme CSS variables intentionally omitted — this app's screens use the literal palette in the PALETTE LOCK. Do not introduce var(--…) colours.)"
+        }
 
 
         CRITICAL REQUIREMENTS - READ CAREFULLY:

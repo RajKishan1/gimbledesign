@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { openrouter } from "@/lib/openrouter";
+import { llm } from "@/lib/llm";
 import { generateText } from "ai";
 
-const GPT_VISION_MODEL = "openai/gpt-5.4-mini";
+const GPT_VISION_MODEL = "google:gemini@3.5-flash";
 
 const VALID_IMAGE_TYPES = [
   "image/jpeg",
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     }
 
     const result = await generateText({
-      model: openrouter.chat(GPT_VISION_MODEL),
+      model: llm.chat(GPT_VISION_MODEL),
       maxOutputTokens: 1600,
       messages: [
         {

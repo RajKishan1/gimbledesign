@@ -1,11 +1,12 @@
-import { generateObject, generateText, stepCountIs } from "ai";
+import { generateText, stepCountIs } from "ai";
+import { DEFAULT_MODEL } from "@/constant/models";
 import { inngest } from "../client";
 import { z } from "zod";
-import { openrouter } from "@/lib/openrouter";
+import { llm, generateStructured } from "@/lib/llm";
 import { INSPIRATION_GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
-import { unsplashTool } from "../tool";
+import { imageTools } from "../tool";
 
 const THEME_IDS = [
   "ocean-breeze",
@@ -82,8 +83,8 @@ const InspirationAnalysisSchema = z.object({
     .describe("Exactly 4 layout/composition variations for the same concept"),
 });
 
-const FAST_MODEL = "google/gemini-3.7-flash";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+const FAST_MODEL = "google:gemini@3.5-flash";
+const QUALITY_MODEL = DEFAULT_MODEL;
 
 export const generateInspirationVariations = inngest.createFunction(
   { id: "generate-inspiration-variations" },
@@ -110,8 +111,8 @@ export const generateInspirationVariations = inngest.createFunction(
           data: { status: "analyzing", projectId },
         });
 
-        const { object } = await generateObject({
-          model: openrouter.chat(FAST_MODEL),
+        const { object } = await generateStructured({
+          model: llm.chat(FAST_MODEL),
           schema: InspirationAnalysisSchema,
           system: INSPIRATION_ANALYSIS_PROMPT,
           prompt: `Redesign brief:\n\n${prompt}\n\nOutput: scope (component or full_screen from the brief), one concept, one theme id that best matches the reference (if any), and exactly 4 layout variations. Same theme for all; only layout/structure differs.`,
@@ -154,9 +155,9 @@ export const generateInspirationVariations = inngest.createFunction(
       const style = analysis.styles[i];
       await step.run(`generate-inspiration-frame-${i}`, async () => {
         const result = await generateText({
-          model: openrouter.chat(generationModel),
+          model: llm.chat(generationModel),
           system: INSPIRATION_GENERATION_SYSTEM_PROMPT,
-          tools: { searchUnsplash: unsplashTool },
+          tools: imageTools(),
           stopWhen: stepCountIs(5),
           prompt: `
 Single design variation ${i + 1}/4 — Inspiration re-design.

@@ -9,10 +9,11 @@
  * HIGH CONTEXT: Uses Design DNA + Component Library for consistency across 20+ screens.
  */
 
-import { generateObject, generateText, stepCountIs } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { inngest } from "../client";
 import { z } from "zod";
-import { openrouter } from "@/lib/openrouter";
+import { llm, generateStructured } from "@/lib/llm";
+import { DEFAULT_MODEL } from "@/constant/models";
 import { FrameType } from "@/types/project";
 import {
   DESIGN_TREE_GENERATION_PROMPT,
@@ -21,7 +22,7 @@ import {
 import { renderDesignTreeToHtml } from "@/lib/design-tree/tree-to-html";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
-import { unsplashTool } from "../tool";
+import { imageTools } from "../tool";
 import { DesignTree, generateNodeId } from "@/types/design-tree";
 import {
   buildDesignContext,
@@ -49,8 +50,8 @@ const DesignTreeAnalysisSchema = z.object({
 });
 
 // Fast model for analysis, quality model for generation
-const FAST_MODEL = "google/gemini-3.7-flash";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+const FAST_MODEL = "google:gemini@3.5-flash";
+const QUALITY_MODEL = DEFAULT_MODEL;
 
 /**
  * Add required properties and IDs to a node recursively
@@ -252,8 +253,8 @@ export const generateDesignTree = inngest.createFunction(
           - For specific screens: only those requested
         `.trim();
 
-        const { object } = await generateObject({
-          model: openrouter.chat(analysisModel),
+        const { object } = await generateStructured({
+          model: llm.chat(analysisModel),
           schema: DesignTreeAnalysisSchema,
           system: DESIGN_TREE_ANALYSIS_PROMPT,
           prompt: analysisPrompt,
@@ -335,11 +336,9 @@ export const generateDesignTree = inngest.createFunction(
           : "";
 
         const result = await generateText({
-          model: openrouter.chat(generationModel),
+          model: llm.chat(generationModel),
           system: DESIGN_TREE_GENERATION_PROMPT,
-          tools: {
-            searchUnsplash: unsplashTool,
-          },
+          tools: imageTools(),
           stopWhen: stepCountIs(5),
           prompt: `
             Generate a Design Tree JSON for this screen:
@@ -561,11 +560,9 @@ export const regenerateDesignTreeFrame = inngest.createFunction(
         : "";
 
       const result = await generateText({
-        model: openrouter.chat(selectedModel),
+        model: llm.chat(selectedModel),
         system: DESIGN_TREE_GENERATION_PROMPT,
-        tools: {
-          searchUnsplash: unsplashTool,
-        },
+        tools: imageTools(),
         stopWhen: stepCountIs(5),
         prompt: `
           USER REQUEST: ${prompt}

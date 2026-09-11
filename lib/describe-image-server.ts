@@ -1,7 +1,7 @@
-import { openrouter } from "@/lib/openrouter";
+import { llm } from "@/lib/llm";
 import { generateText } from "ai";
 
-const GPT_VISION_MODEL = "openai/gpt-5.4-mini";
+const GPT_VISION_MODEL = "google:gemini@3.5-flash";
 
 /**
  * Describe an image from buffer using GPT vision. Used by describe-image API and inspiration-redesign.
@@ -14,7 +14,7 @@ export async function describeImageFromBuffer(
   const dataUrl = `data:${mimeType};base64,${base64}`;
 
   const { text } = await generateText({
-    model: openrouter.chat(GPT_VISION_MODEL),
+    model: llm.chat(GPT_VISION_MODEL),
     maxOutputTokens: 1024,
     messages: [
       {

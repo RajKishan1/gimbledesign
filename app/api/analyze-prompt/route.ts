@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { openrouter } from "@/lib/openrouter";
-import { generateObject } from "ai";
+import { llm, generateStructured } from "@/lib/llm";
 import { z } from "zod";
 
 const ANALYZE_PROMPT_SYSTEM = `You are an expert design intent analyzer. Your job is to understand what type of design the user wants to create based on their prompt.
@@ -52,10 +51,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const selectedModel = model || "google/gemini-3.7-flash";
+    const selectedModel = model || "google:gemini@3.5-flash";
 
-    const { object } = await generateObject({
-      model: openrouter.chat(selectedModel),
+    const { object } = await generateStructured({
+      model: llm.chat(selectedModel),
       system: ANALYZE_PROMPT_SYSTEM,
       prompt: `Analyze this design prompt and determine what type of design the user wants to create:\n\n"${prompt}"`,
       schema: AnalysisSchema,

@@ -9,7 +9,7 @@ export type ProjectType = {
   id: string;
   name: string;
   theme: string;
-  deviceType?: "mobile" | "web" | "inspirations" | "wireframe";
+  deviceType?: "mobile" | "web" | "inspirations" | "wireframe" | "app-store";
   wireframeKind?: "web" | "mobile" | null;
   width?: number;
   height?: number;

@@ -15,6 +15,7 @@ import { useCanvas } from "@/context/canvas-context";
 import { PENDING_SETUP_KEY } from "@/features/use-project";
 import { getGenerationModel } from "@/constant/models";
 import { toast } from "sonner";
+import AppStoreSidebar from "@/components/app-store/app-store-sidebar";
 
 const Page = () => {
   const params = useParams();
@@ -31,6 +32,9 @@ const Page = () => {
   }
 
   const isInspirations = project?.deviceType === "inspirations";
+  // App Store Screens projects have no HTML frames: their output is canvas
+  // images produced by the Inngest job, tracked via the app-store set.
+  const isAppStore = project?.deviceType === "app-store";
   const initialDimensions =
     isInspirations && project?.width != null && project?.height != null
       ? { width: project.width, height: project.height }
@@ -68,7 +72,7 @@ const Page = () => {
       initialDimensions={initialDimensions}
       initialWireframeKind={initialWireframeKind}
       initialAppShell={initialAppShell}
-      hasInitialData={hasInitialData}
+      hasInitialData={hasInitialData || isAppStore}
       projectId={project?.id}
     >
       <PrototypeProvider projectId={project?.id || id}>
@@ -77,6 +81,7 @@ const Page = () => {
           projectName={project?.name}
           isPending={isPending}
           initialPrompt={project?.initialPrompt ?? undefined}
+          isAppStore={isAppStore}
         />
       </PrototypeProvider>
     </CanvasProvider>
@@ -90,11 +95,13 @@ const PageContent = ({
   projectName,
   isPending,
   initialPrompt,
+  isAppStore = false,
 }: {
   projectId: string;
   projectName?: string;
   isPending: boolean;
   initialPrompt?: string | null;
+  isAppStore?: boolean;
 }) => {
   const { mutate: generateDesign, isPending: isGenerating } =
     useGenerateDesignById(projectId);
@@ -244,18 +251,23 @@ const PageContent = ({
       <Header projectName={projectName} />
 
       <div className="flex flex-1 overflow-hidden">
-        <DesignSidebar
-          projectId={projectId}
-          onGenerate={handleGenerate}
-          isPending={isGenerating}
-          initialPrompt={initialPrompt ?? undefined}
-          setupStatus={setupStatus}
-        />
+        {isAppStore ? (
+          <AppStoreSidebar projectId={projectId} />
+        ) : (
+          <DesignSidebar
+            projectId={projectId}
+            onGenerate={handleGenerate}
+            isPending={isGenerating}
+            initialPrompt={initialPrompt ?? undefined}
+            setupStatus={setupStatus}
+          />
+        )}
         <div className="relative flex-1">
           <Canvas
             projectId={projectId}
             projectName={projectName || null}
             isPending={isPending}
+            isAppStore={isAppStore}
           />
         </div>
       </div>

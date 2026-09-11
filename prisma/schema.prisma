@@ -34,9 +34,79 @@ model Project {
   frames        Frame[]
   chatMessages  ChatMessage[]
   canvasImages  CanvasImage[]
+  appStoreSet   AppStoreSet?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// App Store Screens tool — one set per project (deviceType "app-store").
+/// Holds the user's brief and the frozen art-direction that every screen follows.
+model AppStoreSet {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  projectId  String   @unique @db.ObjectId
+  project    Project  @relation(fields: [projectId], references: [id])
+  userId     String
+  brief      Json     // AppStoreBrief (lib/app-store/specs.ts)
+  styleGuide Json?    // StyleGuide produced by the art-direction step
+  platform   String   // "iphone" | "android" | "ipad"
+  quality    String   // "standard" | "premium"
+  model      String   // image model id used (e.g. gpt-image-2)
+  status     String   @default("planning") // planning | generating | completed | failed
+  error      String?
+
+  screens AppStoreScreen[]
+  assets  AppStoreAsset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// One store screenshot. The rendered bitmap lives in CanvasImage (canvasImageId) so the
+/// canvas can move/resize/delete it like any other image.
+model AppStoreScreen {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  setId         String      @db.ObjectId
+  set           AppStoreSet @relation(fields: [setId], references: [id])
+  projectId     String      @db.ObjectId
+  index         Int
+  headline      String      @default("")
+  subheadline   String?
+  visualBrief   String?     // art director's composition notes for this screen
+  assetId       String?     @db.ObjectId // AppStoreAsset (screenshot) shown inside the device
+  deviceVariant String      @default("straight") // straight | tilt-left | tilt-right | zoom-crop
+  prompt        String?     // final prompt sent to the image model (debugging / audit)
+  status        String      @default("pending") // pending | generating | done | failed
+  error         String?
+  canvasImageId String?     @db.ObjectId
+  genWidth      Int?
+  genHeight     Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([setId])
+  @@index([projectId])
+}
+
+/// User-uploaded inputs for a set (logo, real app screenshots, optional style reference).
+model AppStoreAsset {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  setId     String      @db.ObjectId
+  set       AppStoreSet @relation(fields: [setId], references: [id])
+  projectId String      @db.ObjectId
+  kind      String      // "logo" | "screenshot" | "reference"
+  name      String
+  src       String      // data URL (downscaled PNG)
+  width     Int
+  height    Int
+  order     Int         @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([setId])
 }
 
 model Frame {
@@ -44,6 +114,7 @@ model Frame {
   title       String
   htmlContent String
   designTree  Json?    // Structured design data (Design Tree)
+  position    Int?     // Display order within the project (screens render in parallel, so creation time is not the order)
 
   projectId   String   @db.ObjectId
   project     Project  @relation(fields: [projectId], references: [id])

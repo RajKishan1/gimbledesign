@@ -1,7 +1,8 @@
-import { generateObject, generateText, stepCountIs } from "ai";
+import { generateText, stepCountIs } from "ai";
+import { DEFAULT_MODEL } from "@/constant/models";
 import { inngest } from "../client";
 import { z } from "zod";
-import { openrouter } from "@/lib/openrouter";
+import { llm, generateStructured } from "@/lib/llm";
 import { FrameType } from "@/types/project";
 import {
   WEB_ANALYSIS_PROMPT,
@@ -9,18 +10,18 @@ import {
 } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
-import { unsplashTool } from "../tool";
+import { imageTools } from "../tool";
+import { analyzePalette, buildPaletteLockString } from "@/lib/palette-lock";
+import { conformToThemeVariables, scrubColorSpecs } from "@/lib/theme-conformance";
 import {
   buildDesignContext,
   generateFullContext,
-  updateDesignContext,
   DesignContext,
 } from "@/lib/design-context-manager";
 import {
   AppIdentity,
   ComponentRegistry,
   buildComponentRegistry,
-  updateRegistryIfNeeded,
   generateFullScreenContext,
   generateAppIdentityString,
   extractAppIdentity,
@@ -81,8 +82,8 @@ const FlexibleAppSchema = z.object({
 });
 
 // Fast model for analysis, quality model for generation
-const FAST_MODEL = "google/gemini-3.7-flash";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+const FAST_MODEL = "google:gemini@3.5-flash";
+const QUALITY_MODEL = DEFAULT_MODEL;
 
 export const generateWebScreens = inngest.createFunction(
   { id: "generate-web-screens" },
@@ -103,6 +104,18 @@ export const generateWebScreens = inngest.createFunction(
     // Use fast model for analysis, user-selected or quality model for generation
     const analysisModel = FAST_MODEL;
     const generationModel = model || QUALITY_MODEL;
+
+    // Palette lock — follow-ups must match the colours already on the canvas
+    // even if the first generation hardcoded them (see lib/palette-lock.ts).
+    const existingPalette = isExistingGeneration
+      ? analyzePalette((frames as FrameType[]).map((f) => f.htmlContent))
+      : null;
+    const existingThemeName =
+      THEME_LIST.find((t) => t.id === existingTheme)?.name ?? String(existingTheme ?? "");
+    const paletteLock = existingPalette
+      ? buildPaletteLockString(existingPalette, existingThemeName)
+      : "";
+    const enforceThemeVariables = !existingPalette || existingPalette.mode === "theme";
 
     await publish({
       channel: CHANNEL,
@@ -140,6 +153,7 @@ export const generateWebScreens = inngest.createFunction(
           - Set totalScreenCount to the number of NEW screens only (not the total app count).
           - If the user asks for "login and signup", output exactly 2 screens.
           - Match the sidebar navigation, visual style, and design system of the existing screens.
+          ${paletteLock ? `\n          ${paletteLock.replace(/\n/g, "\n          ")}\n          In every visualDescription refer to these existing colours by role — never invent a new palette.\n` : ""}
           ${
             requestedScreenCount != null
               ? `
@@ -191,8 +205,8 @@ export const generateWebScreens = inngest.createFunction(
           }
         `.trim();
 
-      const { object } = await generateObject({
-        model: openrouter.chat(analysisModel),
+      const { object } = await generateStructured({
+        model: llm.chat(analysisModel),
         schema: FlexibleAppSchema,
         system: WEB_ANALYSIS_PROMPT,
         prompt: analysisPrompt,
@@ -305,9 +319,13 @@ export const generateWebScreens = inngest.createFunction(
         );
     }
 
-    // Theme lock — tells the AI exactly which theme is active and must never change
-    const themeLockString = `THEME LOCK: "${selectedTheme?.name || analysisToUse.themeToUse}" — theme ID: ${analysisToUse.themeToUse}
-All screens MUST use this theme's CSS variables unchanged. Do NOT introduce new colors, swap to a different palette, or change any CSS variable values.`;
+    // Colour contract — theme lock for variable-driven apps, literal palette otherwise.
+    const themeLockString = enforceThemeVariables
+      ? `THEME LOCK: "${selectedTheme?.name || analysisToUse.themeToUse}" — theme ID: ${analysisToUse.themeToUse}
+All colours come from this theme's CSS variables — no hex codes, no Tailwind palette classes, no font-['…'] classes. Do NOT introduce new colours or swap palettes.${paletteLock ? `\n\n${paletteLock}` : ""}`
+      : `${paletteLock}
+
+NOTE: the existing screens of this app do NOT use theme CSS variables. Do not introduce var(--…) colours here either — copy the literal palette above so every screen matches.`;
 
     // Detect if user requested a specific design system
     const designSystemSpec = detectDesignSystem(prompt);
@@ -325,118 +343,84 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}
 `
       : "";
 
-    for (let i = 0; i < analysisToUse.screens.length; i++) {
+    const totalScreens = analysisToUse.screens.length;
+    const basePosition = isExistingGeneration ? frames.length : 0;
+    const PARALLEL_SCREENS = 3;
+
+    type RenderContext = {
+      registry: ComponentRegistry | null;
+      identity: AppIdentity;
+      designContext: DesignContext;
+      referenceFrames: FrameType[];
+    };
+
+    // ── One web screen ───────────────────────────────────────────────────────
+    const renderScreen = async (i: number, ctx: RenderContext) => {
       const screenPlan = analysisToUse.screens[i];
+      const appIdentityString = generateAppIdentityString(ctx.identity);
 
-      await step.run(`generate-screen-${i}`, async () => {
-        // After generating first screen, build Component Registry + upgrade identity from real HTML
-        if (generatedFrames.length === 1 && !componentRegistry) {
-          componentRegistry = buildComponentRegistry(
-            generatedFrames[0] as FrameType,
-            prompt,
-          );
-          // Upgrade from provisional (analysis appName) to HTML-extracted identity
-          frozenAppIdentity = componentRegistry.appIdentity;
-        }
+      let contextString: string;
+      if (ctx.registry) {
+        const last = ctx.referenceFrames[ctx.referenceFrames.length - 1] ?? null;
+        const recentFrame =
+          last && last.title !== ctx.registry.sourceScreenTitle ? last : null;
+        contextString =
+          generateFullScreenContext(ctx.registry, recentFrame, Math.max(i, 1), screenPlan.name, totalScreens) +
+          "\n\n" +
+          generateFullContext(ctx.designContext, screenPlan, [], i, totalScreens);
+      } else if (ctx.designContext.isInitialized) {
+        contextString = generateFullContext(
+          ctx.designContext,
+          screenPlan,
+          ctx.referenceFrames.slice(-2),
+          i,
+          totalScreens,
+        );
+      } else {
+        contextString = `No previous screens - this is the first screen. Establish the Design DNA that ALL subsequent screens will follow.`;
+      }
 
-        // After generating second screen, update registry if needed
-        if (generatedFrames.length === 2 && componentRegistry) {
-          componentRegistry = updateRegistryIfNeeded(
-            componentRegistry,
-            generatedFrames[1] as FrameType,
-          );
-        }
+      const sidebarActiveHint = ctx.registry?.sidebar
+        ? `\n\nACTIVE SIDEBAR ITEM: For this screen ("${screenPlan.name}"), highlight the appropriate sidebar navigation item.`
+        : "";
+      const isFoundation = !ctx.registry;
 
-        // After generating first 2-3 screens, rebuild design context
-        if (generatedFrames.length >= 2 && generatedFrames.length <= 3) {
-          designContext = buildDesignContext(
-            generatedFrames,
-            analysisToUse.themeToUse,
-          );
-        }
-
-        // Always available from screen 0 onwards via frozenAppIdentity
-        const appIdentityString = generateAppIdentityString(frozenAppIdentity);
-
-        // Generate context string based on whether we have a Component Registry
-        let contextString: string;
-
-        if (componentRegistry && i > 0) {
-          // Use Component Registry for enhanced consistency
-          const recentFrame =
-            generatedFrames.length > 0
-              ? (generatedFrames[generatedFrames.length - 1] as FrameType)
-              : null;
-
-          contextString = generateFullScreenContext(
-            componentRegistry,
-            recentFrame,
-            i,
-            screenPlan.name,
-            analysisToUse.screens.length,
-          );
-
-          // Also include Design DNA for additional patterns
-          contextString +=
-            "\n\n" +
-            generateFullContext(
-              designContext,
-              screenPlan,
-              [], // Don't include recent frames again
-              i,
-              analysisToUse.screens.length,
-            );
-        } else if (designContext.isInitialized) {
-          // Fallback to Design DNA approach
-          const recentFrames = generatedFrames.slice(-2);
-          contextString = generateFullContext(
-            designContext,
-            screenPlan,
-            recentFrames,
-            i,
-            analysisToUse.screens.length,
-          );
-        } else {
-          contextString = `No previous screens - this is the first screen. Establish the Design DNA that ALL subsequent screens will follow.`;
-        }
-
-        // Determine which sidebar item should be active
-        const sidebarActiveHint = componentRegistry?.sidebar
-          ? `\n\nACTIVE SIDEBAR ITEM: For this screen ("${screenPlan.name}"), highlight the appropriate sidebar navigation item.`
-          : "";
-
-        const result = await generateText({
-          model: openrouter.chat(generationModel),
-          system: WEB_GENERATION_SYSTEM_PROMPT,
-          tools: {
-            searchUnsplash: unsplashTool,
-          },
-          stopWhen: stepCountIs(5),
-          prompt: `
+      const result = await generateText({
+        model: llm.chat(generationModel),
+        system: WEB_GENERATION_SYSTEM_PROMPT,
+        tools: imageTools(),
+        stopWhen: stepCountIs(3),
+        maxOutputTokens: 16_000,
+        prompt: `
           ${appIdentityString}
 
           ${themeLockString}
 
-          - Screen ${i + 1}/${analysisToUse.screens.length}
+          - Screen ${i + 1}/${totalScreens}
           - Screen ID: ${screenPlan.id}
           - Screen Name: ${screenPlan.name}
           - Screen Purpose: ${screenPlan.purpose}
 
-          VISUAL DESCRIPTION: ${screenPlan.visualDescription}
+          VISUAL DESCRIPTION: ${scrubColorSpecs(screenPlan.visualDescription)}
           ${designSystemContext}
 
           ${contextString}
           ${sidebarActiveHint}
 
-          THEME CSS VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare):
-          ${fullThemeCSS}
+          ${
+            enforceThemeVariables
+              ? `THEME CSS VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare):\n${fullThemeCSS}`
+              : "(Theme CSS variables intentionally omitted — this app's screens use the literal palette from the PALETTE LOCK.)"
+          }
+
+          IMAGES: avatars use https://i.pravatar.cc/150?u=<unique-name>; photos use https://picsum.photos/seed/<descriptive-slug>/<width>/<height> inside a fixed-aspect box with object-cover. Never invent other image hosts.
 
           ════════════════════════════════════════════════════════════════════════════
           WEB DESKTOP INTERFACE INSTRUCTIONS (1440px WIDTH)
           ════════════════════════════════════════════════════════════════════════════
 
           ${
-            i === 0
+            isFoundation
               ? `
           **FIRST SCREEN - ESTABLISH DESIGN DNA:**
           You are creating the FOUNDATION for all subsequent web screens. Every decision you make here will be replicated:
@@ -445,14 +429,14 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}
           - Spacing system (padding, margins, gaps - use 16px, 24px, 32px, 48px scale)
           - Component patterns (cards, buttons, tables, inputs)
           - Visual style (shadows, borders, hover states)
-          
+
           Make deliberate, professional choices that will scale across all screens.
           The sidebar items and icons you choose here are LOCKED for the entire app.
           `
               : `
-          **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${analysisToUse.screens.length}):**
+          **MAINTAIN DESIGN DNA (CRITICAL - SCREEN ${i + 1} OF ${totalScreens}):**
           This screen MUST be indistinguishable in style from previous screens.
-          
+
           MANDATORY REQUIREMENTS:
           1. SIDEBAR: Copy EXACTLY from Component Registry - same items, icons, order, styling
           2. HEADER: Use same header structure and elements
@@ -461,7 +445,7 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}
           5. SPACING: Same padding, margins, gaps (16px, 24px, 32px, 48px scale)
           6. Only the main CONTENT area changes - sidebar and chrome stay IDENTICAL
           7. Highlight the appropriate sidebar item for "${screenPlan.name}"
-          
+
           ⚠️ If you change sidebar items, icons, or styling, the app will look broken.
           `
           }
@@ -475,49 +459,94 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}
           1. Generate ONLY raw HTML starting with <div>
           2. Use Tailwind CSS for layout/spacing, CSS variables for colors
           3. No markdown, comments, <html>, <body>, or <head>
-          
+          4. Keep it lean: one focal section, 3–6 rows per table/list, icons via <iconify-icon> only (no inline SVG except charts)
+
           Generate the complete, production-ready HTML for this web screen now.
       `.trim(),
-        });
-
-        let finalHtml = result.text ?? "";
-        const match = finalHtml.match(/<div[\s\S]*<\/div>/);
-        finalHtml = match ? match[0] : finalHtml;
-        finalHtml = finalHtml.replace(/```/g, "");
-
-        const frame = await prisma.frame.create({
-          data: {
-            projectId,
-            title: screenPlan.name,
-            htmlContent: finalHtml,
-          },
-        });
-
-        generatedFrames.push(frame);
-
-        // Update design context
-        designContext = updateDesignContext(
-          designContext,
-          frame,
-          generatedFrames,
-        );
-
-        await publish({
-          channel: CHANNEL,
-          topic: "frame.created",
-          data: {
-            frame: {
-              ...frame,
-              isLoading: false,
-            },
-            screenId: screenPlan.id,
-            frameId: frame.id,
-            projectId: projectId,
-          },
-        });
-
-        return { success: true, frame: frame };
       });
+
+      let finalHtml = result.text ?? "";
+      const match = finalHtml.match(/<div[\s\S]*<\/div>/);
+      finalHtml = match ? match[0] : finalHtml;
+      finalHtml = finalHtml.replace(/```/g, "");
+
+      // Keep new screens variable-driven so theme switching and later
+      // follow-ups stay consistent (see lib/theme-conformance.ts).
+      if (enforceThemeVariables) {
+        const conformed = await conformToThemeVariables(finalHtml, {
+          themeCSS: fullThemeCSS,
+          label: screenPlan.name,
+        });
+        finalHtml = conformed.html;
+      }
+
+      const frame = await prisma.frame.create({
+        data: {
+          projectId,
+          title: screenPlan.name,
+          htmlContent: finalHtml,
+          position: basePosition + i,
+        },
+      });
+
+      await publish({
+        channel: CHANNEL,
+        topic: "frame.created",
+        data: {
+          frame: { ...frame, isLoading: false },
+          screenId: screenPlan.id,
+          frameId: frame.id,
+          projectId: projectId,
+        },
+      });
+
+      // Step outputs are JSON-serialised by Inngest, so keep them Date-free.
+      const row: { id: string; title: string; htmlContent: string; projectId: string; position: number | null } = {
+        id: frame.id,
+        title: frame.title,
+        htmlContent: frame.htmlContent,
+        projectId: frame.projectId,
+        position: frame.position,
+      };
+      return row;
+    };
+
+    // First screen alone when the design system does not exist yet; then
+    // parallel batches against the frozen registry.
+    let referenceFrames: FrameType[] = isExistingGeneration ? [...frames] : [];
+    let queue = analysisToUse.screens.map((_: unknown, i: number) => i);
+
+    if (!componentRegistry && totalScreens > 0) {
+      const first = await step.run("generate-screen-0", () =>
+        renderScreen(0, {
+          registry: null,
+          identity: frozenAppIdentity,
+          designContext,
+          referenceFrames,
+        }),
+      );
+      generatedFrames.push(first);
+      componentRegistry = buildComponentRegistry(first as FrameType, prompt);
+      frozenAppIdentity = componentRegistry.appIdentity;
+      referenceFrames = [...referenceFrames, first as FrameType];
+      designContext = buildDesignContext(referenceFrames, analysisToUse.themeToUse);
+      queue = queue.slice(1);
+    }
+
+    for (let b = 0; b < queue.length; b += PARALLEL_SCREENS) {
+      const batch = queue.slice(b, b + PARALLEL_SCREENS);
+      const ctx: RenderContext = {
+        registry: componentRegistry,
+        identity: frozenAppIdentity,
+        designContext,
+        referenceFrames,
+      };
+      const results = await Promise.all(
+        batch.map((i: number) => step.run(`generate-screen-${i}`, () => renderScreen(i, ctx))),
+      );
+      generatedFrames.push(...results);
+      referenceFrames = [...referenceFrames, ...(results as FrameType[])];
+      designContext = buildDesignContext(referenceFrames, analysisToUse.themeToUse);
     }
 
     // Persist the design system so follow-up generations reuse the exact

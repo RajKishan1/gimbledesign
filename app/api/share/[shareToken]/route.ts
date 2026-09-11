@@ -20,7 +20,7 @@ export async function GET(
 
     const project = await prisma.project.findFirst({
       where: { shareToken: shareToken.trim() },
-      include: { frames: true },
+      include: { frames: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] } },
     });
 
     if (!project) {

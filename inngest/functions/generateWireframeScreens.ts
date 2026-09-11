@@ -1,7 +1,8 @@
-import { generateObject, generateText } from "ai";
+import { generateText } from "ai";
+import { DEFAULT_MODEL } from "@/constant/models";
 import { inngest } from "../client";
 import { z } from "zod";
-import { openrouter } from "@/lib/openrouter";
+import { llm, generateStructured } from "@/lib/llm";
 import prisma from "@/lib/prisma";
 
 // Element in the wireframe with a product rationale (every button, link, section has a reason)
@@ -213,8 +214,8 @@ STRICT RULES:
 
 ${THEME_VARIABLES_GUIDE}`;
 
-const FAST_MODEL = "google/gemini-3.7-flash";
-const QUALITY_MODEL = "google/gemini-3.1-pro-preview";
+const FAST_MODEL = "google:gemini@3.5-flash";
+const QUALITY_MODEL = DEFAULT_MODEL;
 
 export const generateWireframeScreens = inngest.createFunction(
   { id: "generate-wireframe-screens" },
@@ -261,8 +262,8 @@ export const generateWireframeScreens = inngest.createFunction(
           Do thorough research before any wireframe is built. 1) Summarize the product and who it's for. 2) List user goals for this screen. 3) Summarize UX best practices for this screen type. 4) List 4-8 UI/UX principles to apply. 5) Output recommendedSections: at least 6 and preferably 8-14 sections. Each section needs: name (e.g. "Hero", "Value propositions"), purpose (one sentence), and keyElements (2-6 specific elements). Base this on the exact screen type the user asked for (landing page, product detail, dashboard, etc.) and industry best practices. Do not output fewer than 6 sections—full pages have many sections.
         `.trim();
 
-      const { object } = await generateObject({
-        model: openrouter.chat(analysisModel),
+      const { object } = await generateStructured({
+        model: llm.chat(analysisModel),
         schema: WireframeResearchSchema,
         system: WIREFRAME_RESEARCH_PROMPT,
         prompt: researchPrompt,
@@ -303,8 +304,8 @@ export const generateWireframeScreens = inngest.createFunction(
           Output ONE wireframe concept: screenType (exact page type from the request), appName, layoutDescription (numbered list of EVERY section above—do not skip any), purpose, principlesApplied, and elementPlan (every element from every section plus header/nav/footer, each with a reason). Default to WEB-FIRST unless they said "mobile app" or "mobile only".
         `.trim();
 
-      const { object } = await generateObject({
-        model: openrouter.chat(analysisModel),
+      const { object } = await generateStructured({
+        model: llm.chat(analysisModel),
         schema: WireframeConceptSchema,
         system: WIREFRAME_ANALYSIS_PROMPT,
         prompt: analysisPrompt,
@@ -355,7 +356,7 @@ export const generateWireframeScreens = inngest.createFunction(
       // One responsive layout – single HTML with Tailwind responsive classes, shown at 3 viewport sizes in the UI
       await step.run("generate-wireframe-responsive", async () => {
         const result = await generateText({
-          model: openrouter.chat(generationModel),
+          model: llm.chat(generationModel),
           system: WIREFRAME_RESPONSIVE_SYSTEM_PROMPT,
           prompt: `
           SCREEN TYPE (generate exactly this—do not switch to another page type): ${
@@ -412,7 +413,7 @@ export const generateWireframeScreens = inngest.createFunction(
       const viewport = WIREFRAME_VIEWPORTS[2]; // mobile
       await step.run("generate-wireframe-mobile", async () => {
         const result = await generateText({
-          model: openrouter.chat(generationModel),
+          model: llm.chat(generationModel),
           system: WIREFRAME_GENERATION_SYSTEM_PROMPT,
           prompt: `
           SCREEN TYPE (generate exactly this): ${analysis.screenType}
@@ -470,7 +471,7 @@ export const generateWireframeScreens = inngest.createFunction(
 
         await step.run(`generate-wireframe-${viewport.id}`, async () => {
           const result = await generateText({
-            model: openrouter.chat(generationModel),
+            model: llm.chat(generationModel),
             system: WIREFRAME_GENERATION_SYSTEM_PROMPT,
             prompt: `
           SCREEN TYPE (generate exactly this): ${analysis.screenType}

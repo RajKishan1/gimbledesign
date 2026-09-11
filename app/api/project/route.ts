@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth";
+import { DEFAULT_MODEL } from "@/constant/models";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { generateProjectName } from "@/app/action/action";
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
     if (!prompt) throw new Error("Missing Prompt");
 
     const userId = user.id;
-    const selectedModel = model || "google/gemini-3.1-pro-preview";
+    const selectedModel = model || DEFAULT_MODEL;
 
     // Check and deduct credits (1 credit for landing page submit)
     const creditCost = 1.0;
