@@ -452,8 +452,10 @@ ${designSystemSpec.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")}
 
           **LAYOUT STRUCTURE:**
           - Root: \`relative w-full min-h-screen flex\`
-          - Sidebar: \`fixed left-0 top-0 h-screen w-64 bg-[var(--card)]\`
-          - Main: \`flex-1 ml-64 p-8\`
+          - Sidebar: \`hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-[var(--card)]\`; provide usable compact navigation below lg
+          - Main: \`min-w-0 flex-1 ml-0 lg:ml-64 p-4 md:p-6 lg:p-8\`
+          - Cards: \`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4\`; stack split panels on mobile
+          - This same HTML must reflow at 393px, 768px and 1280px, preserving content and navigation
 
           **OUTPUT RULES:**
           1. Generate ONLY raw HTML starting with <div>

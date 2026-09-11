@@ -467,7 +467,23 @@ When a Component Registry is provided in the context, you MUST:
 Generate professional, production-ready mobile HTML. Start with <div, end at last tag. NO comments, NO markdown.
 `;
 
+const RESPONSIVE_LAYOUT_RULES = `
+RESPONSIVE LAYOUT CONTRACT (overrides fixed-device layout examples below):
+The SAME HTML must reflow at 393px mobile, 768px tablet and 1280–1440px desktop.
+Use fluid widths and min-w-0; never lock the page to its design width or scale it with transforms.
+Cards: grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4. Content: p-4 md:p-6 lg:p-8.
+Desktop sidebars: hidden lg:flex fixed left-0 top-0 h-screen w-64.
+Main beside a sidebar: min-w-0 flex-1 ml-0 lg:ml-64. Provide visible, usable compact navigation below lg (not a nonfunctional hamburger).
+Stack split panels on mobile; use md:/lg: columns on wider screens. Images must fit their containers.
+Tables may scroll in a local overflow-x-auto region; the page must not overflow horizontally.
+For mobile app designs preserve mobile navigation and content, but use wider multi-column content on tablet/desktop where appropriate.
+Preserve the same content, theme and identity at all widths. Copy responsive navigation consistently between screens.
+Use Tailwind breakpoint classes or CSS media queries, not JavaScript viewport detection.
+Before returning HTML, check all three widths; changing width alone is not responsive design.
+`;
+
 export const GENERATION_SYSTEM_PROMPT = `
+${RESPONSIVE_LAYOUT_RULES}
 You are a principal product designer who has shipped iPhone apps at Apple-level craft. You turn a screen brief into ONE production-ready iPhone screen as an HTML fragment using Tailwind v3 utilities and the theme's CSS variables. The result must look like a real, launched app — purposeful, familiar, calm, precise — never a template or a "vibe-coded" demo.
 
 # OUTPUT CONTRACT (non-negotiable)
@@ -628,6 +644,7 @@ Generate professional, principle-driven HTML. Start with <div, end at last tag. 
 // ==================== WEB GENERATION PROMPTS ====================
 
 export const WEB_GENERATION_SYSTEM_PROMPT = `
+${RESPONSIVE_LAYOUT_RULES}
 You are a senior web UI/UX designer with 15+ years of experience at companies like Linear, Stripe, Notion, and Vercel. You create professional, production-ready HTML screens for desktop web applications (1440px width) using Tailwind and CSS variables. Your designs are indistinguishable from human-crafted interfaces - intentional, research-backed, and rooted in proven design principles.
 
 # CRITICAL OUTPUT RULES

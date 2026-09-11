@@ -167,6 +167,7 @@ const DeviceFrame = ({
   const isPrototypeMode = mode === "prototype";
   const fullHtml = getHTMLWrapper(html, title, theme_style, frameId, {
     font,
+    responsivePreview: !!previewSize,
     ...(heightMessageId != null && { heightMessageId }),
     ...(isShellComposed && appShell && { appShell }),
   });
@@ -243,7 +244,8 @@ const DeviceFrame = ({
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (
-        event.data.type === "FRAME_HEIGHT" &&
+        event.source === iframeRef.current?.contentWindow &&
+        event.data?.type === "FRAME_HEIGHT" &&
         event.data.frameId === heightId
       ) {
         const newHeight = Math.max(event.data.height, DEVICE_MIN_HEIGHT);
