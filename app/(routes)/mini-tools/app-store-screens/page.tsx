@@ -1,12 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon, SmartPhone01Icon } from "@hugeicons/core-free-icons";
-import { Check, ImagePlus, Minus, Plus, Sparkles, Tablet, Upload, X } from "lucide-react";
+import {
+  Check,
+  CircleCheck,
+  ImagePlus,
+  Minus,
+  Palette,
+  Plus,
+  Sparkles,
+  Tablet,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import DashboardSidebar from "../../_common/dashboard-sidebar";
+import NavBar from "@/components/dashboard/NavBar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +47,13 @@ import {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const HEX_RE = /^#?([0-9a-fA-F]{6})$/;
+const CONTROL_CLASS =
+  "h-10 rounded-xl border-border bg-background/60 px-3.5 shadow-none focus-visible:bg-card";
+const TEXTAREA_CLASS =
+  "rounded-xl border-border bg-background/60 px-3.5 py-3 shadow-none focus-visible:bg-card";
+const SELECT_CLASS =
+  "h-10 w-full rounded-xl border border-border bg-background/60 px-3.5 text-sm text-foreground outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:bg-card focus-visible:ring-[3px] focus-visible:ring-ring/50";
+
 function normalizeHex(v: string): string | null {
   const m = v.trim().match(HEX_RE);
   return m ? `#${m[1].toUpperCase()}` : null;
@@ -72,17 +91,17 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
-      <div className="mb-5 flex items-start gap-3">
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
+    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+      <div className="flex items-start gap-3 border-b border-border/60 bg-muted/30 px-5 py-4 sm:px-6">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
           {step}
         </span>
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-          {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">{title}</h2>
+          {hint && <p className="mt-0.5 max-w-2xl text-xs leading-relaxed text-muted-foreground">{hint}</p>}
         </div>
       </div>
-      {children}
+      <div className="p-5 sm:p-6">{children}</div>
     </section>
   );
 }
@@ -101,13 +120,13 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={htmlFor} className="text-xs font-medium text-foreground">
+    <div className="space-y-2">
+      <Label htmlFor={htmlFor} className="text-[13px] font-medium text-foreground">
         {label}
         {optional && <span className="ml-1 font-normal text-muted-foreground">(optional)</span>}
       </Label>
       {children}
-      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+      {hint && <p className="text-[11px] leading-relaxed text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -151,15 +170,15 @@ function SingleImageDrop({
         accept(e.dataTransfer.files?.[0]);
       }}
       className={cn(
-        "relative flex items-center gap-3 rounded-xl border border-dashed p-3 transition-colors",
-        dragging ? "border-primary bg-primary/5" : "border-border hover:border-foreground/30",
+        "relative flex items-center gap-3 rounded-xl border border-dashed bg-background/60 p-3 transition-colors",
+        dragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/60 hover:bg-primary/3",
         compact ? "h-20" : "h-24",
       )}
     >
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted"
+        className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-card shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Upload ${label}`}
       >
         {preview ? (
@@ -169,7 +188,7 @@ function SingleImageDrop({
         )}
       </button>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-foreground">{label}</p>
+        <p className="text-[13px] font-medium text-foreground">{label}</p>
         <p className="truncate text-[11px] text-muted-foreground">
           {file ? file.name : hint ?? "PNG, JPG or WebP · drag & drop or click"}
         </p>
@@ -223,6 +242,184 @@ function ScreenshotTile({ file, index, onRemove }: { file: File; index: number; 
         <X className="size-3" />
       </button>
     </div>
+  );
+}
+
+function SetPreview({
+  appName,
+  tagline,
+  platform,
+  quality,
+  screenCount,
+  brandColors,
+  logo,
+  screenshots,
+  credits,
+  cost,
+  submitting,
+  validationError,
+  hasEnoughCredits,
+  onSubmit,
+}: {
+  appName: string;
+  tagline: string;
+  platform: PlatformId;
+  quality: QualityId;
+  screenCount: number;
+  brandColors: string[];
+  logo: File | null;
+  screenshots: File[];
+  credits: number | undefined;
+  cost: number;
+  submitting: boolean;
+  validationError: string | null;
+  hasEnoughCredits: boolean;
+  onSubmit: () => void;
+}) {
+  const accent = brandColors[0] ?? "#0284C7";
+  const logoPreview = usePreviewUrl(logo);
+  const screenshotPreview = usePreviewUrl(screenshots[0] ?? null);
+  const output = PLATFORMS[platform].generate[quality];
+  const frameClass = platform === "ipad" ? "aspect-[3/4] w-30 sm:w-34" : "aspect-[9/19] w-22 sm:w-24";
+
+  return (
+    <aside className="lg:sticky lg:top-23 lg:self-start">
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Your screenshot set</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">A live preview of the creative direction</p>
+          </div>
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+            {PLATFORMS[platform].store}
+          </span>
+        </div>
+
+        <div className="p-3">
+          <div className="relative h-88 overflow-hidden rounded-xl bg-neutral-950 text-white">
+            <div
+              className="absolute left-0 top-0 h-1 w-full"
+              style={{ backgroundColor: accent }}
+            />
+            <div className="relative z-10 px-5 pt-5">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-8 items-center justify-center overflow-hidden rounded-lg bg-white/10 ring-1 ring-white/15">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="" className="size-full object-cover" />
+                  ) : (
+                    <Sparkles className="size-3.5 text-white/80" />
+                  )}
+                </span>
+                <p className="truncate text-xs font-medium text-white/60">
+                  {appName.trim() || "Your app"}
+                </p>
+              </div>
+              <h3 className="mt-4 max-w-64 text-[22px] font-semibold leading-tight tracking-tight">
+                {tagline.trim() || "Turn your product story into a scroll-stopping set."}
+              </h3>
+            </div>
+
+            <div className="absolute inset-x-0 bottom-0 flex h-52 items-end justify-center gap-2 overflow-hidden px-4">
+              {[0, 1, 2].map((index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "relative shrink-0 overflow-hidden rounded-t-[18px] border-[3px] border-neutral-700 bg-white shadow-2xl",
+                    frameClass,
+                    index === 0 && "-rotate-3 translate-y-7 opacity-70",
+                    index === 1 && "z-10",
+                    index === 2 && "rotate-3 translate-y-7 opacity-70",
+                  )}
+                >
+                  {screenshotPreview && index === 1 ? (
+                    <img src={screenshotPreview} alt="First uploaded app screen" className="size-full object-cover" />
+                  ) : (
+                    <div className="flex size-full flex-col bg-white p-2">
+                      <div className="mb-2 h-[38%] rounded-md" style={{ backgroundColor: accent }} />
+                      <div className="h-1.5 w-2/3 rounded-full bg-neutral-900" />
+                      <div className="mt-1 h-1 w-full rounded-full bg-neutral-200" />
+                      <div className="mt-1 h-1 w-4/5 rounded-full bg-neutral-200" />
+                      <div className="mt-auto grid grid-cols-2 gap-1">
+                        <div className="aspect-square rounded bg-neutral-100" />
+                        <div className="aspect-square rounded bg-neutral-100" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 border-y border-border/60 bg-muted/20">
+          <div className="px-4 py-3">
+            <p className="text-[11px] text-muted-foreground">Format</p>
+            <p className="mt-0.5 truncate text-xs font-semibold text-foreground">{PLATFORMS[platform].short}</p>
+          </div>
+          <div className="border-x border-border/60 px-4 py-3">
+            <p className="text-[11px] text-muted-foreground">Output</p>
+            <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-foreground">
+              {output.width}×{output.height}
+            </p>
+          </div>
+          <div className="px-4 py-3">
+            <p className="text-[11px] text-muted-foreground">Set</p>
+            <p className="mt-0.5 text-xs font-semibold text-foreground">{screenCount} screens</p>
+          </div>
+        </div>
+
+        <div className="space-y-3 px-5 py-4">
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <CircleCheck className={cn("size-4", appName.trim() ? "text-primary" : "text-muted-foreground/50")} />
+              App story
+            </span>
+            <span className="font-medium text-foreground">{appName.trim() ? "Started" : "Required"}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <Palette className={cn("size-4", logo || brandColors.length ? "text-primary" : "text-muted-foreground/50")} />
+              Brand direction
+            </span>
+            <span className="font-medium text-foreground">{logo || brandColors.length ? "Added" : "Auto"}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <ImagePlus className={cn("size-4", screenshots.length ? "text-primary" : "text-muted-foreground/50")} />
+              Product screens
+            </span>
+            <span className="font-medium text-foreground">{screenshots.length ? `${screenshots.length} added` : "Optional"}</span>
+          </div>
+        </div>
+
+        <div className="border-t border-border/60 p-4">
+          <div className="mb-3 flex items-end justify-between gap-3 px-1">
+            <div>
+              <p className="text-[11px] text-muted-foreground">Generation cost</p>
+              <p className="mt-0.5 text-base font-semibold text-foreground">{cost} credits</p>
+            </div>
+            <p className="pb-0.5 text-right text-[11px] text-muted-foreground">
+              {credits != null ? `${Math.floor(credits)} available` : "Balance shown after sign in"}
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="lg"
+            className="h-11 w-full rounded-xl shadow-sm"
+            disabled={submitting || !!validationError || !hasEnoughCredits}
+            onClick={onSubmit}
+            title={validationError ?? undefined}
+          >
+            {submitting ? <Spinner className="size-4" /> : <Sparkles className="size-4" />}
+            {submitting ? "Starting…" : "Generate screenshot set"}
+          </Button>
+          {validationError && <p className="mt-2 text-center text-[11px] text-muted-foreground">{validationError}</p>}
+          {!hasEnoughCredits && (
+            <p className="mt-2 text-center text-[11px] font-medium text-destructive">Add credits to generate this set.</p>
+          )}
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -338,394 +535,345 @@ export default function AppStoreScreensPage() {
   const submitting = create.isPending || create.isSuccess;
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
-      <DashboardSidebar />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div className="hidden md:block">
+        <DashboardSidebar />
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <main className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-3xl px-6 pb-40 pt-12">
+          <Suspense fallback={<div className="h-17 border-b border-border/60" />}>
+            <NavBar />
+          </Suspense>
+
+          <div className="mx-auto w-full max-w-[1440px] px-4 pb-16 pt-7 sm:px-6 lg:px-8 xl:px-10">
             <Link
               href="/mini-tools"
-              className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="mb-5 inline-flex items-center gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
               <HugeiconsIcon icon={ArrowLeft01Icon} size={14} color="currentColor" strokeWidth={2} />
-              Back to Tools
+              All tools
             </Link>
 
-            <div className="mb-8 flex items-start gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-gradient-to-br from-amber-500/20 to-orange-500/10">
-                <HugeiconsIcon icon={SmartPhone01Icon} size={26} color="currentColor" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">App Store Screens</h1>
-                <p className="mt-1.5 max-w-xl text-base leading-relaxed text-muted-foreground">
-                  Describe your app, drop in your logo and real screenshots, and get a consistent,
-                  store-ready screenshot set rendered by GPT Image 2 via Runware.
+            <header className="mb-8 flex flex-col gap-5 border-b border-border/60 pb-7 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <HugeiconsIcon icon={SmartPhone01Icon} size={20} color="currentColor" strokeWidth={1.75} />
+                  </span>
+                  <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                    Creative asset generator
+                  </span>
+                </div>
+                <h1 className="text-3xl font-semibold tracking-[-0.035em] text-foreground sm:text-[34px]">
+                  App Store Screens
+                </h1>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                  Build a polished, consistent screenshot story from your real product screens and brand direction.
                 </p>
               </div>
-            </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="size-1.5 rounded-full bg-primary" />
+                Store-ready sizing included
+              </div>
+            </header>
 
-            <div className="space-y-4">
-              {/* 1 — Basics */}
-              <Section step={1} title="About the app" hint="The art director reads this to write headlines and pick a visual system.">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="App name" htmlFor="appName">
-                    <Input
-                      id="appName"
-                      value={appName}
-                      onChange={(e) => setAppName(e.target.value)}
-                      placeholder="e.g. Lumen"
-                      maxLength={60}
-                    />
-                  </Field>
-                  <Field label="Tagline" htmlFor="tagline" optional>
-                    <Input
-                      id="tagline"
-                      value={tagline}
-                      onChange={(e) => setTagline(e.target.value)}
-                      placeholder="e.g. Sleep better, every night"
-                      maxLength={120}
-                    />
-                  </Field>
-                  <Field label="Category" htmlFor="category">
-                    <select
-                      id="category"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}
-                      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-                    >
-                      {CATEGORIES.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="Audience" htmlFor="audience" optional>
-                    <Input
-                      id="audience"
-                      value={audience}
-                      onChange={(e) => setAudience(e.target.value)}
-                      placeholder="e.g. busy professionals with trouble sleeping"
-                      maxLength={200}
-                    />
-                  </Field>
-                </div>
-                <div className="mt-4">
-                  <Field
-                    label="What does the app do?"
-                    htmlFor="description"
-                    hint={`${description.trim().length}/${LIMITS.maxDescription} · Benefits, key screens, what makes it different.`}
-                  >
-                    <Textarea
-                      id="description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value.slice(0, LIMITS.maxDescription))}
-                      placeholder="Lumen tracks your sleep with the phone on the nightstand, wakes you in a light sleep phase, and gives a simple morning score with one suggestion to improve tonight…"
-                      className="min-h-28"
-                    />
-                  </Field>
-                </div>
-              </Section>
-
-              {/* 2 — Set */}
-              <Section step={2} title="Screenshot set" hint="One story, one idea per screen. The first screen is the hero.">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {PLATFORM_IDS.map((id) => {
-                    const p = PLATFORMS[id];
-                    const active = platform === id;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setPlatform(id)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
-                          active
-                            ? "border-foreground bg-foreground/5"
-                            : "border-border hover:border-foreground/30",
-                        )}
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-8">
+              <div className="min-w-0 space-y-5">
+                <Section step={1} title="About the app" hint="Give the art director enough context to write the story and headlines.">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="App name" htmlFor="appName">
+                      <Input
+                        id="appName"
+                        value={appName}
+                        onChange={(e) => setAppName(e.target.value)}
+                        placeholder="Lumen"
+                        maxLength={60}
+                        className={CONTROL_CLASS}
+                      />
+                    </Field>
+                    <Field label="Tagline" htmlFor="tagline" optional>
+                      <Input
+                        id="tagline"
+                        value={tagline}
+                        onChange={(e) => setTagline(e.target.value)}
+                        placeholder="Sleep better, every night"
+                        maxLength={120}
+                        className={CONTROL_CLASS}
+                      />
+                    </Field>
+                    <Field label="Category" htmlFor="category">
+                      <select
+                        id="category"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}
+                        className={SELECT_CLASS}
                       >
-                        <span className="flex size-9 items-center justify-center rounded-lg bg-muted">
-                          {id === "ipad" ? (
-                            <Tablet className="size-4" />
-                          ) : (
-                            <HugeiconsIcon icon={SmartPhone01Icon} size={18} color="currentColor" strokeWidth={1.75} />
+                        {CATEGORIES.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Audience" htmlFor="audience" optional>
+                      <Input
+                        id="audience"
+                        value={audience}
+                        onChange={(e) => setAudience(e.target.value)}
+                        placeholder="Busy professionals who struggle to sleep"
+                        maxLength={200}
+                        className={CONTROL_CLASS}
+                      />
+                    </Field>
+                  </div>
+                  <div className="mt-5">
+                    <Field
+                      label="What does the app do?"
+                      htmlFor="description"
+                      hint={`${description.trim().length}/${LIMITS.maxDescription} · Focus on benefits, key screens, and what makes it different.`}
+                    >
+                      <Textarea
+                        id="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value.slice(0, LIMITS.maxDescription))}
+                        placeholder="Lumen tracks your sleep from the nightstand, wakes you during a light sleep phase, and turns every morning into one simple score and suggestion…"
+                        className={cn(TEXTAREA_CLASS, "min-h-30")}
+                      />
+                    </Field>
+                  </div>
+                </Section>
+
+                <Section step={2} title="Shape the set" hint="Choose the storefront, length, and the moments the sequence should tell.">
+                  <div className="grid gap-2.5 sm:grid-cols-3">
+                    {PLATFORM_IDS.map((id) => {
+                      const p = PLATFORMS[id];
+                      const active = platform === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setPlatform(id)}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl border p-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                            active
+                              ? "border-primary bg-primary/7"
+                              : "border-border bg-background/50 hover:border-primary/40 hover:bg-primary/3",
                           )}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-sm font-medium text-foreground">{p.short}</span>
-                          <span className="block truncate text-[11px] text-muted-foreground">{p.store}</span>
-                        </span>
-                        {active && <Check className="ml-auto size-4 shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-5 grid gap-5 sm:grid-cols-[auto_1fr]">
-                  <Field label="Number of screens" hint={`${LIMITS.minScreens}–${LIMITS.maxScreens}`}>
-                    <div className="inline-flex h-9 items-center rounded-md border border-input">
-                      <button
-                        type="button"
-                        onClick={() => setScreenCount((n) => Math.max(LIMITS.minScreens, n - 1))}
-                        className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-40"
-                        disabled={screenCount <= LIMITS.minScreens}
-                        aria-label="Fewer screens"
-                      >
-                        <Minus className="size-3.5" />
-                      </button>
-                      <span className="w-10 text-center text-sm font-semibold tabular-nums">{screenCount}</span>
-                      <button
-                        type="button"
-                        onClick={() => setScreenCount((n) => Math.min(LIMITS.maxScreens, n + 1))}
-                        className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-40"
-                        disabled={screenCount >= LIMITS.maxScreens}
-                        aria-label="More screens"
-                      >
-                        <Plus className="size-3.5" />
-                      </button>
-                    </div>
-                  </Field>
-
-                  <Field
-                    label="Key moments"
-                    htmlFor="features"
-                    optional
-                    hint={`One per line, in order — each becomes a screen. ${features.length}/${screenCount} filled; the art director writes the rest.`}
-                  >
-                    <Textarea
-                      id="features"
-                      value={featuresText}
-                      onChange={(e) => setFeaturesText(e.target.value)}
-                      placeholder={"Wake up in a light sleep phase\nA morning score you understand at a glance\nOne suggestion for tonight\nWorks with the phone on the nightstand"}
-                      className="min-h-28 font-mono text-xs leading-relaxed"
-                    />
-                  </Field>
-                </div>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  {QUALITY_IDS.map((id) => {
-                    const q = QUALITY_OPTIONS[id];
-                    const active = quality === id;
-                    const gen = PLATFORMS[platform].generate[id];
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setQuality(id)}
-                        className={cn(
-                          "rounded-xl border p-3 text-left transition-colors",
-                          active ? "border-foreground bg-foreground/5" : "border-border hover:border-foreground/30",
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-foreground">{q.label}</span>
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums">
-                            {CREDITS_PER_SCREEN[id]} cr / screen
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                          {q.description} Renders at {gen.width}×{gen.height}.
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </Section>
-
-              {/* 3 — Brand */}
-              <Section step={3} title="Brand" hint="The logo and colours anchor the palette so every screen looks like yours.">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <SingleImageDrop label="App logo" file={logo} onChange={setLogo} hint="PNG with transparency works best" />
-                  <SingleImageDrop
-                    label="Style reference"
-                    file={reference}
-                    onChange={setReference}
-                    hint="Optional — a screenshot set or brand visual you like"
-                  />
-                </div>
-
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <Field label="Tone" htmlFor="tone">
-                    <select
-                      id="tone"
-                      value={tone}
-                      onChange={(e) => setTone(e.target.value as Tone)}
-                      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm capitalize text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-                    >
-                      {TONES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field label="Brand colours" optional hint="Up to 4 hex colours. Leave empty to derive them from the logo.">
-                    <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-input px-2 py-1.5 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
-                      {brandColors.map((c) => (
-                        <span
-                          key={c}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 py-0.5 pl-1 pr-1.5 text-[11px] font-medium"
                         >
-                          <span className="size-3.5 rounded-full ring-1 ring-black/10" style={{ background: c }} />
-                          {c}
-                          <button
-                            type="button"
-                            onClick={() => setBrandColors((prev) => prev.filter((x) => x !== c))}
-                            className="text-muted-foreground hover:text-foreground"
-                            aria-label={`Remove ${c}`}
-                          >
-                            <X className="size-3" />
-                          </button>
-                        </span>
-                      ))}
-                      <input
-                        type="color"
-                        aria-label="Pick a colour"
-                        className="size-6 cursor-pointer rounded border-0 bg-transparent p-0"
-                        // Browsers fire `change` continuously while the picker is
-                        // open, so only commit the final value once it closes.
-                        onChange={(e) => {
-                          pickedColorRef.current = e.target.value;
-                        }}
-                        onBlur={() => {
-                          const hex = pickedColorRef.current ? normalizeHex(pickedColorRef.current) : null;
-                          pickedColorRef.current = null;
-                          if (hex) setBrandColors((prev) => (prev.includes(hex) || prev.length >= 4 ? prev : [...prev, hex]));
-                        }}
-                      />
-                      <input
-                        value={colorInput}
-                        onChange={(e) => setColorInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === ",") {
-                            e.preventDefault();
-                            addColor();
-                          }
-                        }}
-                        onBlur={addColor}
-                        placeholder={brandColors.length ? "" : "#6D28D9"}
-                        className="min-w-20 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                        maxLength={7}
-                        disabled={brandColors.length >= 4}
-                      />
-                    </div>
-                  </Field>
-                </div>
-              </Section>
+                          <span className={cn("flex size-9 items-center justify-center rounded-lg", active ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground")}>
+                            {id === "ipad" ? <Tablet className="size-4" /> : <HugeiconsIcon icon={SmartPhone01Icon} size={18} color="currentColor" strokeWidth={1.75} />}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[13px] font-semibold text-foreground">{p.short}</span>
+                            <span className="block truncate text-[11px] text-muted-foreground">{p.store}</span>
+                          </span>
+                          {active && <Check className="ml-auto size-4 shrink-0 text-primary" />}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-              {/* 4 — Screenshots */}
-              <Section
-                step={4}
-                title="Real app screenshots"
-                hint="Optional but strongly recommended — they are shown inside the device exactly as uploaded. Without them the model designs plausible UI from your description."
-              >
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragging(true);
-                  }}
-                  onDragLeave={() => setDragging(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragging(false);
-                    addScreenshots(e.dataTransfer.files);
-                  }}
-                  className={cn(
-                    "rounded-xl border border-dashed p-3 transition-colors",
-                    dragging ? "border-primary bg-primary/5" : "border-border",
-                  )}
-                >
-                  {screenshots.length === 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => screenshotInputRef.current?.click()}
-                      className="flex w-full flex-col items-center justify-center gap-2 py-8 text-center"
-                    >
-                      <span className="flex size-10 items-center justify-center rounded-full bg-muted">
-                        <Upload className="size-4 text-muted-foreground" />
-                      </span>
-                      <span className="text-sm font-medium text-foreground">Drop screenshots here</span>
-                      <span className="text-xs text-muted-foreground">
-                        Up to {LIMITS.maxScreenshots} · in the order you want them to appear
-                      </span>
-                    </button>
-                  ) : (
-                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
-                      {screenshots.map((f, i) => (
-                        <ScreenshotTile
-                          key={`${f.name}-${f.size}-${i}`}
-                          file={f}
-                          index={i}
-                          onRemove={() => setScreenshots((prev) => prev.filter((_, j) => j !== i))}
-                        />
-                      ))}
-                      {screenshots.length < LIMITS.maxScreenshots && (
+                  <div className="mt-5 grid gap-5 sm:grid-cols-[150px_1fr]">
+                    <Field label="Number of screens" hint={`${LIMITS.minScreens}–${LIMITS.maxScreens} screens`}>
+                      <div className="inline-flex h-10 w-full items-center justify-between rounded-xl border border-border bg-background/60">
                         <button
                           type="button"
-                          onClick={() => screenshotInputRef.current?.click()}
-                          className="flex aspect-[9/19] items-center justify-center rounded-xl border border-dashed border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-                          aria-label="Add screenshots"
+                          onClick={() => setScreenCount((n) => Math.max(LIMITS.minScreens, n - 1))}
+                          className="flex h-full w-10 items-center justify-center rounded-l-xl text-muted-foreground outline-none hover:bg-card hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+                          disabled={screenCount <= LIMITS.minScreens}
+                          aria-label="Fewer screens"
                         >
-                          <Plus className="size-4" />
+                          <Minus className="size-3.5" />
                         </button>
-                      )}
-                    </div>
-                  )}
-                  <input
-                    ref={screenshotInputRef}
-                    type="file"
-                    multiple
-                    accept="image/png,image/jpeg,image/webp"
-                    className="hidden"
-                    onChange={(e) => {
-                      addScreenshots(e.target.files);
-                      e.target.value = "";
-                    }}
-                  />
-                </div>
-              </Section>
+                        <span className="text-sm font-semibold tabular-nums">{screenCount}</span>
+                        <button
+                          type="button"
+                          onClick={() => setScreenCount((n) => Math.min(LIMITS.maxScreens, n + 1))}
+                          className="flex h-full w-10 items-center justify-center rounded-r-xl text-muted-foreground outline-none hover:bg-card hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+                          disabled={screenCount >= LIMITS.maxScreens}
+                          aria-label="More screens"
+                        >
+                          <Plus className="size-3.5" />
+                        </button>
+                      </div>
+                    </Field>
 
-              {/* 5 — Extra */}
-              <Section step={5} title="Anything else?" hint="Constraints the art director must honour.">
-                <Textarea
-                  value={extraInstructions}
-                  onChange={(e) => setExtraInstructions(e.target.value.slice(0, LIMITS.maxInstructions))}
-                  placeholder="e.g. Dark background only. Headlines in Spanish. Never show the paywall. Keep it calm — no neon."
-                  className="min-h-20"
-                />
-              </Section>
+                    <Field
+                      label="Key moments"
+                      htmlFor="features"
+                      optional
+                      hint={`One per line, in story order. ${features.length}/${screenCount} planned.`}
+                    >
+                      <Textarea
+                        id="features"
+                        value={featuresText}
+                        onChange={(e) => setFeaturesText(e.target.value)}
+                        placeholder={"Wake up in a light sleep phase\nUnderstand your morning score at a glance\nGet one useful suggestion for tonight"}
+                        className={cn(TEXTAREA_CLASS, "min-h-30 text-xs leading-relaxed")}
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+                    {QUALITY_IDS.map((id) => {
+                      const q = QUALITY_OPTIONS[id];
+                      const active = quality === id;
+                      const gen = PLATFORMS[platform].generate[id];
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setQuality(id)}
+                          className={cn(
+                            "rounded-xl border p-4 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                            active ? "border-primary bg-primary/7" : "border-border bg-background/50 hover:border-primary/40 hover:bg-primary/3",
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[13px] font-semibold text-foreground">{q.label}</span>
+                            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums", active ? "bg-primary/10 text-primary" : "bg-card text-muted-foreground")}>
+                              {CREDITS_PER_SCREEN[id]} cr / screen
+                            </span>
+                          </div>
+                          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                            {q.description} {gen.width}×{gen.height}.
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Section>
+
+                <Section step={3} title="Set the brand direction" hint="Add what you have. The palette can be inferred from your logo if you leave colours empty.">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <SingleImageDrop label="App logo" file={logo} onChange={setLogo} hint="A transparent PNG works best" />
+                    <SingleImageDrop label="Style reference" file={reference} onChange={setReference} hint="A campaign or brand visual you like" />
+                  </div>
+
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <Field label="Tone" htmlFor="tone">
+                      <select
+                        id="tone"
+                        value={tone}
+                        onChange={(e) => setTone(e.target.value as Tone)}
+                        className={cn(SELECT_CLASS, "capitalize")}
+                      >
+                        {TONES.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </Field>
+
+                    <Field label="Brand colours" optional hint="Add up to 4 hex colours.">
+                      <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-xl border border-border bg-background/60 px-2.5 py-1.5 transition-[color,box-shadow] focus-within:border-ring focus-within:bg-card focus-within:ring-[3px] focus-within:ring-ring/50">
+                        {brandColors.map((c) => (
+                          <span key={c} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card py-0.5 pl-1 pr-1.5 text-[11px] font-medium shadow-xs">
+                            <span className="size-3.5 rounded-full ring-1 ring-black/10" style={{ background: c }} />
+                            {c}
+                            <button type="button" onClick={() => setBrandColors((prev) => prev.filter((x) => x !== c))} className="rounded text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" aria-label={`Remove ${c}`}>
+                              <X className="size-3" />
+                            </button>
+                          </span>
+                        ))}
+                        <input
+                          type="color"
+                          aria-label="Pick a colour"
+                          className="size-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                          onChange={(e) => { pickedColorRef.current = e.target.value; }}
+                          onBlur={() => {
+                            const hex = pickedColorRef.current ? normalizeHex(pickedColorRef.current) : null;
+                            pickedColorRef.current = null;
+                            if (hex) setBrandColors((prev) => (prev.includes(hex) || prev.length >= 4 ? prev : [...prev, hex]));
+                          }}
+                        />
+                        <input
+                          value={colorInput}
+                          onChange={(e) => setColorInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === ",") {
+                              e.preventDefault();
+                              addColor();
+                            }
+                          }}
+                          onBlur={addColor}
+                          placeholder={brandColors.length ? "" : "#0284C7"}
+                          className="min-w-20 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                          maxLength={7}
+                          disabled={brandColors.length >= 4}
+                        />
+                      </div>
+                    </Field>
+                  </div>
+                </Section>
+
+                <Section step={4} title="Add your product screens" hint="Optional, but recommended. Upload them in the order you want the screenshot story to follow.">
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={(e) => { e.preventDefault(); setDragging(false); addScreenshots(e.dataTransfer.files); }}
+                    className={cn(
+                      "rounded-xl border border-dashed bg-background/60 p-3 transition-colors",
+                      dragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/40",
+                    )}
+                  >
+                    {screenshots.length === 0 ? (
+                      <button type="button" onClick={() => screenshotInputRef.current?.click()} className="flex w-full flex-col items-center justify-center gap-2 rounded-lg py-8 text-center outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        <span className="flex size-10 items-center justify-center rounded-xl bg-card text-primary shadow-xs ring-1 ring-border/60">
+                          <Upload className="size-4" />
+                        </span>
+                        <span className="text-[13px] font-semibold text-foreground">Drop product screenshots here</span>
+                        <span className="text-xs text-muted-foreground">PNG, JPG or WebP · up to {LIMITS.maxScreenshots} files</span>
+                      </button>
+                    ) : (
+                      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
+                        {screenshots.map((f, i) => (
+                          <ScreenshotTile key={`${f.name}-${f.size}-${i}`} file={f} index={i} onRemove={() => setScreenshots((prev) => prev.filter((_, j) => j !== i))} />
+                        ))}
+                        {screenshots.length < LIMITS.maxScreenshots && (
+                          <button type="button" onClick={() => screenshotInputRef.current?.click()} className="flex aspect-[9/19] items-center justify-center rounded-xl border border-dashed border-border bg-card text-muted-foreground outline-none hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring" aria-label="Add screenshots">
+                            <Plus className="size-4" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    <input
+                      ref={screenshotInputRef}
+                      type="file"
+                      multiple
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => { addScreenshots(e.target.files); e.target.value = ""; }}
+                    />
+                  </div>
+                </Section>
+
+                <Section step={5} title="Add final direction" hint="Call out anything the art director must include or avoid.">
+                  <Textarea
+                    value={extraInstructions}
+                    onChange={(e) => setExtraInstructions(e.target.value.slice(0, LIMITS.maxInstructions))}
+                    placeholder="Dark backgrounds only. Headlines in Spanish. Do not show the paywall. Keep the mood calm and restrained."
+                    className={cn(TEXTAREA_CLASS, "min-h-24")}
+                  />
+                </Section>
+              </div>
+
+              <SetPreview
+                appName={appName}
+                tagline={tagline}
+                platform={platform}
+                quality={quality}
+                screenCount={screenCount}
+                brandColors={brandColors}
+                logo={logo}
+                screenshots={screenshots}
+                credits={credits}
+                cost={cost}
+                submitting={submitting}
+                validationError={validationError}
+                hasEnoughCredits={hasEnoughCredits}
+                onSubmit={handleSubmit}
+              />
             </div>
           </div>
         </main>
-
-        {/* Sticky action bar */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center px-6 pb-6">
-          <div className="pointer-events-auto flex w-full max-w-3xl items-center justify-between gap-4 rounded-2xl border border-border bg-card/95 px-4 py-3 shadow-xl backdrop-blur">
-            <div className="min-w-0 text-xs text-muted-foreground">
-              <p className="text-sm font-semibold text-foreground">
-                {screenCount} screens · {cost} credits
-              </p>
-              <p className="truncate">
-                {credits != null ? `${Math.floor(credits)} credits available` : "Sign in to see your balance"}
-                {" · "}
-                {PLATFORMS[platform].label} · {QUALITY_OPTIONS[quality].label}
-              </p>
-            </div>
-            <Button
-              type="button"
-              size="lg"
-              className="rounded-full px-5"
-              disabled={submitting || !!validationError || !hasEnoughCredits}
-              onClick={handleSubmit}
-              title={validationError ?? undefined}
-            >
-              {submitting ? <Spinner className="size-4" /> : <Sparkles className="size-4" />}
-              {submitting ? "Starting…" : "Generate screenshots"}
-            </Button>
-          </div>
-        </div>
       </div>
     </div>
   );
