@@ -91,9 +91,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+    <section className="overflow-hidden rounded-2xl border border-border/50 bg-card/20 shadow-md">
       <div className="flex items-start gap-3 border-b border-border/60 bg-muted/30 px-5 py-4 sm:px-6">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
           {step}
         </span>
         <div className="min-w-0">
@@ -121,9 +121,9 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={htmlFor} className="text-[13px] font-medium text-foreground">
+      <Label htmlFor={htmlFor} className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
         {label}
-        {optional && <span className="ml-1 font-normal text-muted-foreground">(optional)</span>}
+        {optional && <span className="ml-1 font-normal text-xs text-muted-foreground">(optional)</span>}
       </Label>
       {children}
       {hint && <p className="text-[11px] leading-relaxed text-muted-foreground">{hint}</p>}
@@ -295,7 +295,7 @@ function SetPreview({
           </span>
         </div>
 
-        <div className="p-3">
+        {/* <div className="p-3">
           <div className="relative h-88 overflow-hidden rounded-xl bg-neutral-950 text-white">
             <div
               className="absolute left-0 top-0 h-1 w-full"
@@ -349,8 +349,8 @@ function SetPreview({
               ))}
             </div>
           </div>
-        </div>
-
+        </div> */}
+<img src="/tools/appstore.png" className="rounded-xl p-2" alt="" />
         <div className="grid grid-cols-3 border-y border-border/60 bg-muted/20">
           <div className="px-4 py-3">
             <p className="text-[11px] text-muted-foreground">Format</p>
@@ -550,28 +550,28 @@ export default function AppStoreScreensPage() {
               href="/mini-tools"
               className="mb-5 inline-flex items-center gap-1.5 rounded-lg text-[13px] font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <HugeiconsIcon icon={ArrowLeft01Icon} size={14} color="currentColor" strokeWidth={2} />
+              <HugeiconsIcon icon={ArrowLeft01Icon} size={14} color="currentColor" strokeWidth={2} className="my-auto"/>
               All tools
             </Link>
 
             <header className="mb-8 flex flex-col gap-5 border-b border-border/60 pb-7 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
-                <div className="mb-3 flex items-center gap-3">
+                {/* <div className="mb-3 flex items-center gap-3">
                   <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <HugeiconsIcon icon={SmartPhone01Icon} size={20} color="currentColor" strokeWidth={1.75} />
                   </span>
                   <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-primary">
                     Creative asset generator
                   </span>
-                </div>
+                </div> */}
                 <h1 className="text-3xl font-semibold tracking-[-0.035em] text-foreground sm:text-[34px]">
                   App Store Screens
                 </h1>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
                   Build a polished, consistent screenshot story from your real product screens and brand direction.
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground border p-2 rounded-xl">
                 <span className="size-1.5 rounded-full bg-primary" />
                 Store-ready sizing included
               </div>

@@ -32,11 +32,11 @@ const Faq = () => {
   return (
     <section>
       <Header />
-      <div className={`bg-white dark:bg-black ${inter.className}`}>
-        <div className="max-w-6xl mx-auto py-16 border border-gray-900">
+      <div className={`bg-white dark:bg-[#141414] ${inter.className}`}>
+        <div className="max-w-6xl mx-auto py-16 border border-gray-100 dark:border-gray-900 rounded-2xl">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             {/* Title */}
-            <div className="lg:col-span-4 p-6 border border-gray-900">
+            <div className="lg:col-span-4 p-6 ">
               <h1 className="text-3xl font-medium text-black dark:text-white">
                 Frequently Asked
                 <br />
