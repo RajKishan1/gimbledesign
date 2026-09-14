@@ -8,7 +8,9 @@ import Canvas from "@/components/canvas";
 import { CanvasProvider } from "@/context/canvas-context";
 import { PrototypeProvider } from "@/context/prototype-context";
 import DesignSidebar from "@/components/canvas/design-sidebar";
-import GenerateVariationsPanel, { type VariationsConfig } from "@/components/canvas/generate-variations-panel";
+import GenerateVariationsPanel, {
+  type VariationsConfig,
+} from "@/components/canvas/generate-variations-panel";
 import { useGenerateDesignById } from "@/features/use-project-id";
 import { useGenerateVariations } from "@/features/use-frame";
 import { useCanvas } from "@/context/canvas-context";
@@ -16,6 +18,7 @@ import { PENDING_SETUP_KEY } from "@/features/use-project";
 import { getGenerationModel } from "@/constant/models";
 import { toast } from "sonner";
 import AppStoreSidebar from "@/components/app-store/app-store-sidebar";
+import Image from "next/image";
 
 const Page = () => {
   const params = useParams();
@@ -28,7 +31,17 @@ const Page = () => {
   const hasInitialData = project?.frames.length > 0;
 
   if (!isPending && !project) {
-    return <div>Project not found</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <Image
+          src="/projectnotfound.png"
+          alt="404 Not Found"
+          width={400}
+          height={400}
+          className="mx-auto mt-20"
+        />
+      </div>
+    );
   }
 
   const isInspirations = project?.deviceType === "inspirations";
@@ -193,7 +206,12 @@ const PageContent = ({
     run();
   }, [projectId, generateDesign]);
 
-  const handleGenerate = async (promptText: string, model?: string, imageBase64?: string, mimeType?: string) => {
+  const handleGenerate = async (
+    promptText: string,
+    model?: string,
+    imageBase64?: string,
+    mimeType?: string,
+  ) => {
     let finalPrompt = promptText;
     if (imageBase64 && mimeType) {
       setSetupStatus("reading");
@@ -239,7 +257,12 @@ const PageContent = ({
       setVariationsPanelOpen(false);
       setVariationsFrameId(null);
     },
-    [variationsFrameId, variationsMutation, setVariationsPanelOpen, setVariationsFrameId],
+    [
+      variationsFrameId,
+      variationsMutation,
+      setVariationsPanelOpen,
+      setVariationsFrameId,
+    ],
   );
 
   return (

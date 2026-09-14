@@ -1,11 +1,19 @@
 "use client";
 
 import React, { useState, memo } from "react";
+import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Edit01Icon, CreditCardIcon, ArrowLeft01Icon, Upload01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import {
+  ArrowLeft01Icon,
+  Cancel01Icon,
+  Edit01Icon,
+  FolderOpenIcon,
+  SparklesIcon,
+  Upload01Icon,
+} from "@hugeicons/core-free-icons";
 import Header from "../_common/header";
 import { useUpdateProfile } from "@/features/use-profile";
 import { useProfile } from "@/context/profile-provider";
@@ -146,10 +154,10 @@ const ProfilePage = () => {
 
   if (isLoadingProfile) {
     return (
-      <div className="w-full min-h-screen">
+      <div className="min-h-screen w-full bg-background">
         <Header />
-        <div className="flex items-center justify-center py-20">
-          <Spinner className="size-10" />
+        <div className="flex min-h-[calc(100vh-73px)] items-center justify-center">
+          <Spinner className="size-8 text-muted-foreground" />
         </div>
       </div>
     );
@@ -159,299 +167,396 @@ const ProfilePage = () => {
   const displayEmail = profile?.email || user?.email || "";
   const displayProfilePicture = profile?.profilePicture || user?.image || "";
   const displayHeaderImage = profile?.headerImage || "";
+  const projectCount = projects?.length ?? 0;
+  const roleLabel = profile?.role === "admin" ? "Administrator" : "Creator";
 
   return (
-    <div className="w-full min-h-screen bg-background">
+    <div className="min-h-screen w-full bg-background">
       <Header />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2" />
-          Back
-        </Button>
-
-        {/* Header Image Section */}
-        <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden bg-gradient-to-r from-primary/20 to-primary/5 mb-4">
-          {displayHeaderImage ? (
-            <img
-              src={displayHeaderImage}
-              alt="Header"
-              className="w-full h-full object-cover"
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+        <div className="mb-8 flex flex-col-reverse gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-[-0.035em] text-foreground sm:text-4xl">
+              Account settings
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+              Manage your profile, creative capacity, and subscription.
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="w-fit rounded-full px-3 text-muted-foreground hover:text-foreground"
+          >
+            <HugeiconsIcon
+              icon={ArrowLeft01Icon}
+              size={16}
+              color="currentColor"
+              strokeWidth={1.75}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <p className="text-muted-foreground">No header image</p>
-            </div>
-          )}
+            Back
+          </Button>
         </div>
 
-        {/* Profile Info Section */}
-        <div className="relative -mt-16 md:-mt-20 px-4 md:px-8">
-          <div className="flex flex-col md:flex-row md:items-end gap-4 pb-6">
-            <div className="relative">
-              <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background">
-                <AvatarImage src={displayProfilePicture} alt={displayName} />
-                <AvatarFallback className="text-2xl">
-                  {displayName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+        <section className="overflow-hidden rounded-[28px] border border-border bg-card shadow-[0_18px_55px_-42px_rgba(15,23,42,0.55)]">
+          <div>
+            <div className="relative h-44 overflow-hidden bg-[#06263b] sm:h-56 lg:h-64">
+              {displayHeaderImage ? (
+                <>
+                  <Image
+                    src={displayHeaderImage}
+                    alt="Profile cover"
+                    fill
+                    sizes="(min-width: 1280px) 1152px, 100vw"
+                    className="object-cover"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/5" />
+                </>
+              ) : (
+                <div className="absolute inset-0" aria-hidden>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(56,189,248,0.5),transparent_30%),linear-gradient(145deg,#061724_0%,#0b3854_52%,#087ca7_100%)]" />
+                  <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:32px_32px]" />
+                  <div className="absolute -right-12 top-10 size-48 rounded-full border border-white/20" />
+                  <div className="absolute -right-3 top-[84px] size-32 rounded-full border border-white/25" />
+                  <svg
+                    viewBox="0 0 280 160"
+                    className="absolute bottom-5 left-5 w-[70%] text-white/85"
+                  >
+                    <path
+                      d="M8 128 C64 70, 112 145, 164 72 S244 30, 274 48"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <circle cx="8" cy="128" r="4" fill="currentColor" />
+                    <circle cx="164" cy="72" r="4" fill="currentColor" />
+                    <circle cx="274" cy="48" r="4" fill="currentColor" />
+                  </svg>
+                </div>
+              )}
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-semibold mb-1">
-                  {displayName}
-                </h1>
-                <p className="text-muted-foreground">{displayEmail}</p>
-              </div>
+            <div className="min-w-0 px-5 pb-7 sm:px-8 sm:pb-8">
+              <div className="flex items-start justify-between gap-5">
+                <Avatar className="-mt-12 size-24 border-4 border-card bg-card shadow-[0_0_0_1px_rgba(0,0,0,0.08)] sm:-mt-16 sm:size-32 sm:border-[5px] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
+                  <AvatarImage src={displayProfilePicture} alt={displayName} />
+                  <AvatarFallback className="bg-neutral-900 text-3xl font-semibold text-white sm:text-4xl dark:bg-white dark:text-neutral-900">
+                    {displayName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
 
-              <Dialog
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <HugeiconsIcon icon={Edit01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2" />
-                    Edit Profile
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>Edit Profile</DialogTitle>
-                    <DialogDescription>
-                      Update your profile information
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={editForm.name}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, name: e.target.value })
-                        }
-                        placeholder="Your name"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, email: e.target.value })
-                        }
-                        placeholder="your.email@example.com"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="profilePicture">Profile Picture</Label>
-                      <div className="flex flex-col gap-2">
-                        {profilePicPreview && (
-                          <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-border">
-                            <img
-                              src={profilePicPreview}
-                              alt="Profile preview"
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setProfilePicPreview(null);
-                                setEditForm({
-                                  ...editForm,
-                                  profilePicture: "",
-                                });
-                              }}
-                              className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
-                            >
-                              <HugeiconsIcon icon={Cancel01Icon} size={12} color="currentColor" strokeWidth={1.75} />
-                            </button>
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <input
-                            id="profilePicture-upload"
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) =>
-                              handleFileChange(e, "profilePicture")
-                            }
-                            disabled={uploadingProfilePic}
-                          />
-                          <label
-                            htmlFor="profilePicture-upload"
-                            className="flex-1"
-                          >
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="w-full cursor-pointer"
-                              disabled={uploadingProfilePic}
-                              asChild
-                            >
-                              <span>
-                                {uploadingProfilePic ? (
-                                  <>
-                                    <Spinner className="size-4 mr-2" />
-                                    Uploading...
-                                  </>
-                                ) : (
-                                  <>
-                                    <HugeiconsIcon icon={Upload01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2" />
-                                    Upload Image
-                                  </>
-                                )}
-                              </span>
-                            </Button>
-                          </label>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Or enter URL:
-                        </div>
-                        <Input
-                          id="profilePicture-url"
-                          value={editForm.profilePicture}
-                          onChange={(e) => {
-                            setEditForm({
-                              ...editForm,
-                              profilePicture: e.target.value,
-                            });
-                            setProfilePicPreview(e.target.value || null);
-                          }}
-                          placeholder="https://example.com/image.jpg"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="headerImage">Header Image</Label>
-                      <div className="flex flex-col gap-2">
-                        {headerPreview && (
-                          <div className="relative w-full h-32 rounded-lg overflow-hidden border-2 border-border">
-                            <img
-                              src={headerPreview}
-                              alt="Header preview"
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setHeaderPreview(null);
-                                setEditForm({ ...editForm, headerImage: "" });
-                              }}
-                              className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
-                            >
-                              <HugeiconsIcon icon={Cancel01Icon} size={16} color="currentColor" strokeWidth={1.75} />
-                            </button>
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <input
-                            id="headerImage-upload"
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleFileChange(e, "headerImage")}
-                            disabled={uploadingHeader}
-                          />
-                          <label
-                            htmlFor="headerImage-upload"
-                            className="flex-1"
-                          >
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="w-full cursor-pointer"
-                              disabled={uploadingHeader}
-                              asChild
-                            >
-                              <span>
-                                {uploadingHeader ? (
-                                  <>
-                                    <Spinner className="size-4 mr-2" />
-                                    Uploading...
-                                  </>
-                                ) : (
-                                  <>
-                                    <HugeiconsIcon icon={Upload01Icon} size={16} color="currentColor" strokeWidth={1.75} className="mr-2" />
-                                    Upload Image
-                                  </>
-                                )}
-                              </span>
-                            </Button>
-                          </label>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Or enter URL:
-                        </div>
-                        <Input
-                          id="headerImage-url"
-                          value={editForm.headerImage}
-                          onChange={(e) => {
-                            setEditForm({
-                              ...editForm,
-                              headerImage: e.target.value,
-                            });
-                            setHeaderPreview(e.target.value || null);
-                          }}
-                          placeholder="https://example.com/header.jpg"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <DialogFooter>
+                <Dialog
+                  open={isEditDialogOpen}
+                  onOpenChange={setIsEditDialogOpen}
+                >
+                  <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      onClick={() => setIsEditDialogOpen(false)}
+                      className="mt-4 rounded-full bg-card px-4 shadow-none sm:mt-5"
                     >
-                      Cancel
+                      <HugeiconsIcon
+                        icon={Edit01Icon}
+                        size={16}
+                        color="currentColor"
+                        strokeWidth={1.75}
+                      />
+                      Edit profile
                     </Button>
-                    <Button onClick={handleSave} disabled={isUpdating}>
-                      {isUpdating ? (
-                        <>
-                          <Spinner className="size-4 mr-2" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save Changes"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent className="max-h-[90vh] gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[640px]">
+                    <DialogHeader className="border-b border-border px-6 py-5 pr-14">
+                      <DialogTitle className="text-xl">Edit profile</DialogTitle>
+                      <DialogDescription>
+                        Update the details and artwork shown on your account.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-7 overflow-y-auto px-6 py-6">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-2">
+                          <Label htmlFor="name">Name</Label>
+                          <Input
+                            id="name"
+                            value={editForm.name}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, name: e.target.value })
+                            }
+                            placeholder="Your name"
+                            className="h-10 rounded-xl"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={editForm.email}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, email: e.target.value })
+                            }
+                            placeholder="you@example.com"
+                            className="h-10 rounded-xl"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3">
+                        <div>
+                          <Label>Profile picture</Label>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Square images work best.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4 rounded-2xl border border-border bg-muted/35 p-4">
+                          <div className="relative size-16 shrink-0 overflow-hidden rounded-full border border-border bg-card">
+                            {profilePicPreview ? (
+                              <Image
+                                src={profilePicPreview}
+                                alt="Profile preview"
+                                fill
+                                sizes="64px"
+                                className="object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-muted-foreground">
+                                {displayName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <input
+                              id="profilePicture-upload"
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={(e) =>
+                                handleFileChange(e, "profilePicture")
+                              }
+                              disabled={uploadingProfilePic}
+                            />
+                            <div className="flex flex-wrap gap-2">
+                              <label
+                                htmlFor="profilePicture-upload"
+                                aria-disabled={uploadingProfilePic}
+                                className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-medium transition-colors hover:bg-accent aria-disabled:pointer-events-none aria-disabled:opacity-50"
+                              >
+                                {uploadingProfilePic ? (
+                                  <Spinner className="size-4" />
+                                ) : (
+                                  <HugeiconsIcon
+                                    icon={Upload01Icon}
+                                    size={16}
+                                    color="currentColor"
+                                    strokeWidth={1.75}
+                                  />
+                                )}
+                                {uploadingProfilePic ? "Uploading…" : "Upload image"}
+                              </label>
+                              {profilePicPreview && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="h-9 rounded-xl text-muted-foreground"
+                                  onClick={() => {
+                                    setProfilePicPreview(null);
+                                    setEditForm({
+                                      ...editForm,
+                                      profilePicture: "",
+                                    });
+                                  }}
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                            <Input
+                              id="profilePicture-url"
+                              value={editForm.profilePicture}
+                              onChange={(e) => {
+                                setEditForm({
+                                  ...editForm,
+                                  profilePicture: e.target.value,
+                                });
+                                setProfilePicPreview(e.target.value || null);
+                              }}
+                              placeholder="Or paste an image URL"
+                              aria-label="Profile picture URL"
+                              className="h-9 rounded-xl bg-card text-xs"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3">
+                        <div>
+                          <Label>Cover image</Label>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Use a wide image to personalize your profile panel.
+                          </p>
+                        </div>
+                        <div className="overflow-hidden rounded-2xl border border-border bg-muted/35">
+                          <div className="relative h-32 bg-[#0b3854]">
+                            {headerPreview ? (
+                              <Image
+                                src={headerPreview}
+                                alt="Cover preview"
+                                fill
+                                sizes="(min-width: 640px) 590px, 100vw"
+                                className="object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.55),transparent_35%),linear-gradient(145deg,#061724,#087ca7)]" />
+                            )}
+                            {headerPreview && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setHeaderPreview(null);
+                                  setEditForm({ ...editForm, headerImage: "" });
+                                }}
+                                aria-label="Remove cover image"
+                                className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur transition-colors hover:bg-black/70"
+                              >
+                                <HugeiconsIcon
+                                  icon={Cancel01Icon}
+                                  size={15}
+                                  color="currentColor"
+                                  strokeWidth={1.75}
+                                />
+                              </button>
+                            )}
+                          </div>
+                          <div className="space-y-2 p-4">
+                            <input
+                              id="headerImage-upload"
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={(e) =>
+                                handleFileChange(e, "headerImage")
+                              }
+                              disabled={uploadingHeader}
+                            />
+                            <label
+                              htmlFor="headerImage-upload"
+                              aria-disabled={uploadingHeader}
+                              className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-medium transition-colors hover:bg-accent aria-disabled:pointer-events-none aria-disabled:opacity-50"
+                            >
+                              {uploadingHeader ? (
+                                <Spinner className="size-4" />
+                              ) : (
+                                <HugeiconsIcon
+                                  icon={Upload01Icon}
+                                  size={16}
+                                  color="currentColor"
+                                  strokeWidth={1.75}
+                                />
+                              )}
+                              {uploadingHeader ? "Uploading…" : "Upload cover"}
+                            </label>
+                            <Input
+                              id="headerImage-url"
+                              value={editForm.headerImage}
+                              onChange={(e) => {
+                                setEditForm({
+                                  ...editForm,
+                                  headerImage: e.target.value,
+                                });
+                                setHeaderPreview(e.target.value || null);
+                              }}
+                              placeholder="Or paste an image URL"
+                              aria-label="Cover image URL"
+                              className="h-9 rounded-xl bg-card text-xs"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <DialogFooter className="border-t border-border bg-muted/25 px-6 py-4">
+                      <Button
+                        variant="outline"
+                        className="rounded-xl"
+                        onClick={() => setIsEditDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSave}
+                        disabled={isUpdating}
+                        className="rounded-xl bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+                      >
+                        {isUpdating && <Spinner className="size-4" />}
+                        {isUpdating ? "Saving…" : "Save changes"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              <div className="mt-3 min-w-0">
+                <h2 className="truncate text-3xl font-semibold tracking-[-0.035em] text-foreground sm:text-[34px]">
+                  {displayName}
+                </h2>
+                <p className="mt-2 truncate text-sm text-muted-foreground">
+                  {displayEmail}
+                </p>
+                <div className="mt-2 flex items-center gap-2 text-sm font-medium text-sky-700 dark:text-sky-400">
+                  <span className="size-1.5 rounded-full bg-sky-500" />
+                  {roleLabel} account
+                </div>
+              </div>
+
+              <div className="mt-6 grid max-w-7xl grid-cols-3 border-t border-border pt-6">
+                <AccountMetric
+                  icon={FolderOpenIcon}
+                  value={isLoadingProjects ? "—" : projectCount.toLocaleString()}
+                  label={projectCount === 1 ? "Project" : "Projects"}
+                />
+                <AccountMetric
+                  icon={SparklesIcon}
+                  value={Math.max(0, remainingCredits).toLocaleString(undefined, {
+                    maximumFractionDigits: 1,
+                  })}
+                  label="Credits left"
+                  bordered
+                />
+                <AccountMetric
+                  icon={SparklesIcon}
+                  value={usedCredits.toLocaleString(undefined, {
+                    maximumFractionDigits: 1,
+                  })}
+                  label="Credits used"
+                  bordered
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         <BillingSection />
 
-        <div className="mt-8 p-6 rounded-lg border bg-card">
-          <div className="flex items-center gap-2 mb-4">
-            <HugeiconsIcon icon={CreditCardIcon} size={20} color="currentColor" strokeWidth={1.75} className="text-primary" />
-            <h2 className="text-xl font-semibold">Credits</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm text-muted-foreground mb-1">Used</p>
-              <p className="text-2xl font-semibold text-primary">
-                {usedCredits.toFixed(1)}
+        <section className="mt-12 border-t border-border pt-10">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-[-0.025em]">
+                All Projects
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your complete design workspace.
               </p>
             </div>
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm text-muted-foreground mb-1">Remaining</p>
-              <p className="text-2xl font-semibold text-primary">
-                {remainingCredits.toFixed(1)}
-              </p>
-            </div>
+            {!isLoadingProjects && projectCount > 0 && (
+              <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                {projectCount} {projectCount === 1 ? "project" : "projects"}
+              </span>
+            )}
           </div>
-        </div>
-
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">All Projects</h2>
           {isLoadingProjects ? (
             <div className="flex items-center justify-center py-10">
               <Spinner className="size-10" />
@@ -467,11 +572,46 @@ const ProfilePage = () => {
               <p>No projects yet. Start creating your first project!</p>
             </div>
           )}
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 };
+
+const AccountMetric = ({
+  icon,
+  value,
+  label,
+  bordered = false,
+}: {
+  icon: typeof FolderOpenIcon;
+  value: string;
+  label: string;
+  bordered?: boolean;
+}) => (
+  <div
+    className={
+      bordered
+        ? "border-l border-border pl-3 sm:pl-6"
+        : "pr-2 sm:pr-6"
+    }
+  >
+    <div className="flex items-center gap-1 text-muted-foreground sm:gap-1.5">
+      <HugeiconsIcon
+        icon={icon}
+        size={14}
+        color="currentColor"
+        strokeWidth={1.75}
+      />
+      <span className="whitespace-nowrap text-[10px] font-medium sm:text-xs">
+        {label}
+      </span>
+    </div>
+    <p className="mt-1.5 text-lg font-semibold tracking-tight text-foreground tabular-nums sm:text-xl">
+      {value}
+    </p>
+  </div>
+);
 
 const ProjectCard = memo(({ project }: { project: ProjectType }) => {
   const router = useRouter();

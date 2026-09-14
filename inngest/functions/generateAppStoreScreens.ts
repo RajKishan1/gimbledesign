@@ -3,7 +3,7 @@ import { NonRetriableError } from "inngest";
 import { inngest } from "../client";
 import prisma from "@/lib/prisma";
 import { llm } from "@/lib/llm";
-import { DEFAULT_MODEL } from "@/constant/models";
+import { VISION_MODEL } from "@/constant/models";
 import { refundCredits } from "@/lib/credits";
 import {
   ART_DIRECTOR_SYSTEM_PROMPT,
@@ -26,6 +26,7 @@ import type { Prisma } from "@/lib/generated/prisma";
 
 /** How many screens render concurrently after the hero exists. */
 const RENDER_BATCH = 3;
+const STALE_SET_AFTER_MS = 20 * 60 * 1000;
 
 type SetEvent = { userId: string; projectId: string; setId: string };
 
@@ -116,7 +117,10 @@ export const generateAppStoreScreens = inngest.createFunction(
         if (withImages) for (const a of ordered) content.push({ type: "image", image: a.src });
 
         const { text } = await generateText({
-          model: llm.chat(DEFAULT_MODEL),
+          // The art director receives uploaded screenshots and references.
+          // Use the multimodal model because Anthropic models routed through
+          // Runware's OpenAI-compatible endpoint reject `image_url` parts.
+          model: llm.chat(VISION_MODEL),
           system: ART_DIRECTOR_SYSTEM_PROMPT,
           messages: [{ role: "user", content }],
           maxOutputTokens: 6000,
@@ -213,6 +217,54 @@ export const generateAppStoreScreens = inngest.createFunction(
   },
 );
 
+/**
+ * Replays active sets that stopped making progress. The main renderer is
+ * idempotent for completed screens, so this only resumes unfinished work.
+ * This also recovers jobs created while a deployment was temporarily offline.
+ */
+export const recoverStalledAppStoreSets = inngest.createFunction(
+  {
+    id: "app-store-recover-stalled-sets",
+    retries: 2,
+    concurrency: [{ limit: 1 }],
+  },
+  { cron: "0 * * * *" },
+  async ({ step }) => {
+    const stalled = await step.run("find-stalled-sets", async () => {
+      const candidates = await prisma.appStoreSet.findMany({
+        where: { status: { in: ["planning", "generating"] } },
+        orderBy: { updatedAt: "asc" },
+        take: 50,
+        select: {
+          id: true,
+          projectId: true,
+          userId: true,
+          updatedAt: true,
+          screens: { select: { updatedAt: true } },
+        },
+      });
+      const cutoff = Date.now() - STALE_SET_AFTER_MS;
+      return candidates
+        .filter((set) => {
+          const latestActivity = Math.max(
+            set.updatedAt.getTime(),
+            ...set.screens.map((screen) => screen.updatedAt.getTime()),
+          );
+          return latestActivity < cutoff;
+        })
+        .map(({ id: setId, projectId, userId }) => ({ setId, projectId, userId }));
+    });
+
+    if (stalled.length === 0) return { requeued: 0 };
+
+    await step.sendEvent(
+      "requeue-stalled-sets",
+      stalled.map((data) => ({ name: "app-store/generate.set", data })),
+    );
+    return { requeued: stalled.length };
+  },
+);
+
 type RegenEvent = SetEvent & { screenId: string; adjustments?: string | null };
 
 /** Re-render a single screen, keeping it matched to the rest of the set. */
@@ -244,6 +296,7 @@ export const regenerateAppStoreScreen = inngest.createFunction(
       return renderScreen(ctx, screen.index, {
         masterScreenIndex: master?.index ?? null,
         adjustments: adjustments ?? null,
+        force: true,
       });
     });
 

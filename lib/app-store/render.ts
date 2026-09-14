@@ -99,12 +99,18 @@ async function canvasImageToReference(canvasImageId: string): Promise<ReferenceI
 export async function renderScreen(
   ctx: RenderContext,
   index: number,
-  opts: { masterScreenIndex: number | null; adjustments?: string | null },
+  opts: { masterScreenIndex: number | null; adjustments?: string | null; force?: boolean },
 ): Promise<RenderResult> {
   const screen = await prisma.appStoreScreen.findFirst({
     where: { setId: ctx.setId, index },
   });
   if (!screen) throw new Error(`Screen ${index} not found for set ${ctx.setId}`);
+
+  // A stalled set can be safely replayed by the recovery job. Preserve screens
+  // that were already persisted instead of paying to render them twice.
+  if (!opts.force && screen.status === "done" && screen.canvasImageId) {
+    return { ok: true, screenId: screen.id, canvasImageId: screen.canvasImageId };
+  }
 
   await prisma.appStoreScreen.update({
     where: { id: screen.id },

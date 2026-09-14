@@ -53,7 +53,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 const DEFAULT_CARDS: FloatingCardData[] = [
   {
     // Position 1 — outer-left
-    src: "/newmodel/card-meadow.webp",
+    src: "/newmodel/asset1.png",
     alt: "Summer meadow under a blue sky",
     rotate: -11,
     offsetY: 28,
@@ -62,7 +62,7 @@ const DEFAULT_CARDS: FloatingCardData[] = [
   },
   {
     // Position 2 — inner-left
-    src: "/newmodel/card-bougainvillea.webp",
+    src: "/newmodel/asset2.png",
     alt: "Pink bougainvillea against a blue sky",
     rotate: -3,
     offsetY: 12,
@@ -71,7 +71,7 @@ const DEFAULT_CARDS: FloatingCardData[] = [
   },
   {
     // Position 3 — inner-right
-    src: "/newmodel/card-twilight.webp",
+    src: "/newmodel/asset3.png",
     alt: "Starry twilight sky over a dark meadow",
     rotate: 4,
     offsetY: 14,
@@ -80,7 +80,7 @@ const DEFAULT_CARDS: FloatingCardData[] = [
   },
   {
     // Position 4 — outer-right
-    src: "/newmodel/card-blossom.webp",
+    src: "/newmodel/asset4.png",
     alt: "Cherry blossoms at golden hour",
     rotate: 11,
     offsetY: 26,

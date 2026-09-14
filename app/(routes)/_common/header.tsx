@@ -29,10 +29,10 @@ const Header = () => {
   const displayName = profile?.name || user?.name || "";
   return (
     <div className="sticky top-0 right-0 left-0 z-30 border-b border-border bg-background">
-      <header className="px-6 py-4 bg-background">
-        <div className="w-full max-w-6xl mx-auto flex items-center justify-between gap-6">
+      <header className="bg-background px-4 py-4 sm:px-6">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 sm:gap-5">
           <Logo />
-          <nav className="flex gap-8 items-center text-sm font-medium">
+          <nav className="hidden items-center gap-6 text-sm font-medium md:flex lg:gap-8">
             <Link
               href={user ? "/dashboard" : "/login"}
               className="text-muted-foreground hover:text-foreground transition-colors"
@@ -52,12 +52,12 @@ const Header = () => {
               Pricing
             </Link>
           </nav>
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-2 sm:gap-3">
             <Button
-              className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-4"
+              className="h-9 rounded-xl bg-primary px-3 font-semibold text-primary-foreground hover:bg-primary/90 sm:px-4"
               asChild
             >
-              <Link href="/Pricing">UPGRADE</Link>
+              <Link href="/Pricing">Upgrade</Link>
             </Button>
             <Button
               variant="outline"
@@ -125,7 +125,10 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+              <Button
+                className="hidden rounded-full bg-primary text-primary-foreground hover:bg-primary/90 sm:inline-flex"
+                asChild
+              >
                 <Link href="/login">Get Started</Link>
               </Button>
             )}

@@ -9,6 +9,7 @@ import { generateFrameVariations } from "@/inngest/functions/generateFrameVariat
 import { generateInspirationVariations } from "@/inngest/functions/generateInspirationVariations";
 import {
   generateAppStoreScreens,
+  recoverStalledAppStoreSets,
   regenerateAppStoreScreen,
 } from "@/inngest/functions/generateAppStoreScreens";
 
@@ -31,6 +32,7 @@ export const { GET, POST, PUT } = serve({
     generateFrameVariations,
     generateInspirationVariations,
     generateAppStoreScreens,
+    recoverStalledAppStoreSets,
     regenerateAppStoreScreen,
   ],
   // Optional: Explicitly set signing key (if not using INNGEST_SIGNING_KEY env var)

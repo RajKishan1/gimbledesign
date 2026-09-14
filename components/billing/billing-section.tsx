@@ -24,12 +24,20 @@ function StatusPill({ label, tone }: { label: string; tone: "ok" | "warn" | "mut
   return (
     <span
       className={cn(
-        "rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
         tone === "ok" && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
         tone === "warn" && "bg-amber-500/10 text-amber-700 dark:text-amber-400",
         tone === "muted" && "bg-muted text-muted-foreground",
       )}
     >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          tone === "ok" && "bg-emerald-500",
+          tone === "warn" && "bg-amber-500",
+          tone === "muted" && "bg-muted-foreground/60",
+        )}
+      />
       {label}
     </span>
   );
@@ -59,55 +67,122 @@ export function BillingSection() {
     action.mutate(body, { onSuccess: close });
 
   return (
-    <section id="billing" className="mt-8 rounded-lg border bg-card p-6 scroll-mt-24">
-      <div className="mb-4 flex items-center gap-2">
-        <HugeiconsIcon icon={CreditCardIcon} size={20} color="currentColor" strokeWidth={1.75} className="text-primary" />
-        <h2 className="text-xl font-semibold">Billing</h2>
+    <section
+      id="billing"
+      className="mt-6 scroll-mt-24 overflow-hidden rounded-[28px] border border-border bg-card shadow-[0_18px_55px_-46px_rgba(15,23,42,0.5)]"
+    >
+      <div className="flex items-center gap-3 border-b border-border px-6 py-5 sm:px-8">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-700 dark:text-sky-400">
+          <HugeiconsIcon
+            icon={CreditCardIcon}
+            size={19}
+            color="currentColor"
+            strokeWidth={1.75}
+          />
+        </span>
+        <div>
+          <h2 className="text-lg font-semibold tracking-[-0.015em]">
+            Plan &amp; billing
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+            Your subscription and monthly creative allowance.
+          </p>
+        </div>
       </div>
 
       {isLoading || !sub ? (
-        <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 px-6 py-10 text-sm text-muted-foreground sm:px-8">
           <Spinner className="size-4" /> Loading billing details…
         </div>
       ) : (
-        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <p className="text-lg font-semibold">{sub.planName} plan</p>
-              <StatusPill label={status.label} tone={status.tone} />
+        <div className="px-6 py-6 sm:px-8 sm:py-7">
+          <div className="grid gap-7 lg:grid-cols-[1.35fr_0.8fr_0.8fr] lg:gap-0">
+            <div className="lg:pr-8">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h3 className="text-2xl font-semibold tracking-[-0.03em]">
+                  {sub.planName} plan
+                </h3>
+                <StatusPill label={status.label} tone={status.tone} />
+              </div>
+              <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                {sub.hasSubscription
+                  ? PLANS[sub.planId].tagline
+                  : "Start creating with the essentials, then upgrade whenever you need more room."}
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {sub.hasSubscription
-                ? `${PLANS[sub.planId].credits.toLocaleString()} credits each month · ${
-                    sub.cancelAtPeriodEnd ? "Access ends" : "Renews"
-                  }${periodEnd ? ` on ${periodEnd}` : " at the end of the period"}`
-                : `${PLANS.free.credits} starter credits. Upgrade for a monthly credit allowance and exports.`}
-            </p>
+
+            <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:px-8 lg:pt-0">
+              <p className="text-xs font-medium text-muted-foreground">
+                Monthly allowance
+              </p>
+              <p className="mt-2 text-2xl font-semibold tracking-[-0.025em] tabular-nums">
+                {PLANS[sub.planId].credits.toLocaleString()}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">credits</p>
+            </div>
+
+            <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+              <p className="text-xs font-medium text-muted-foreground">
+                {sub.cancelAtPeriodEnd ? "Access until" : sub.hasSubscription ? "Next renewal" : "Billing"}
+              </p>
+              <p className="mt-2 text-base font-semibold">
+                {sub.hasSubscription
+                  ? periodEnd || "End of period"
+                  : "No recurring charge"}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {sub.hasSubscription
+                  ? `$${PLANS[sub.planId].priceMonthly}/month`
+                  : "Free forever"}
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="mt-7 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs leading-5 text-muted-foreground">
+              {sub.hasSubscription
+                ? "Changes are reflected in your account immediately."
+                : `${PLANS.free.credits} starter credits are included with your account.`}
+            </p>
+            <div className="flex flex-wrap gap-2">
             {sub.hasSubscription ? (
               <>
-                <Button size="sm" onClick={() => setChangeOpen(true)} disabled={busy}>
+                <Button
+                  size="sm"
+                  onClick={() => setChangeOpen(true)}
+                  disabled={busy}
+                  className="rounded-xl bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+                >
                   Change plan
                 </Button>
                 {sub.cancelAtPeriodEnd ? (
                   <Button
                     size="sm"
                     variant="outline"
+                    className="rounded-xl"
                     disabled={busy}
                     onClick={() => action.mutate({ action: "resume" })}
                   >
                     Resume subscription
                   </Button>
                 ) : (
-                  <Button size="sm" variant="outline" disabled={busy} onClick={() => setCancelOpen(true)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    disabled={busy}
+                    onClick={() => setCancelOpen(true)}
+                  >
                     Cancel subscription
                   </Button>
                 )}
               </>
             ) : (
-              <Button size="sm" asChild>
+              <Button
+                size="sm"
+                asChild
+                className="rounded-xl bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+              >
                 <Link href="/Pricing">Upgrade</Link>
               </Button>
             )}
@@ -115,12 +190,14 @@ export function BillingSection() {
               <Button
                 size="sm"
                 variant="ghost"
+                className="rounded-xl"
                 disabled={busy}
                 onClick={() => action.mutate({ action: "portal" })}
               >
-                Invoices &amp; payment method
+                Invoices &amp; payment
               </Button>
             )}
+            </div>
           </div>
         </div>
       )}
@@ -133,7 +210,7 @@ export function BillingSection() {
           if (!open) setTargetPlan(null);
         }}
       >
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="rounded-3xl sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Change plan</DialogTitle>
             <DialogDescription>
@@ -153,8 +230,10 @@ export function BillingSection() {
                   onClick={() => setTargetPlan(id)}
                   aria-pressed={selected}
                   className={cn(
-                    "flex items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors",
-                    selected ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
+                    "flex items-center justify-between rounded-2xl border px-4 py-3.5 text-left transition-colors",
+                    selected
+                      ? "border-sky-500 bg-sky-500/5 ring-2 ring-sky-500/10"
+                      : "border-border hover:bg-accent",
                   )}
                 >
                   <span>
@@ -189,7 +268,7 @@ export function BillingSection() {
 
       {/* Cancel */}
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
-        <DialogContent className="sm:max-w-[440px]">
+        <DialogContent className="rounded-3xl sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle>Cancel subscription?</DialogTitle>
             <DialogDescription>
