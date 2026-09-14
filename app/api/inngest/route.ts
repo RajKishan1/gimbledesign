@@ -13,6 +13,14 @@ import {
   regenerateAppStoreScreen,
 } from "@/inngest/functions/generateAppStoreScreens";
 
+const productionServeHost =
+  process.env.NODE_ENV === "production"
+    ? process.env.INNGEST_SERVE_ORIGIN ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : process.env.NEXT_PUBLIC_APP_URL)
+    : undefined;
+
 // Each Inngest step runs as its own request to this route. Image renders and
 // long LLM calls can take well over a minute, so raise the serverless ceiling.
 export const maxDuration = 300;
@@ -23,6 +31,10 @@ export const maxDuration = 300;
 // - Registers all functions with Inngest Cloud when deployed
 export const { GET, POST, PUT } = serve({
   client: inngest,
+  // Always register the stable production endpoint. Without this, a deploy or
+  // proxy can make Inngest store a preview/custom URL that responds with 307.
+  serveHost: productionServeHost?.replace(/\/+$/, ""),
+  servePath: "/api/inngest",
   functions: [
     helloWorld,
     generateScreens,
