@@ -2,6 +2,8 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import { Inter_Tight } from "next/font/google";
 import Header from "@/app/(routes)/_common/header";
+import DashboardSidebar from "@/app/(routes)/_common/dashboard-sidebar";
+import NavBar from "@/components/dashboard/NavBar";
 
 const inter = Inter_Tight({ subsets: ["latin"] });
 
@@ -31,45 +33,49 @@ const Faq = () => {
 
   return (
     <section>
-      <Header />
-      <div className={`bg-white dark:bg-[#141414] ${inter.className}`}>
-        <div className="max-w-6xl mx-auto py-16 border border-gray-100 dark:border-gray-900 rounded-2xl">
-          <div className="grid grid-cols-1 lg:grid-cols-12">
-            {/* Title */}
-            <div className="lg:col-span-4 p-6 ">
-              <h1 className="text-3xl font-medium text-black dark:text-white">
-                Frequently Asked
-                <br />
-                Questions
-              </h1>
-            </div>
+      {" "}
+      <div className={`bg-white dark:bg-[#141414] flex ${inter.className}`}>
+        <DashboardSidebar />
+        <div className="flex-1">
+          <NavBar />
+          <div className="max-w-6xl mx-auto py-16 border border-gray-100 dark:border-gray-900 rounded-2xl">
+            <div className="grid grid-cols-1 lg:grid-cols-12">
+              {/* Title */}
+              <div className="lg:col-span-4 p-6 ">
+                <h1 className="text-3xl font-medium text-black dark:text-white">
+                  Frequently Asked
+                  <br />
+                  Questions
+                </h1>
+              </div>
 
-            {/* FAQ List */}
-            <div className="lg:col-span-8 border-l border-r border-gray-200 dark:border-gray-900">
-              {faqs.map((faq, index) => (
-                <div
-                  key={index}
-                  className={`px-8 py-6 border-t border-gray-200 dark:border-gray-800 ${
-                    index === faqs.length - 1
-                      ? "border-b border-gray-200 dark:border-gray-800"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-normal text-black dark:text-white">
-                      {faq.question}
-                    </h3>
-                    <ChevronDown
-                      size={20}
-                      className="text-black dark:text-white opacity-50"
-                    />
+              {/* FAQ List */}
+              <div className="lg:col-span-8 border-l border-r border-gray-200 dark:border-gray-900">
+                {faqs.map((faq, index) => (
+                  <div
+                    key={index}
+                    className={`px-8 py-6 border-t border-gray-200 dark:border-gray-800 ${
+                      index === faqs.length - 1
+                        ? "border-b border-gray-200 dark:border-gray-800"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-normal text-black dark:text-white">
+                        {faq.question}
+                      </h3>
+                      <ChevronDown
+                        size={20}
+                        className="text-black dark:text-white opacity-50"
+                      />
+                    </div>
+
+                    <p className="pr-12 leading-relaxed text-neutral-600 dark:text-neutral-400">
+                      {faq.answer}
+                    </p>
                   </div>
-
-                  <p className="pr-12 leading-relaxed text-neutral-600 dark:text-neutral-400">
-                    {faq.answer}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>

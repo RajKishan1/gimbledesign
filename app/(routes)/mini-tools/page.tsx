@@ -202,7 +202,7 @@ function ToolCard({ tool }: { tool: Tool }) {
   const card = (
     <div
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card",
+        "group flex h-full  flex-col overflow-hidden rounded-2xl border border-border/60 dark:bg-[#141414c0]",
         "shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-all duration-200",
         tool.href
           ? "hover:-translate-y-0.5 hover:border-border hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.3)]"
@@ -306,7 +306,7 @@ export default function MiniToolsPage() {
             <NavBar />
           </Suspense>
 
-          <div className="w-full px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
+          <div className="w-full px-4 py-8 sm:px-6 lg:px-8 xl:px-28">
             {/* Header row: title + search + category filter */}
             <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-sm">
@@ -380,7 +380,7 @@ export default function MiniToolsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
                 {filtered.map((tool) => (
                   <ToolCard key={tool.id} tool={tool} />
                 ))}

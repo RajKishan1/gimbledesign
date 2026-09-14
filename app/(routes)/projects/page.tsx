@@ -17,6 +17,7 @@ import { openSauceOne } from "@/app/fonts";
 import { ProjectType } from "@/types/project";
 import { ArrowLeft } from "lucide-react";
 import { ProjectsGrid } from "../_common/dashboard-section";
+import NavBar from "@/components/dashboard/NavBar";
 
 export default function ProjectsPage() {
   const { data: session, isPending: isSessionPending } =
@@ -52,14 +53,15 @@ export default function ProjectsPage() {
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-card">
         
         <main className="flex-1 min-h-0 overflow-y-auto">
+          <NavBar />
           <div className="w-full max-w-7xl mx-auto px-6 py-12">
-            <Link
+            {/* <Link
               href="/dashboard"
               className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground mb-8"
             >
               <ArrowLeft className="size-4" />
               Back to Dashboard
-            </Link>
+            </Link> */}
             <div className="mb-8">
               <h1 className="font-bold text-3xl tracking-tight text-foreground">
                 All Projects

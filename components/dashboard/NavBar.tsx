@@ -40,7 +40,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/mini-tools", label: "Tools", badge: "New" },
   { href: "/dashboard?type=mobile", label: "Mobile App", dashboardType: "mobile" },
   { href: "/dashboard?type=web", label: "Web Platform", dashboardType: "web" },
-  { href: "/mini-tools/app-store-screens", label: "Assets" },
+  { href: "/mini-tools/app-store-screens", label: "App Store Screenshot" },
   { href: "/Pricing", label: "Pricing" },
 ];
 

@@ -26,12 +26,12 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardSquare01Icon },
   { href: "/mini-tools", label: "Tools", icon: MagicWand01Icon },
   { href: "/explore", label: "Explore", icon: CompassIcon },
-  { href: "/profile", label: "Settings", icon: Settings01Icon },
+  { href: "/projects", label: "Projects", icon: FolderOpenIcon },
 ];
 
 const SECONDARY_ITEMS = [
-  { href: "/projects", label: "Projects", icon: FolderOpenIcon },
   { href: "/FAQ", label: "Support", icon: Message01Icon },
+  { href: "/profile", label: "Settings", icon: Settings01Icon },
 ];
 
 function isActivePath(pathname: string, href: string) {

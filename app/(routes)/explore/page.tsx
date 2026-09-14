@@ -9,6 +9,7 @@ import { useExploreProjects, ExploreProject } from "@/features/use-explore";
 import { Spinner } from "@/components/ui/spinner";
 import { DefaultProjectThumbnail } from "@/components/ui/project-thumbnail";
 import { openSauceOne } from "@/app/fonts";
+import NavBar from "@/components/dashboard/NavBar";
 
 const PAGE_SIZE = 12;
 
@@ -30,9 +31,17 @@ function ShimmerCard() {
   );
 }
 
-function ShimmerGrid({ count = 10, className = "" }: { count?: number; className?: string }) {
+function ShimmerGrid({
+  count = 10,
+  className = "",
+}: {
+  count?: number;
+  className?: string;
+}) {
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${className}`}>
+    <div
+      className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5 ${className}`}
+    >
       {Array.from({ length: count }, (_, i) => (
         <ShimmerCard key={i} />
       ))}
@@ -40,7 +49,11 @@ function ShimmerGrid({ count = 10, className = "" }: { count?: number; className
   );
 }
 
-const ExploreCard = memo(function ExploreCard({ project }: { project: ExploreProject }) {
+const ExploreCard = memo(function ExploreCard({
+  project,
+}: {
+  project: ExploreProject;
+}) {
   return (
     <Link
       href={`/project/${project.id}`}
@@ -57,8 +70,15 @@ const ExploreCard = memo(function ExploreCard({ project }: { project: ExplorePro
           {project.name}
         </h3>
         <p className="text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })} •{" "}
-          {project.deviceType === "web" ? "Web" : project.deviceType === "mobile" ? "Mobile" : project.deviceType}
+          {formatDistanceToNow(new Date(project.updatedAt), {
+            addSuffix: true,
+          })}{" "}
+          •{" "}
+          {project.deviceType === "web"
+            ? "Web"
+            : project.deviceType === "mobile"
+              ? "Mobile"
+              : project.deviceType}
         </p>
       </div>
     </Link>
@@ -95,10 +115,12 @@ function ExploreContent() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, projects.length));
+          setVisibleCount((prev) =>
+            Math.min(prev + PAGE_SIZE, projects.length),
+          );
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -112,11 +134,13 @@ function ExploreContent() {
   const visibleProjects = projects.slice(0, visibleCount);
 
   return (
-    <div className={`w-full h-screen overflow-hidden flex ${openSauceOne.className}`}>
+    <div
+      className={`w-full h-screen overflow-hidden flex ${openSauceOne.className}`}
+    >
       <DashboardSidebar />
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-card">
-      
         <main className="flex-1 min-h-0 overflow-y-auto">
+          <NavBar />
           <div className="w-full max-w-7xl mx-auto px-6 py-12">
             <div className="mb-8">
               <h1 className="font-bold text-3xl tracking-tight text-foreground">
@@ -133,7 +157,8 @@ function ExploreContent() {
             ) : projects.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-muted/30 py-20 text-center">
                 <p className="text-muted-foreground">
-                  No explore projects yet. Check back later or create your own and ask an admin to share it.
+                  No explore projects yet. Check back later or create your own
+                  and ask an admin to share it.
                 </p>
               </div>
             ) : (
