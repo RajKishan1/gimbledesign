@@ -102,8 +102,14 @@ function ExploreContent() {
   const projects = query
     ? allProjects.filter((p) => p.name.toLowerCase().includes(query))
     : allProjects;
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const paginationKey = `${query}:${projects.length}`;
+  const [pagination, setPagination] = useState({
+    key: paginationKey,
+    count: PAGE_SIZE,
+  });
   const loaderRef = useRef<HTMLDivElement>(null);
+  const visibleCount =
+    pagination.key === paginationKey ? pagination.count : PAGE_SIZE;
 
   const hasMore = visibleCount < projects.length;
 
@@ -115,21 +121,21 @@ function ExploreContent() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) =>
-            Math.min(prev + PAGE_SIZE, projects.length),
-          );
+          setPagination((previous) => {
+            const currentCount =
+              previous.key === paginationKey ? previous.count : PAGE_SIZE;
+            return {
+              key: paginationKey,
+              count: Math.min(currentCount + PAGE_SIZE, projects.length),
+            };
+          });
         }
       },
       { rootMargin: "200px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, projects.length]);
-
-  // Reset visible count when projects change (e.g. refetch)
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [projects.length]);
+  }, [hasMore, paginationKey, projects.length]);
 
   const visibleProjects = projects.slice(0, visibleCount);
 

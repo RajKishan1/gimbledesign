@@ -1,7 +1,6 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
 import { Inter_Tight } from "next/font/google";
-import Header from "@/app/(routes)/_common/header";
 import DashboardSidebar from "@/app/(routes)/_common/dashboard-sidebar";
 import NavBar from "@/components/dashboard/NavBar";
 

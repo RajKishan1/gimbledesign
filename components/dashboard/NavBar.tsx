@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -273,11 +279,36 @@ function AccountMenu() {
   );
 }
 
-const NavBar = () => {
+function NavigationLinks({
+  pathname,
+  typeParam,
+}: {
+  pathname: string;
+  typeParam: string | null;
+}) {
+  return (
+    <ul className="flex min-w-0 items-center gap-6 overflow-x-auto overflow-y-hidden py-px [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {NAV_ITEMS.map((item) => (
+        <li key={item.label} className="shrink-0">
+          <NavLink
+            item={item}
+            active={isItemActive(pathname, typeParam, item)}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ActiveNavigationLinks() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const typeParam = searchParams.get("type");
 
+  return <NavigationLinks pathname={pathname} typeParam={typeParam} />;
+}
+
+const NavBar = () => {
   return (
     <nav
       aria-label="Primary"
@@ -296,16 +327,9 @@ const NavBar = () => {
       {/* Left: nav items. Horizontal scroll on narrow screens, but with the
           scrollbar hidden and vertical overflow clipped — otherwise the 1px
           link underline overflows and Windows paints a vertical scrollbar. */}
-      <ul className="flex min-w-0 items-center gap-6 overflow-x-auto overflow-y-hidden py-px [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {NAV_ITEMS.map((item) => (
-          <li key={item.label} className="shrink-0">
-            <NavLink
-              item={item}
-              active={isItemActive(pathname, typeParam, item)}
-            />
-          </li>
-        ))}
-      </ul>
+      <Suspense fallback={<NavigationLinks pathname="" typeParam={null} />}>
+        <ActiveNavigationLinks />
+      </Suspense>
 
       {/* Right: search, notifications, account */}
       <div className="flex shrink-0 items-center gap-2">

@@ -3,9 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
 import DashboardSidebar from "../_common/dashboard-sidebar";
-import Header from "../_common/header";
 import { useGetProjects } from "@/features/use-project";
 import { useProfile } from "@/context/profile-provider";
 import {
@@ -15,7 +13,6 @@ import { authClient } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { openSauceOne } from "@/app/fonts";
 import { ProjectType } from "@/types/project";
-import { ArrowLeft } from "lucide-react";
 import { ProjectsGrid } from "../_common/dashboard-section";
 import NavBar from "@/components/dashboard/NavBar";
 

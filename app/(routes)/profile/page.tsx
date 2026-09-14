@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowLeft01Icon,
   Cancel01Icon,
   Edit01Icon,
   FolderOpenIcon,
@@ -42,7 +41,6 @@ import DashboardSidebar from "../_common/dashboard-sidebar";
 const ProfilePage = () => {
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const router = useRouter();
   const { data: profile, isLoading: isLoadingProfile } = useProfile();
   const { data: credits } = useGetCredits(user?.id);
   const { data: projects, isLoading: isLoadingProjects } = useGetProjects(
