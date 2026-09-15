@@ -637,7 +637,7 @@ const ChatInput = memo(function ChatInput({
                   </svg>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44 rounded-xl border border-border shadow-xl">
+              <DropdownMenuContent align="end" className="max-h-80 w-56 overflow-y-auto rounded-xl border border-border shadow-xl">
                 {SELECTABLE_MODELS.map((m) => (
                   <DropdownMenuItem
                     key={m.id}

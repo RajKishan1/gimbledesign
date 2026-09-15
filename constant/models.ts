@@ -19,6 +19,69 @@ export const AI_MODELS: ModelOption[] = [
     useCase: "generation",
   },
   {
+    id: "google:gemini@3.8-flash",
+    name: "Gemini 3.8 Flash",
+    provider: "Google",
+    description: "Google's newest Flash model for long-horizon design work",
+    useCase: "both",
+  },
+  {
+    id: "openai:gpt@5.6-sol",
+    name: "GPT-5.6 Sol",
+    provider: "OpenAI",
+    description: "OpenAI's flagship for the most demanding design tasks",
+    useCase: "generation",
+  },
+  {
+    id: "openai:gpt@5.6-terra",
+    name: "GPT-5.6 Terra",
+    provider: "OpenAI",
+    description: "Strong design quality with balanced speed and cost",
+    useCase: "both",
+  },
+  {
+    id: "openai:gpt@5.6-luna",
+    name: "GPT-5.6 Luna",
+    provider: "OpenAI",
+    description: "Fast, cost-efficient generation for high-volume work",
+    useCase: "both",
+  },
+  {
+    id: "anthropic:claude@fable-5",
+    name: "Claude Fable 5",
+    provider: "Anthropic",
+    description: "Frontier multimodal model for long-horizon creative work",
+    useCase: "generation",
+  },
+  {
+    id: "zai:glm@5.3",
+    name: "GLM-5.3",
+    provider: "Z.ai",
+    description: "Latest GLM flagship for coding and agentic generation",
+    useCase: "both",
+  },
+  {
+    id: "moonshotai:kimi@k3",
+    name: "Kimi K3",
+    provider: "Moonshot AI",
+    description: "Frontier multimodal reasoning for complex design workflows",
+    useCase: "both",
+  },
+  {
+    id: "minimax:m3@0",
+    name: "MiniMax M3",
+    provider: "MiniMax",
+    description: "Latest MiniMax model for multimodal agentic generation",
+    useCase: "both",
+  },
+  {
+    id: "deepseek:v4.1@flash",
+    name: "DeepSeek V4.1 Flash",
+    provider: "DeepSeek",
+    description: "Efficient multimodal model with a long context window",
+    useCase: "both",
+  },
+  {
     id: "anthropic:claude@sonnet-4.6",
     name: "Claude Sonnet 4.6",
     provider: "Anthropic",
@@ -105,14 +168,14 @@ export const VISION_MODEL = "google:gemini@3.5-flash";
 export const LEGACY_MODEL_IDS: Record<string, string> = {
   "anthropic/claude-opus-5": "anthropic:claude@opus-5",
   "anthropic/claude-sonnet-5": "anthropic:claude@sonnet-4.6",
-  "openai/gpt-5.6-sol": "openai:gpt@5.5",
+  "openai/gpt-5.6-sol": "openai:gpt@5.6-sol",
   "openai/gpt-5.4-mini": VISION_MODEL,
   "google/gemini-3.1-pro-preview": "google:gemini@3.1-pro",
-  "google/gemini-3.7-flash": FAST_MODEL,
-  "deepseek/deepseek-v4-pro": "deepseek:v4@flash",
-  "moonshotai/kimi-k3": DEFAULT_MODEL,
+  "google/gemini-3.7-flash": "google:gemini@3.8-flash",
+  "deepseek/deepseek-v4-pro": "deepseek:v4@pro",
+  "moonshotai/kimi-k3": "moonshotai:kimi@k3",
   "qwen/qwen3.8-max": DEFAULT_MODEL,
-  "z-ai/glm-5.3": "zai:glm@4.7",
+  "z-ai/glm-5.3": "zai:glm@5.3",
 };
 
 /** Accepts "auto", a current id, or a legacy OpenRouter slug; returns a Runware id. */
@@ -132,6 +195,6 @@ export const getModelName = (modelId: string): string => {
 
 export const getAnalysisModel = (): string => FAST_MODEL;
 
-/** Resolves user-facing model id to actual API model (Auto → Gemini 3.1 Pro). */
+/** Resolves user-facing model id to actual API model (Auto → Claude Sonnet 4.6). */
 export const getGenerationModel = (userModel?: string): string =>
   normalizeModelId(userModel);
