@@ -46,8 +46,8 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 
-/** Canvas-only preview viewport for a frame. "full" = content height at the
-    project's own device width (the default). */
+/** Canvas-only preview viewport for a frame. "full" shows the complete
+    content height at the project's own device width. */
 export type FramePreviewMode = "mobile" | "tablet" | "desktop" | "full";
 
 const PREVIEW_OPTIONS: {

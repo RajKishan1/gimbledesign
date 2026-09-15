@@ -201,7 +201,7 @@ const PromptInput = ({
                     <Zap className="size-3.5" />
                     Models
                   </p>
-                  <div className="mt-1 space-y-0.5">
+                  <div className="mt-1 space-y-0.5 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-border/20 scrollbar-track-transparent">
                     {modelsExpanded ? (
                       SELECTABLE_MODELS.map((model) => (
                         <button

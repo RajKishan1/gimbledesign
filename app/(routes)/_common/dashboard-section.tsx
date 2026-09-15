@@ -221,15 +221,8 @@ const DashboardSection = () => {
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-card">
         {/* <Header /> */}
         <main className="flex-1 min-h-0 overflow-y-auto">
-          {/* NavBar lives inside <main> as a sticky top-0 element so the
-              backdrop-blur "frosted glass" effect actually sees content
-              scrolling underneath it. */}
           <NavBar />
 
-          {/* Explore designs — first thing on the page, like the reference. */}
-          {/* <ExploreDesign /> */}
-
-          {/* Hero — id anchors the NewModel banner's "Try" CTA. */}
           <div
             id="new-design"
             className={`relative overflow-hidden py-12 sm:py-16 px-4 sm:px-6 lg:px-8 xl:px-10 ${instrumentSerif.variable}`}
@@ -249,9 +242,7 @@ const DashboardSection = () => {
               </p>
               <h1 className="font-display mb-7 text-center text-[38px] leading-[1.08] text-foreground sm:text-5xl md:text-[56px]">
                 What will you design{" "}
-                <em className="italic text-sky-600 dark:text-sky-400">
-                  today
-                </em>
+                <em className="italic text-sky-600 dark:text-sky-400">today</em>
                 ?
               </h1>
 

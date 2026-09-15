@@ -12,6 +12,8 @@ interface UseCanvasTransformOptions {
   initialY?: number;
   minScale?: number;
   maxScale?: number;
+  /** Ordinary wheel behavior. Ctrl/Cmd + wheel always zooms. */
+  wheelMode?: "pan" | "zoom";
 }
 
 /**
@@ -29,6 +31,7 @@ export function useCanvasTransform(opts: UseCanvasTransformOptions = {}) {
     initialY = 5,
     minScale = 0.05,
     maxScale = 4,
+    wheelMode = "pan",
   } = opts;
 
   // The committed transform (written to state for React re-renders)
@@ -116,25 +119,24 @@ export function useCanvasTransform(opts: UseCanvasTransformOptions = {}) {
   /**
    * Handle wheel events on the canvas container.
    *
-   * The browser (and OS) tells us the intent via ctrlKey:
-   *   ctrlKey = true  → pinch-to-zoom (or Ctrl+scroll)  → ZOOM
-   *   ctrlKey = false → two-finger trackpad scroll       → PAN
+   * Ctrl/Cmd + wheel always zooms. An ordinary wheel pans in Select mode and
+   * zooms in Hand mode, matching the interaction model used by design tools.
    */
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       e.preventDefault();
 
-      if (e.ctrlKey) {
+      if (wheelMode === "zoom" || e.ctrlKey || e.metaKey) {
         // ── ZOOM ──────────────────────────────────────────────────────────
-        // deltaY is negative when fingers spread (zoom in), positive when pinch (zoom out).
-        // We use a sensitivity tuned for both trackpad pinch and ctrl+scroll.
-        const sensitivity = e.deltaMode === 1 ? 0.15 : 0.005;
-        const delta = -e.deltaY * sensitivity;
+        // Exponential scaling keeps trackpad gestures smooth and prevents a
+        // mouse-wheel notch from producing an abrupt jump.
+        const deltaInPixels = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+        const zoomFactor = Math.exp(-deltaInPixels * 0.0015);
 
         applyTransform((prev) => {
           const newScale = Math.min(
             maxScale,
-            Math.max(minScale, prev.scale * (1 + delta))
+            Math.max(minScale, prev.scale * zoomFactor)
           );
           const ratio = newScale / prev.scale;
 
@@ -161,7 +163,7 @@ export function useCanvasTransform(opts: UseCanvasTransformOptions = {}) {
         }));
       }
     },
-    [applyTransform, minScale, maxScale]
+    [applyTransform, minScale, maxScale, wheelMode]
   );
 
   // The canvas container — wheel events inside it drive the canvas transform.

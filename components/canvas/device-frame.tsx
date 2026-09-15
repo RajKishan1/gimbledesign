@@ -87,7 +87,7 @@ const DeviceFrame = ({
     cancelLinking,
   } = usePrototype();
 
-  // Device dimensions: per-frame override (wireframe), custom (inspirations), or deviceType. No fixed height — height follows content.
+  // Device dimensions: per-frame override (wireframe), custom (inspirations), or deviceType.
   const getDeviceDimensions = () => {
     if (overrideWidth != null) {
       return {
@@ -118,7 +118,19 @@ const DeviceFrame = ({
   // ── Preview viewport (canvas-only) ─────────────────────────────────────
   // Switching Mobile/Tablet/Desktop/Full Height just resizes the rendered
   // viewport on the canvas — no navigation, no regeneration, no credits.
-  const [previewMode, setPreviewMode] = useState<FramePreviewMode | null>(null);
+  const getDefaultPreviewMode = useCallback((): FramePreviewMode | null => {
+    // Custom-size inspiration frames and responsive wireframes keep their
+    // authored dimensions. Product screens open in a real device viewport.
+    if (customDimensions || deviceType === "wireframe") return null;
+    return deviceType === "web" ? "desktop" : "mobile";
+  }, [customDimensions, deviceType]);
+  const [previewMode, setPreviewMode] = useState<FramePreviewMode | null>(
+    getDefaultPreviewMode,
+  );
+
+  useEffect(() => {
+    setPreviewMode(getDefaultPreviewMode());
+  }, [getDefaultPreviewMode]);
   const previewSize =
     previewMode && previewMode !== "full"
       ? PREVIEW_VIEWPORTS[previewMode]
@@ -129,7 +141,7 @@ const DeviceFrame = ({
   const hasFixedPreviewRef = useRef(false);
   hasFixedPreviewRef.current = !!previewSize;
 
-  // Skeleton height: use device-appropriate placeholder height when loading, then switch to content height
+  // Skeleton height: use a device-appropriate placeholder while loading.
   const skeletonHeight =
     overrideWidth != null
       ? (overrideMinHeight ?? 852)
@@ -137,8 +149,13 @@ const DeviceFrame = ({
       ? DEVICE_DIMENSIONS.WEB.skeletonHeight
       : DEVICE_DIMENSIONS.MOBILE.skeletonHeight;
 
-  // Height is content-driven only; no fixed height. Iframe reports content height and we use it.
+  // The iframe still reports its full content height for exports and Full Height mode.
   const [contentHeight, setContentHeight] = useState<number>(DEVICE_MIN_HEIGHT);
+  const actualHeight = isLoading
+    ? skeletonHeight
+    : previewSize
+      ? previewSize.height
+      : contentHeight;
   const [framePosition, setFramePosition] = useState(initialPosition);
   const [frameRect, setFrameRect] = useState<DOMRect | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -229,17 +246,17 @@ const DeviceFrame = ({
       x: framePosition.x,
       y: framePosition.y,
       width: DEVICE_WIDTH,
-      height: contentHeight,
+      height: actualHeight,
     });
   }, [
     frameId,
     framePosition,
     updateScreenPosition,
     DEVICE_WIDTH,
-    contentHeight,
+    actualHeight,
   ]);
 
-  // Iframe reports content height; we use it for frame height (no fixed height).
+  // Iframe reports content height for exports and the optional Full Height mode.
   const heightId = heightMessageId ?? frameId;
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -273,15 +290,6 @@ const DeviceFrame = ({
       window.removeEventListener("scroll", updateRect);
     };
   }, [framePosition]);
-
-  // While loading use skeletonHeight so the frame placeholder is properly sized; after loading switch to content height.
-  // Fixed preview viewports clip to the device height (content scrolls
-  // inside the iframe); Full Height / default follows the content.
-  const actualHeight = isLoading
-    ? skeletonHeight
-    : previewSize
-      ? previewSize.height
-      : contentHeight;
 
   const handleDownloadPng = useCallback(async () => {
     if (isDownloading) return;

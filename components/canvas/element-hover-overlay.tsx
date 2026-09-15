@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -123,23 +124,11 @@ const ElementHoverOverlay: React.FC<ElementHoverOverlayProps> = ({
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
   const [copiedProperty, setCopiedProperty] = useState<string | null>(null);
 
-  // Show properties panel when element is selected
-  useEffect(() => {
-    if (selectedElement) {
-      setShowPropertiesPanel(true);
-    }
-  }, [selectedElement]);
-
-  // Close properties panel
+  // Closing the editor keeps the element selected so the contextual Edit
+  // action remains available.
   const handleClosePanel = useCallback(() => {
     setShowPropertiesPanel(false);
-    setSelectedElement(null);
-    // Notify iframe to deselect
-    const iframe = iframeRef.current;
-    if (iframe?.contentWindow) {
-      iframe.contentWindow.postMessage({ type: "DESELECT_ELEMENT" }, "*");
-    }
-  }, [iframeRef]);
+  }, []);
 
   // Copy to clipboard
   const handleCopyValue = useCallback(async (value: string, key: string) => {
@@ -161,6 +150,8 @@ const ElementHoverOverlay: React.FC<ElementHoverOverlayProps> = ({
     }
 
     const handleMessage = (event: MessageEvent) => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
+
       if (event.data.type === "ELEMENT_HOVER") {
         setHoveredElement(event.data.element);
       } else if (event.data.type === "ELEMENT_LEAVE") {
@@ -169,10 +160,12 @@ const ElementHoverOverlay: React.FC<ElementHoverOverlayProps> = ({
         const clickedElement = event.data.element;
         if (clickedElement) {
           setSelectedElement(clickedElement);
+          setShowPropertiesPanel(false);
           onElementSelect?.(clickedElement);
         }
       } else if (event.data.type === "ELEMENT_DESELECT") {
         setSelectedElement(null);
+        setShowPropertiesPanel(false);
         onElementSelect?.(null);
       } else if (event.data.type === "ELEMENT_UPDATED") {
         // Update selected element with new info after style/text change
@@ -180,17 +173,31 @@ const ElementHoverOverlay: React.FC<ElementHoverOverlayProps> = ({
         if (updatedElement) {
           setSelectedElement(updatedElement);
         }
+      } else if (event.data.type === "ELEMENT_RECT_UPDATED") {
+        const updatedElement = event.data.element;
+        if (updatedElement) {
+          setSelectedElement((current) => {
+            if (!current || current.uniqueKey !== updatedElement.uniqueKey) {
+              return current;
+            }
+            return {
+              ...current,
+              rect: updatedElement.rect as ElementInfo["rect"],
+            };
+          });
+        }
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [isActive, onElementSelect]);
+  }, [iframeRef, isActive, onElementSelect]);
 
   // Clear selection when isActive becomes false
   useEffect(() => {
     if (!isActive) {
       setSelectedElement(null);
+      setShowPropertiesPanel(false);
     }
   }, [isActive]);
 
@@ -391,6 +398,22 @@ const ElementHoverOverlay: React.FC<ElementHoverOverlayProps> = ({
               lastElement = null;
               window.parent.postMessage({ type: 'ELEMENT_LEAVE' }, '*');
             }
+
+            let rectUpdatePending = false;
+            function updateSelectedRect() {
+              if (!selectedElement || rectUpdatePending) return;
+              rectUpdatePending = true;
+              requestAnimationFrame(() => {
+                rectUpdatePending = false;
+                const info = getElementInfo(selectedElement, false);
+                if (info) {
+                  window.parent.postMessage({
+                    type: 'ELEMENT_RECT_UPDATED',
+                    element: info,
+                  }, '*');
+                }
+              });
+            }
             
             function handleClick(e) {
               if (!isEnabled) return;
@@ -416,6 +439,8 @@ const ElementHoverOverlay: React.FC<ElementHoverOverlayProps> = ({
             document.addEventListener('mousemove', handleMouseMove, { passive: true });
             document.addEventListener('mouseleave', handleMouseLeave);
             document.addEventListener('click', handleClick, { capture: true });
+            document.addEventListener('scroll', updateSelectedRect, { capture: true, passive: true });
+            window.addEventListener('resize', updateSelectedRect, { passive: true });
             
             // Listen for enable/disable messages
             window.addEventListener('message', (e) => {
@@ -613,6 +638,38 @@ const ElementHoverOverlay: React.FC<ElementHoverOverlayProps> = ({
               {Math.round(selectedElement.rect.width)} × {Math.round(selectedElement.rect.height)}
             </div>
           )}
+
+          {!showPropertiesPanel && (
+            <button
+              type="button"
+              aria-label={`Edit ${getElementLabel(selectedElement)}`}
+              className="pointer-events-auto absolute z-40 inline-flex h-8 items-center gap-1.5 rounded-lg border border-blue-500/30 bg-white px-2.5 text-xs font-semibold text-blue-700 shadow-lg shadow-blue-950/10 transition-colors hover:bg-blue-50 dark:bg-gray-900 dark:text-blue-300 dark:hover:bg-gray-800"
+              style={{
+                left: Math.max(
+                  64,
+                  selectedElement.rect.left + selectedElement.rect.width,
+                ),
+                top:
+                  selectedElement.rect.top >= 40
+                    ? selectedElement.rect.top - 38
+                    : selectedElement.rect.top + 8,
+                transform: "translateX(-100%)",
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setShowPropertiesPanel(true);
+              }}
+            >
+              <HugeiconsIcon
+                icon={PencilEdit01Icon}
+                size={14}
+                color="currentColor"
+                strokeWidth={1.9}
+              />
+              Edit
+            </button>
+          )}
         </>
       )}
 
@@ -658,16 +715,18 @@ const ElementHoverOverlay: React.FC<ElementHoverOverlayProps> = ({
       )}
 
       {/* Properties Panel */}
-      {showPropertiesPanel && selectedElement && (
-        <ElementPropertiesPanel
-          element={selectedElement}
-          onClose={handleClosePanel}
-          onCopyValue={handleCopyValue}
-          copiedProperty={copiedProperty}
-          iframeRef={iframeRef}
-          onElementUpdate={(updatedElement) => setSelectedElement(updatedElement)}
-        />
-      )}
+      {showPropertiesPanel && selectedElement && typeof document !== "undefined" &&
+        createPortal(
+          <ElementPropertiesPanel
+            element={selectedElement}
+            onClose={handleClosePanel}
+            onCopyValue={handleCopyValue}
+            copiedProperty={copiedProperty}
+            iframeRef={iframeRef}
+            onElementUpdate={(updatedElement) => setSelectedElement(updatedElement)}
+          />,
+          document.body,
+        )}
     </div>
   );
 };
@@ -710,6 +769,53 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
   
   // Track if any changes were made
   const [hasChanges, setHasChanges] = useState(false);
+  const [panelPosition, setPanelPosition] = useState<{
+    top: number;
+    left: number;
+    maxHeight: number;
+  } | null>(null);
+
+  // Keep the inspector docked beside the frame even while the canvas is being
+  // panned or zoomed. A portal keeps the inspector at normal UI scale.
+  useEffect(() => {
+    let animationFrame = 0;
+
+    const updatePosition = () => {
+      const iframe = iframeRef.current;
+      if (!iframe) return;
+
+      const rect = iframe.getBoundingClientRect();
+      const panelWidth = 320;
+      const gutter = 16;
+      const edge = 16;
+      const fitsRight = window.innerWidth - rect.right >= panelWidth + gutter + edge;
+      const nextLeft = fitsRight
+        ? rect.right + gutter
+        : Math.max(edge, rect.left - panelWidth - gutter);
+      const nextTop = Math.min(
+        Math.max(edge, rect.top),
+        Math.max(edge, window.innerHeight - 240),
+      );
+      const nextPosition = {
+        top: nextTop,
+        left: nextLeft,
+        maxHeight: Math.max(224, window.innerHeight - nextTop - edge),
+      };
+
+      setPanelPosition((current) =>
+        current &&
+        current.top === nextPosition.top &&
+        current.left === nextPosition.left &&
+        current.maxHeight === nextPosition.maxHeight
+          ? current
+          : nextPosition,
+      );
+      animationFrame = window.requestAnimationFrame(updatePosition);
+    };
+
+    animationFrame = window.requestAnimationFrame(updatePosition);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [iframeRef]);
 
   // Update local state when element changes
   useEffect(() => {
@@ -931,9 +1037,12 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   const styles = element.styles;
 
+  if (!panelPosition) return null;
+
   return (
     <div 
-      className="fixed top-4 right-4 w-80 max-h-[85vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 pointer-events-auto"
+      className="fixed w-80 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[200] pointer-events-auto"
+      style={panelPosition}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
@@ -983,7 +1092,10 @@ const ElementPropertiesPanel: React.FC<PropertiesPanelProps> = ({
       </div>
 
       {/* Content */}
-      <div className="overflow-y-auto max-h-[calc(85vh-180px)] p-2">
+      <div
+        className="overflow-y-auto p-2"
+        style={{ maxHeight: Math.max(120, panelPosition.maxHeight - 104) }}
+      >
         {/* Edit Tab - Editable properties */}
         {activeTab === "edit" && (
           <div className="space-y-4">

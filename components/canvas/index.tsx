@@ -191,6 +191,7 @@ const Canvas = ({
     initialY: 5,
     minScale: 0.05,
     maxScale: 4,
+    wheelMode: toolMode === TOOL_MODE_ENUM.HAND ? "zoom" : "pan",
   });
 
   // Keyboard delete for selected canvas image
