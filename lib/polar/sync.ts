@@ -17,6 +17,51 @@ function isWriteConflict(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2034";
 }
 
+const GRANT_MAX_ATTEMPTS = 3;
+
+/**
+ * Commit a ledger row together with the user update that applies it, in one
+ * transaction. Returns false when the ledger key already exists — the grant was
+ * applied before and nothing changed. The user row must already exist, so the
+ * only unique violation this can hit is the ledger key.
+ */
+async function commitGrant(
+  grant: Prisma.CreditGrantCreateInput,
+  userData: Prisma.UserUpdateInput,
+): Promise<boolean> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await prisma.$transaction([
+        prisma.creditGrant.create({ data: grant }),
+        prisma.user.update({ where: { userId: grant.userId }, data: userData }),
+      ]);
+      return true;
+    } catch (err) {
+      if (isUniqueViolation(err)) return false;
+      if (isWriteConflict(err) && attempt < GRANT_MAX_ATTEMPTS) continue;
+      throw err;
+    }
+  }
+}
+
+/**
+ * Highest plan allowance (in credits) already granted to a subscription since
+ * `periodStart`, from the first payment / renewal or an earlier upgrade.
+ */
+async function creditedAllowanceInPeriod(
+  subscriptionId: string,
+  periodStart: Date,
+): Promise<number> {
+  const rows = await prisma.creditGrant.findMany({
+    where: { subscriptionId, createdAt: { gte: periodStart } },
+    select: { planId: true },
+  });
+  return rows.reduce(
+    (max, row) => (isPaidPlanId(row.planId) ? Math.max(max, PLANS[row.planId].credits) : max),
+    0,
+  );
+}
+
 /**
  * Subscription states that keep the user on their paid plan. `past_due` is
  * included as a grace period while Polar retries the payment.
@@ -45,8 +90,15 @@ function resolveUserId(
  * Mirror a Polar subscription onto our User row. Safe to call from both the
  * webhook and from API responses (both are idempotent for the same state).
  *
- * Upgrades within the same subscription grant the credit difference between
- * tiers immediately; renewals and first payments are credited from `order.paid`.
+ * Renewals and first payments are credited from `order.paid`. An upgrade on the
+ * same subscription tops the user up to the new plan's allowance right away —
+ * Polar charges the proration before applying a plan change (a failed charge
+ * rejects the change), so an upgrade observed here is already paid for.
+ *
+ * The top-up is measured against the highest allowance the subscription has
+ * already been credited for in the current billing period, not just the plan
+ * being left. Switching down and back up therefore grants nothing: a period
+ * never yields more than its highest plan's credits.
  */
 export async function syncSubscription(sub: Subscription): Promise<void> {
   const userId = resolveUserId(sub.customer.externalId, sub.metadata);
@@ -104,26 +156,38 @@ export async function syncSubscription(sub: Subscription): Promise<void> {
     return;
   }
 
-  // Tier change on the same subscription → grant the difference, once.
-  let delta = 0;
+  // Upgrade on the same subscription → top up to the new allowance, once.
   if (
     entitled &&
     existing.polarSubscriptionId === sub.id &&
     existing.polarProductId !== sub.productId &&
-    isPaidPlanId(existing.plan)
+    isPaidPlanId(existing.plan) &&
+    PLANS[planId].credits > PLANS[existing.plan].credits
   ) {
-    delta = PLANS[planId].credits - PLANS[existing.plan].credits;
-  }
+    const alreadyCredited = Math.max(
+      PLANS[existing.plan].credits,
+      await creditedAllowanceInPeriod(sub.id, sub.currentPeriodStart),
+    );
+    const topUp = PLANS[planId].credits - alreadyCredited;
 
-  if (delta > 0) {
-    // Conditional on the previous product so a concurrent delivery can't grant twice.
-    const { count } = await prisma.user.updateMany({
-      where: { userId, polarProductId: existing.polarProductId },
-      data: { ...billingFields, credits: { increment: delta } },
-    });
-    if (count === 1) {
-      console.log(`[Polar] user=${userId} upgraded to ${planId}, credits +${delta}`);
-      return;
+    if (topUp > 0) {
+      // The key makes concurrent deliveries of the same change (API response +
+      // webhook) collapse into a single grant.
+      const granted = await commitGrant(
+        {
+          id: `polar:upgrade:${sub.id}:${sub.currentPeriodStart.toISOString()}:${planId}`,
+          userId,
+          subscriptionId: sub.id,
+          credits: topUp,
+          reason: "subscription_upgrade",
+          planId,
+        },
+        { ...billingFields, credits: { increment: topUp } },
+      );
+      if (granted) {
+        console.log(`[Polar] user=${userId} upgraded to ${planId}, credits +${topUp}`);
+        return;
+      }
     }
   }
 
@@ -131,8 +195,6 @@ export async function syncSubscription(sub: Subscription): Promise<void> {
 }
 
 export type GrantOutcome = "granted" | "already_granted" | "skipped";
-
-const GRANT_MAX_ATTEMPTS = 3;
 
 /**
  * Grant the plan's monthly credits when Polar confirms a subscription payment.
@@ -170,30 +232,18 @@ export async function grantCreditsForPaidOrder(order: Order): Promise<GrantOutco
   }
 
   const credits = PLANS[planId].credits;
-  for (let attempt = 1; ; attempt++) {
-    try {
-      await prisma.$transaction([
-        prisma.creditGrant.create({
-          data: {
-            id: `polar:order:${order.id}`,
-            userId,
-            credits,
-            reason: order.billingReason,
-            planId,
-          },
-        }),
-        prisma.user.update({
-          where: { userId },
-          data: { credits: { increment: credits }, polarCustomerId: order.customerId },
-        }),
-      ]);
-      break;
-    } catch (err) {
-      if (isUniqueViolation(err)) return "already_granted";
-      if (isWriteConflict(err) && attempt < GRANT_MAX_ATTEMPTS) continue;
-      throw err;
-    }
-  }
+  const granted = await commitGrant(
+    {
+      id: `polar:order:${order.id}`,
+      userId,
+      subscriptionId: order.subscriptionId,
+      credits,
+      reason: order.billingReason,
+      planId,
+    },
+    { credits: { increment: credits }, polarCustomerId: order.customerId },
+  );
+  if (!granted) return "already_granted";
 
   console.log(`[Polar] user=${userId} ${order.billingReason} (${planId}), credits +${credits}`);
   return "granted";

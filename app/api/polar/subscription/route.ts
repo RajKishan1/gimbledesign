@@ -5,6 +5,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { AlreadyCanceledSubscription } from "@polar-sh/sdk/models/errors/alreadycanceledsubscription.js";
+import { PaymentFailed } from "@polar-sh/sdk/models/errors/paymentfailed.js";
+import { SubscriptionLocked } from "@polar-sh/sdk/models/errors/subscriptionlocked.js";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { PAID_PLAN_IDS, planFromStored } from "@/lib/plans";
@@ -131,6 +134,33 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, message });
   } catch (err) {
+    // Expected outcomes the customer can act on. Polar rejects the whole change
+    // in these cases, so the plan and credits are untouched.
+    if (err instanceof PaymentFailed) {
+      return NextResponse.json(
+        {
+          error:
+            "Your payment method was declined, so your plan was not changed. Update your card under Invoices & payment and try again.",
+          code: "PAYMENT_FAILED",
+        },
+        { status: 402 },
+      );
+    }
+    if (err instanceof SubscriptionLocked) {
+      return NextResponse.json(
+        {
+          error: "Another change to your subscription is still processing. Try again in a moment.",
+          code: "SUBSCRIPTION_LOCKED",
+        },
+        { status: 409 },
+      );
+    }
+    if (err instanceof AlreadyCanceledSubscription) {
+      return NextResponse.json(
+        { error: "This subscription has already been canceled.", code: "ALREADY_CANCELED" },
+        { status: 409 },
+      );
+    }
     console.error(`[Polar Subscription POST] ${body.action} failed:`, err);
     return NextResponse.json({ error: "Failed to update subscription" }, { status: 502 });
   }
