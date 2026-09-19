@@ -195,6 +195,22 @@ model WebhookEvent {
   @@unique([provider, eventId])
 }
 
+/// Credit ledger — one row per paid provider order that has been credited.
+/// The row id *is* the idempotency key ("polar:order:<orderId>"): MongoDB always
+/// enforces `_id` uniqueness, so an order can be credited exactly once no matter
+/// how many paths race to grant it (webhook delivery, retry, checkout confirm),
+/// and without depending on a secondary index having been pushed.
+model CreditGrant {
+  id        String   @id @map("_id")
+  userId    String
+  credits   Float
+  reason    String   // Polar billing reason: subscription_create | subscription_cycle
+  planId    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 /// Admin-curated design tiles shown on the dashboard "Explore designs" section.
 /// Uploaded via /api/admin/explore-designs (Cloudinary). Public fetch via /api/explore-designs.
 model ExploreDesign {

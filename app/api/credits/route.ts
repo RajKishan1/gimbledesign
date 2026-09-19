@@ -4,7 +4,8 @@ import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 
 // Credits are read-only from the client. They are deducted server-side by the
-// generation routes and granted by the Polar webhook — never by user request.
+// generation routes and granted from verified Polar payments (lib/polar/sync.ts:
+// webhook + checkout confirmation) — never from values supplied by the client.
 export async function GET() {
   try {
     const session = await getSession(await headers());

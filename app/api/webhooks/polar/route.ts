@@ -3,8 +3,9 @@
 // Security model:
 //  - Every delivery is verified with the Standard Webhooks HMAC signature
 //    before the body is trusted (raw body, never pre-parsed).
-//  - Deliveries are recorded by `webhook-id` before processing so retries
-//    and duplicates are acknowledged without re-applying side effects.
+//  - Every handler is idempotent (credits are keyed by order id in the
+//    CreditGrant ledger), so retries and duplicates can never double-apply.
+//    Deliveries are still recorded by `webhook-id` for auditing.
 //  - Processing failures release the record and return 5xx so Polar retries.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -18,10 +19,13 @@ import {
 } from "standardwebhooks";
 import { Order$inboundSchema } from "@polar-sh/sdk/models/components/order.js";
 import { Subscription$inboundSchema } from "@polar-sh/sdk/models/components/subscription.js";
-import { Prisma } from "@/lib/generated/prisma";
 import prisma from "@/lib/prisma";
 import { getPolarEnv } from "@/lib/polar/env";
-import { grantCreditsForPaidOrder, syncSubscription } from "@/lib/polar/sync";
+import {
+  grantCreditsForPaidOrder,
+  isUniqueViolation,
+  syncSubscription,
+} from "@/lib/polar/sync";
 
 const PROVIDER = "polar";
 type PolarEvent = ReturnType<typeof validateEvent>;
@@ -66,22 +70,28 @@ function parseVerifiedPayload(payload: unknown): PolarEvent {
 }
 
 /**
- * Polar's SDK helper expects a user-defined/raw secret and base64-encodes it
- * before handing it to Standard Webhooks. New Polar endpoints can instead
- * return an already encoded `whsec_...` secret. Passing that format through
- * the SDK helper double-encodes it, so verify it directly in that case.
+ * Polar has two signing schemes and which one applies depends on when the
+ * endpoint's secret was generated, which the secret itself doesn't reveal:
+ *  - since 8 Sep 2026: plain Standard Webhooks — the `whsec_...` secret is
+ *    used as-is;
+ *  - before that: the HMAC key is the UTF-8 bytes of the whole secret string,
+ *    which is what the SDK's `validateEvent` implements.
+ * Both are full HMAC verifications with the same secret, so trying one then
+ * the other doesn't weaken the check.
  */
 function validatePolarEvent(
   body: string,
   headers: Record<string, string>,
   secret: string,
 ): PolarEvent {
-  if (!secret.startsWith("whsec_")) {
-    return validateEvent(body, headers, secret);
+  if (secret.startsWith("whsec_")) {
+    try {
+      return parseVerifiedPayload(new Webhook(secret).verify(body, headers));
+    } catch (err) {
+      if (!(err instanceof StandardWebhookVerificationError)) throw err;
+    }
   }
-
-  const payload = new Webhook(secret).verify(body, headers);
-  return parseVerifiedPayload(payload);
+  return validateEvent(body, headers, secret);
 }
 
 async function handleEvent(event: PolarEvent): Promise<void> {
@@ -104,10 +114,6 @@ async function handleEvent(event: PolarEvent): Promise<void> {
   }
 }
 
-function isUniqueViolation(err: unknown): boolean {
-  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
-}
-
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const signatureHeaders: Record<string, string> = {};
@@ -124,6 +130,10 @@ export async function POST(req: NextRequest) {
       err instanceof PolarWebhookVerificationError ||
       err instanceof StandardWebhookVerificationError
     ) {
+      // Usually a stale POLAR_WEBHOOK_SECRET (e.g. the endpoint was recreated).
+      console.warn(
+        `[Polar Webhook] Signature verification failed (webhook-id=${signatureHeaders["webhook-id"] ?? "missing"})`,
+      );
       return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
     }
     console.error("[Polar Webhook] Failed to parse event:", err);
@@ -139,20 +149,17 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     if (isUniqueViolation(err)) {
-      // Subscription state synchronization is idempotent. Re-run it for a
-      // duplicate delivery so an event accepted during a previous parser or
-      // processing bug can repair the user's billing state on redelivery.
-      // Paid orders remain strictly once-only because they grant credits.
-      if (SUBSCRIPTION_EVENTS.has(event.type)) {
-        try {
-          await handleEvent(event);
-        } catch (syncError) {
-          console.error(
-            `[Polar Webhook] Error resyncing duplicate ${event.type} (${eventId}):`,
-            syncError,
-          );
-          return NextResponse.json({ error: "Processing failed" }, { status: 500 });
-        }
+      // Handlers are idempotent, so re-run them for a duplicate delivery: an
+      // event accepted during a previous parser or processing bug can then
+      // repair the user's billing state when it is redelivered from Polar.
+      try {
+        await handleEvent(event);
+      } catch (syncError) {
+        console.error(
+          `[Polar Webhook] Error reprocessing duplicate ${event.type} (${eventId}):`,
+          syncError,
+        );
+        return NextResponse.json({ error: "Processing failed" }, { status: 500 });
       }
       return NextResponse.json({ received: true, duplicate: true });
     }

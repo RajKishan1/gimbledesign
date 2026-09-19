@@ -46,7 +46,9 @@ export async function POST(req: NextRequest) {
     const appUrl = getAppUrl();
     const checkout = await getPolar().checkouts.create({
       products: [productIdForPlan(planId)],
-      successUrl: `${appUrl}/dashboard?checkout=success`,
+      // Polar substitutes {CHECKOUT_ID}; the dashboard uses it to confirm the
+      // purchase server-side (/api/polar/checkout/confirm).
+      successUrl: `${appUrl}/dashboard?checkout=success&checkout_id={CHECKOUT_ID}`,
       returnUrl: `${appUrl}/Pricing`,
       externalCustomerId: session.user.id,
       customerEmail: session.user.email,

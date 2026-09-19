@@ -20,13 +20,14 @@ Based on your `.env` file, you have:
    - Used in: `lib/openrouter.ts`, `app/action/action.ts`
 
 4. **Billing (Polar)**
-   - `POLAR_ACCESS_TOKEN` – organization access token (create it at sandbox.polar.sh → Settings → Developers while `POLAR_SERVER=sandbox`; needs `checkouts:write`, `subscriptions:write`, `customer_sessions:write`)
+   - `POLAR_ACCESS_TOKEN` – organization access token (create it at sandbox.polar.sh → Settings → Developers while `POLAR_SERVER=sandbox`; needs `checkouts:read`, `checkouts:write`, `orders:read`, `subscriptions:read`, `subscriptions:write`, `customer_sessions:write`)
    - `POLAR_WEBHOOK_SECRET` – secret of the webhook endpoint pointed at `https://<your-host>/api/webhooks/polar`
    - `POLAR_SERVER` – `sandbox` (default) or `production`
    - `POLAR_PRODUCT_BASIC` / `POLAR_PRODUCT_PRO` / `POLAR_PRODUCT_MAX` – Polar product IDs (monthly subscriptions)
    - Webhook events to subscribe: `subscription.*` and `order.paid`
    - Used in: `lib/polar/*`, `app/api/polar/*`, `app/api/webhooks/polar`
-   - Local testing: expose the dev server with `ngrok http 3000` (or Polar's CLI) and point the sandbox webhook at that URL
+   - How credits are granted: every paid order is credited exactly once (ledger: `CreditGrant`, keyed by order id). Two paths feed it — the `order.paid` webhook (needed for monthly renewals) and `/api/polar/checkout/confirm`, which the dashboard calls when the customer returns from checkout, so a first purchase is credited even if the webhook can't reach the app (e.g. plain `localhost`)
+   - Local webhook testing: expose the dev server with `ngrok http 3000` (or Polar's CLI) and point the sandbox webhook at that URL. Free ngrok URLs change on restart — update the endpoint URL each time. Polar **disables an endpoint after repeated failed deliveries**; re-enable it in Settings → Webhooks, and use the delivery log there to redeliver missed events (safe: handlers are idempotent)
 
 ## ❌ Missing Environment Variables
 

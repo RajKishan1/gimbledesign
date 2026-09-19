@@ -13,8 +13,8 @@ import { getSession } from "@/lib/auth";
  * profile via ProfileProvider (single subscription), explore via its own
  * React Query call.
  *
- * Polar sends users back here with `?checkout=success`; CheckoutStatus turns
- * that into a toast and refreshes billing data.
+ * Polar sends users back here with `?checkout=success&checkout_id=…`;
+ * CheckoutStatus has the server confirm the purchase and refreshes billing data.
  */
 export default async function DashboardPage() {
   const session = await getSession(await headers());
