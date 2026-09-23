@@ -17,10 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGetProfile } from "@/features/use-profile";
+import { useSignOut } from "@/hooks/use-sign-out";
 
 const Header = () => {
   const { theme, setTheme } = useTheme();
   const { data: session } = authClient.useSession();
+  const { signOut, isSigningOut } = useSignOut();
   const user = session?.user;
   const { data: profile } = useGetProfile();
   const isDark = theme === "dark";
@@ -117,7 +119,8 @@ const Header = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="w-full flex items-center cursor-pointer"
-                    onClick={() => authClient.signOut()}
+                    disabled={isSigningOut}
+                    onSelect={() => void signOut()}
                   >
                     <HugeiconsIcon icon={Logout01Icon} size={16} color="currentColor" strokeWidth={1.75} />
                     Logout

@@ -22,6 +22,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
 import { useProfile } from "@/context/profile-provider";
+import { useSignOut } from "@/hooks/use-sign-out";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,6 +184,7 @@ function AccountMenu() {
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const { data: profile } = useProfile();
+  const { signOut, isSigningOut } = useSignOut();
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useMounted();
   const isDark = mounted && resolvedTheme === "dark";
@@ -264,7 +266,8 @@ function AccountMenu() {
         <DropdownMenuItem
           variant="destructive"
           className="flex cursor-pointer items-center gap-2"
-          onClick={() => authClient.signOut()}
+          disabled={isSigningOut}
+          onSelect={() => void signOut()}
         >
           <HugeiconsIcon
             icon={Logout01Icon}
